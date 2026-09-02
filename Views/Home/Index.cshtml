@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Início";
+}
+
+<header class="ms-header">
+    <div class="ms-header-inner">
+        <div class="ms-header-left">
+            <span class="ms-brand">
+                <span class="ms-brand-text">
+                    <span class="ms-brand-primary">Minha</span><span class="ms-brand-accent">Sessao</span>
+                </span>
+            </span>
+        </div>
+        <div class="ms-header-center">
+            <span id="ms-greeting" class="ms-greeting"></span>
+            <span class="ms-clock-sep">•</span>
+            <span id="ms-clock" class="ms-clock"></span>
+        </div>
+        <div class="ms-header-right">
+            <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#loginModal">
+                Entrar / Cadastrar
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="ms-main">
+    <div class="ms-quote-card">
+        <p id="ms-quote" class="ms-quote-text"></p>
+    </div>
+</main>
+
+<!-- Modal 1: Login -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Entrar</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="loginEmail" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="loginEmail" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginSenha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="loginSenha" placeholder="••••••••" required>
+                        <div class="text-end mt-1">
+                            <a href="#" class="ms-link ms-link-forgot">Esqueci minha senha</a>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-ms-orange">Entrar</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <span class="ms-footer-text">
+                    Ainda não sou cadastrado
+                    <a href="#" id="linkCadastreSe" class="ms-link">Cadastre-se aqui</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Seleção de Perfil para Cadastro -->
+<div class="modal fade" id="registerTypeModal" tabindex="-1" aria-labelledby="registerTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registerTypeModalLabel">Escolha seu tipo de acesso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ms-profile-options">
+                    <button type="button" class="btn ms-profile-btn" data-perfil="profissional">
+                        <span class="ms-profile-icon">🩺</span>
+                        <span>Profissional</span>
+                    </button>
+                    <button type="button" class="btn ms-profile-btn" data-perfil="paciente">
+                        <span class="ms-profile-icon">🧑</span>
+                        <span>Paciente</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

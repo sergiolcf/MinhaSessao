@@ -1,0 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+  --ms-bg: #F8F9FA;
+  --ms-text: #2B2D42;
+  --ms-orange: #FF6B35;
+  --ms-orange-dark: #E0551F;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--ms-bg);
+  color: var(--ms-text);
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.ms-header {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E9ECEF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 2rem;
+}
+
+.ms-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.ms-header-left,
+.ms-header-right {
+  flex: 1 1 0;
+}
+
+.ms-header-left {
+  margin-left: 0;
+}
+
+.ms-header-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ms-header-center {
+  flex: 2 1 0;
+  text-align: center;
+  color: var(--ms-text);
+  font-size: 0.95rem;
+}
+
+.ms-brand {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.35rem;
+  text-decoration: none;
+}
+
+.ms-brand:hover,
+.ms-brand:focus {
+  text-decoration: none;
+}
+
+.ms-brand-primary {
+  color: #2B2D42;
+  font-weight: 500;
+}
+
+.ms-brand-accent {
+  color: #FF6B35;
+  font-weight: 700;
+}
+
+.ms-greeting {
+  font-weight: 600;
+}
+
+.ms-clock-sep {
+  margin: 0 0.4rem;
+  color: #adb5bd;
+}
+
+.ms-clock {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botão laranja */
+.btn-ms-orange {
+  background-color: var(--ms-orange);
+  border-color: var(--ms-orange);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.btn-ms-orange:hover,
+.btn-ms-orange:focus {
+  background-color: var(--ms-orange-dark);
+  border-color: var(--ms-orange-dark);
+  color: #fff;
+}
+
+/* Centro da página */
+.ms-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.ms-quote-card {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(43, 45, 66, 0.08);
+  padding: 2.5rem 3rem;
+  max-width: 640px;
+  text-align: center;
+}
+
+.ms-quote-text {
+  font-family: 'Lora', serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--ms-text);
+  margin: 0;
+  min-height: 3.5rem;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.ms-quote-text.ms-fade {
+  opacity: 0;
+}
+
+.ms-highlight {
+  color: #FF6B35;
+  font-weight: 600;
+  font-size: 1.08em;
+  font-style: normal;
+  display: inline-block;
+}
+
+/* Modais */
+.modal-content {
+  border-radius: 0.75rem;
+  border: none;
+}
+
+.modal-title {
+  color: var(--ms-text);
+  font-weight: 700;
+}
+
+.ms-footer-text {
+  font-size: 0.9rem;
+  color: var(--ms-text);
+  text-align: center;
+}
+
+.ms-link {
+  color: var(--ms-orange);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 0.25rem;
+}
+
+.ms-link:hover {
+  text-decoration: underline;
+  color: var(--ms-orange-dark);
+}
+
+.ms-link-forgot {
+  font-size: 0.85rem;
+}
+
+.form-control:focus {
+  border-color: var(--ms-orange);
+  box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.2);
+}
+
+/* Seleção de perfil */
+.ms-profile-options {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.ms-profile-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  border: 2px solid #E9ECEF;
+  border-radius: 0.75rem;
+  background-color: var(--ms-bg);
+  color: var(--ms-text);
+  font-weight: 600;
+  transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.ms-profile-icon {
+  font-size: 2rem;
+}
+
+.ms-profile-btn:hover,
+.ms-profile-btn:focus {
+  border-color: var(--ms-orange);
+  background-color: #FFF3EE;
+  color: var(--ms-orange-dark);
+}
