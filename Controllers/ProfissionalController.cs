@@ -71,7 +71,9 @@ public class ProfissionalController : Controller
             _context.Profissionais.Add(profissional);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Profissional cadastrado com sucesso!" });
+            var redirectUrl = Url.Action("Index", "Dashboard", new { profissionalId = profissional.Id });
+
+            return Json(new { success = true, message = "Profissional cadastrado com sucesso!", redirectUrl });
         }
         catch (Exception ex)
         {

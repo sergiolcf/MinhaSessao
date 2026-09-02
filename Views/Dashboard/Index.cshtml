@@ -1,0 +1,33 @@
+@model MinhaSessao.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-welcome">
+    <h1 class="ms-dash-welcome-title">Bem-vindo(a), @Model.NomeCompleto</h1>
+    <p class="ms-dash-welcome-subtitle">@Model.RegistroCRP</p>
+</div>
+
+<div class="ms-dash-cards">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-check"></i>
+        <h5>Minha Agenda</h5>
+        <p>Em breve você poderá gerenciar seus horários por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-people"></i>
+        <h5>Meus Pacientes</h5>
+        <p>Em breve você poderá visualizar seus pacientes por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-journal-medical"></i>
+        <h5>Minhas Sessões</h5>
+        <p>Em breve você poderá acompanhar suas sessões por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-gear"></i>
+        <h5>Configurações</h5>
+        <p>Em breve você poderá ajustar as configurações da sua conta.</p>
+    </div>
+</div>
