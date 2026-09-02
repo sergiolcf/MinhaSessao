@@ -1,0 +1,94 @@
+@model MinhaSessao.Models.ViewModels.ProfissionalViewModel
+
+<!-- Modal 3: Cadastro do Profissional -->
+<div class="modal fade" id="modalCadastroProfissional" tabindex="-1" aria-labelledby="modalCadastroProfissionalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content ms-modal-professional">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="modalCadastroProfissionalLabel">Cadastro do Profissional</h5>
+                    <p class="ms-modal-subtitle mb-0">Preencha seus dados para começar a atender</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cadastroProfissionalFeedback" class="ms-alert-erro d-none" role="alert">
+                    <span class="ms-status-icon ms-status-icon-sm ms-status-icon-erro">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                            <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                    <div>
+                        <strong class="ms-alert-title">Erro ao Cadastrar</strong>
+                        <p class="ms-alert-message mb-0" id="cadastroProfissionalFeedbackMensagem"></p>
+                    </div>
+                </div>
+                <form id="formCadastroProfissional" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label asp-for="NomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
+                        <input asp-for="NomeCompleto" class="form-control" placeholder="Seu nome completo">
+                        <span asp-validation-for="NomeCompleto" class="text-danger small"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="RegistroCRP" class="form-label">Registro Profissional (CRP)<span class="ms-required">*</span></label>
+                            <input asp-for="RegistroCRP" class="form-control" placeholder="CRP 00/000000">
+                            <span asp-validation-for="RegistroCRP" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Telefone" class="form-label">Telefone / WhatsApp<span class="ms-required">*</span></label>
+                            <input asp-for="Telefone" type="tel" class="form-control" placeholder="(00) 00000-0000">
+                            <span asp-validation-for="Telefone" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">E-mail<span class="ms-required">*</span></label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="seu@email.com">
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Apresentacao" class="form-label">Apresentação / Sobre mim</label>
+                        <textarea asp-for="Apresentacao" class="form-control" rows="3" maxlength="500" placeholder="Conte um pouco sobre sua abordagem e experiência..."></textarea>
+                        <div class="d-flex justify-content-between">
+                            <span asp-validation-for="Apresentacao" class="text-danger small"></span>
+                            <span class="ms-char-counter" id="apresentacaoCounter">0/500</span>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label asp-for="Foto" class="form-label">Foto de Perfil</label>
+                        <input asp-for="Foto" type="file" class="form-control ms-file-input" accept="image/*">
+                        <span asp-validation-for="Foto" class="text-danger small"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formCadastroProfissional" class="btn btn-ms-orange" id="btnCriarConta">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnCriarContaSpinner"></span>
+                    <span id="btnCriarContaTexto">Criar Conta</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Sucesso: Cadastro do Profissional -->
+<div class="modal fade" id="modalSucessoCadastro" tabindex="-1" aria-labelledby="modalSucessoCadastroLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ms-modal-professional text-center">
+            <div class="modal-body py-5">
+                <span class="ms-status-icon ms-status-icon-lg ms-status-icon-success mx-auto mb-3">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                        <path d="M8.5 12.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </span>
+                <h5 class="modal-title mb-2" id="modalSucessoCadastroLabel">Cadastrado com Sucesso!</h5>
+                <p class="ms-modal-subtitle mb-4">Seu cadastro profissional foi criado. Em breve você poderá acessar sua conta.</p>
+                <button type="button" class="btn btn-ms-orange px-4" data-bs-dismiss="modal">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>

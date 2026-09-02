@@ -220,3 +220,104 @@ body {
   background-color: #FFF3EE;
   color: var(--ms-orange-dark);
 }
+
+/* Modal: Cadastro do Profissional */
+.ms-modal-professional {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.ms-modal-subtitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #6C757D;
+  margin-top: 0.15rem;
+}
+
+.ms-required {
+  color: var(--ms-orange);
+  margin-left: 0.15rem;
+}
+
+.ms-char-counter {
+  font-size: 0.75rem;
+  color: #ADB5BD;
+  margin-top: 0.25rem;
+}
+
+.ms-file-input {
+  font-size: 0.85rem;
+  color: #6C757D;
+}
+
+.ms-file-input::file-selector-button {
+  font-family: inherit;
+  color: var(--ms-text);
+  background-color: var(--ms-bg);
+  border: 1px solid #E9ECEF;
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  margin-right: 0.75rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.ms-file-input::file-selector-button:hover {
+  background-color: #EFEFEF;
+}
+
+/* Ícones de status (sucesso/erro) */
+.ms-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ms-status-icon svg {
+  width: 55%;
+  height: 55%;
+}
+
+.ms-status-icon-sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.ms-status-icon-lg {
+  width: 4rem;
+  height: 4rem;
+}
+
+.ms-status-icon-success {
+  background-color: rgba(25, 135, 84, 0.12);
+  color: #198754;
+}
+
+.ms-status-icon-erro {
+  background-color: rgba(220, 53, 69, 0.12);
+  color: #DC3545;
+}
+
+/* Alerta de erro no cadastro do profissional */
+.ms-alert-erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: rgba(220, 53, 69, 0.06);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.ms-alert-title {
+  display: block;
+  color: #DC3545;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.ms-alert-message {
+  color: var(--ms-text);
+  font-size: 0.9rem;
+}

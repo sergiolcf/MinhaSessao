@@ -89,3 +89,9 @@
         </div>
     </div>
 </div>
+
+@await Html.PartialAsync("_CadastroProfissionalModal", new ProfissionalViewModel())
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

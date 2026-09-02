@@ -25,3 +25,17 @@ Tech Stack: .NET 8 MVC, Entity Framework Core, SQLite, Bootstrap 5.
 ## Segurança & Dependências
 - NUNCA instale pacotes NuGet, bibliotecas externas ou serviços de terceiros sem solicitar autorização prévia ao usuário.
 - O projeto DEVE utilizar exclusivamente tecnologias e bibliotecas 100% gratuitas e open-source (sem custos de licença ou planos pagos).
+
+## CARD-03: Cadastro de Profissional (Implementado)
+- Namespace raiz do projeto é `MinhaSessao` (não `SLCF_MinhaSessao` — este é só o nome do arquivo `.sln`). Toda a estrutura de Models usa `MinhaSessao.Models.*`.
+- Models divididos por responsabilidade:
+  - `Models/Entities/Profissional.cs` — entidade mapeada pelo EF Core (`Id` como `Guid`, gerado via `Guid.NewGuid()`, `FotoUrl` string).
+  - `Models/ViewModels/ProfissionalViewModel.cs` — model do formulário (`Id` também `Guid`, campo `Foto` como `IFormFile` para upload, não persistido diretamente).
+- Persistência via EF Core + SQLite: `Data/ApplicationDbContext.cs` (`DbSet<Profissional> Profissionais`), connection string em `appsettings.json` (`ConnectionStrings:DefaultConnection`), migration `CriarTabelaProfissional` já aplicada ao banco local (`minhasessao.db`, gitignored).
+- `Controllers/ProfissionalController.cs`: action `[HttpPost] Criar(ProfissionalViewModel model)`, protegida com `[ValidateAntiForgeryToken]`, injeta `ApplicationDbContext` e `IWebHostEnvironment`. Faz upload da foto (se enviada) para `wwwroot/uploads/profissionais/` com nome único (Guid + extensão), cria a pasta dinamicamente se não existir, salva a entidade em `try/catch` e sempre retorna JSON (`success`, `message`, `errors` quando inválido).
+- View (`Views/Home/_CadastroProfissionalModal.cshtml`) usa Tag Helpers (`asp-for`, `asp-validation-for`) ligados à `ProfissionalViewModel`.
+- Feedback visual via JavaScript nativo (Fetch API, sem jQuery/AJAX de terceiros):
+  - Botão "Criar Conta" desabilita e mostra spinner Bootstrap durante o envio.
+  - Sucesso: fecha a modal do formulário e abre `#modalSucessoCadastro` (ícone de check verde `#198754`, "Cadastrado com Sucesso!").
+  - Erro: mantém a modal do formulário aberta com os dados preenchidos, exibe alerta vermelho (`#DC3545`, ícone de X) com a mensagem específica vinda da Controller/ModelState, reabilita o botão.
+- Pacotes NuGet instalados (autorização já concedida pelo usuário): `Microsoft.EntityFrameworkCore.Sqlite` e `Microsoft.EntityFrameworkCore.Design`, fixados em `8.0.10` (compatibilidade com `net8.0`).

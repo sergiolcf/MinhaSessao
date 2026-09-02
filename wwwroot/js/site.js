@@ -91,4 +91,111 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
         });
     }
+
+    // Alternância entre Modal 2 (Seleção de Perfil) e Modal 3 (Cadastro do Profissional)
+    const modalProfissionalEl = document.getElementById("modalCadastroProfissional");
+    const btnPerfilProfissional = document.querySelector('.ms-profile-btn[data-perfil="profissional"]');
+
+    if (registerTypeModalEl && modalProfissionalEl && btnPerfilProfissional) {
+        const registerTypeModalInstance = bootstrap.Modal.getOrCreateInstance(registerTypeModalEl);
+        const modalProfissional = bootstrap.Modal.getOrCreateInstance(modalProfissionalEl);
+
+        btnPerfilProfissional.addEventListener("click", function () {
+            registerTypeModalEl.addEventListener("hidden.bs.modal", function abrirModalProfissional() {
+                modalProfissional.show();
+                registerTypeModalEl.removeEventListener("hidden.bs.modal", abrirModalProfissional);
+            });
+            registerTypeModalInstance.hide();
+        });
+    }
+
+    // Contador de caracteres da apresentação do profissional
+    const apresentacaoEl = document.getElementById("Apresentacao");
+    const apresentacaoCounterEl = document.getElementById("apresentacaoCounter");
+    if (apresentacaoEl && apresentacaoCounterEl) {
+        apresentacaoEl.addEventListener("input", function () {
+            apresentacaoCounterEl.textContent = apresentacaoEl.value.length + "/500";
+        });
+    }
+
+    // Formulário de cadastro do profissional (envio para o Controller via Fetch)
+    const formCadastroProfissional = document.getElementById("formCadastroProfissional");
+    const feedbackEl = document.getElementById("cadastroProfissionalFeedback");
+    const feedbackMensagemEl = document.getElementById("cadastroProfissionalFeedbackMensagem");
+    const modalSucessoEl = document.getElementById("modalSucessoCadastro");
+    const btnCriarConta = document.getElementById("btnCriarConta");
+    const btnCriarContaSpinner = document.getElementById("btnCriarContaSpinner");
+    const btnCriarContaTexto = document.getElementById("btnCriarContaTexto");
+
+    function definirCarregando(carregando) {
+        if (!btnCriarConta) return;
+        btnCriarConta.disabled = carregando;
+        if (btnCriarContaSpinner) {
+            btnCriarContaSpinner.classList.toggle("d-none", !carregando);
+        }
+        if (btnCriarContaTexto) {
+            btnCriarContaTexto.textContent = carregando ? "Enviando..." : "Criar Conta";
+        }
+    }
+
+    function exibirErro(mensagem) {
+        if (!feedbackEl || !feedbackMensagemEl) return;
+        feedbackMensagemEl.textContent = mensagem;
+        feedbackEl.classList.remove("d-none");
+    }
+
+    function ocultarErro() {
+        if (!feedbackEl) return;
+        feedbackEl.classList.add("d-none");
+    }
+
+    if (formCadastroProfissional) {
+        formCadastroProfissional.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            ocultarErro();
+            definirCarregando(true);
+
+            const formData = new FormData(formCadastroProfissional);
+
+            try {
+                const resposta = await fetch("/Profissional/Criar", {
+                    method: "POST",
+                    body: formData
+                });
+
+                let resultado;
+                try {
+                    resultado = await resposta.json();
+                } catch {
+                    resultado = { success: false, message: "Ocorreu um erro inesperado no servidor. Tente novamente." };
+                }
+
+                if (resposta.ok && resultado.success) {
+                    // Sucesso: limpa o formulário e alterna para a modal de confirmação
+                    formCadastroProfissional.reset();
+                    if (apresentacaoCounterEl) {
+                        apresentacaoCounterEl.textContent = "0/500";
+                    }
+
+                    if (modalProfissionalEl && modalSucessoEl) {
+                        modalProfissionalEl.addEventListener("hidden.bs.modal", function abrirModalSucesso() {
+                            bootstrap.Modal.getOrCreateInstance(modalSucessoEl).show();
+                            modalProfissionalEl.removeEventListener("hidden.bs.modal", abrirModalSucesso);
+                        });
+                        bootstrap.Modal.getOrCreateInstance(modalProfissionalEl).hide();
+                    }
+                } else {
+                    // Erro: mantém a modal aberta com os dados preenchidos e mostra o motivo
+                    const primeiroErroValidacao = resultado.errors
+                        ? Object.values(resultado.errors)[0]?.[0]
+                        : null;
+                    exibirErro(resultado.message || primeiroErroValidacao || "Não foi possível concluir o cadastro.");
+                }
+            } catch (erro) {
+                exibirErro("Erro de conexão. Verifique sua internet e tente novamente.");
+            } finally {
+                definirCarregando(false);
+            }
+        });
+    }
 });
