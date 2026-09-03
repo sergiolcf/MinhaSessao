@@ -65,48 +65,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     setInterval(alternarFrase, 9000);
 
-    // Alternância entre Modal 1 (Login) e Modal 2 (Seleção de Perfil)
-    const loginModalEl = document.getElementById("loginModal");
-    const registerTypeModalEl = document.getElementById("registerTypeModal");
-    const linkCadastreSe = document.getElementById("linkCadastreSe");
-
-    if (loginModalEl && registerTypeModalEl && linkCadastreSe) {
-        const loginModal = bootstrap.Modal.getOrCreateInstance(loginModalEl);
-        const registerTypeModal = bootstrap.Modal.getOrCreateInstance(registerTypeModalEl);
-
-        linkCadastreSe.addEventListener("click", function (e) {
-            e.preventDefault();
-            loginModalEl.addEventListener("hidden.bs.modal", function abrirModal2() {
-                registerTypeModal.show();
-                loginModalEl.removeEventListener("hidden.bs.modal", abrirModal2);
-            });
-            loginModal.hide();
-        });
-    }
-
-    // Formulário de login (placeholder)
-    const loginForm = document.getElementById("loginForm");
-    if (loginForm) {
-        loginForm.addEventListener("submit", function (e) {
-            e.preventDefault();
-        });
-    }
-
-    // Alternância entre Modal 2 (Seleção de Perfil) e Modal 3 (Cadastro do Profissional)
+    // Modal de Cadastro do Profissional
     const modalProfissionalEl = document.getElementById("modalCadastroProfissional");
-    const btnPerfilProfissional = document.querySelector('.ms-profile-btn[data-perfil="profissional"]');
 
-    if (registerTypeModalEl && modalProfissionalEl && btnPerfilProfissional) {
-        const registerTypeModalInstance = bootstrap.Modal.getOrCreateInstance(registerTypeModalEl);
-        const modalProfissional = bootstrap.Modal.getOrCreateInstance(modalProfissionalEl);
-
-        btnPerfilProfissional.addEventListener("click", function () {
-            registerTypeModalEl.addEventListener("hidden.bs.modal", function abrirModalProfissional() {
-                modalProfissional.show();
-                registerTypeModalEl.removeEventListener("hidden.bs.modal", abrirModalProfissional);
-            });
-            registerTypeModalInstance.hide();
-        });
+    // Vindo da tela de Login ("Ainda não tem conta? Cadastre-se"): abre a modal de cadastro direto
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    if (parametrosUrl.get("cadastro") === "profissional" && modalProfissionalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalProfissionalEl).show();
     }
 
     // Contador de caracteres da apresentação do profissional

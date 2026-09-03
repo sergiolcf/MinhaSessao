@@ -19,6 +19,9 @@ public class Profissional
     [Required(ErrorMessage = "O telefone é obrigatório.")]
     public string Telefone { get; set; } = string.Empty;
 
+    // Armazena o hash da senha (gerado via PasswordHasher), nunca o texto puro
+    public string Senha { get; set; } = string.Empty;
+
     [StringLength(500, ErrorMessage = "A apresentação deve ter no máximo 500 caracteres.")]
     public string? Apresentacao { get; set; }
 

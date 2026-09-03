@@ -122,6 +122,28 @@ body.ms-dashboard-body {
   white-space: nowrap;
 }
 
+.ms-dash-logout-form {
+  margin: 0;
+  margin-left: 0.25rem;
+}
+
+.ms-dash-logout-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.4rem;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.ms-dash-logout-btn:hover,
+.ms-dash-logout-btn:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
 /* Corpo: sidebar + área principal */
 .ms-dash-body {
   display: flex;
@@ -589,6 +611,164 @@ body.ms-dashboard-body {
   font-size: 0.95rem;
 }
 
+/* Cabeçalho da aba de Anotações Confidenciais (botão Nova Anotação) */
+.ms-anotacao-tab-header {
+  margin-bottom: 1.25rem;
+}
+
+.ms-anotacao-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ms-anotacao-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ms-anotacao-search i {
+  position: absolute;
+  left: 0.65rem;
+  color: #ADB5BD;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.ms-anotacao-search input {
+  padding-left: 2rem;
+  width: 220px;
+}
+
+.ms-anotacao-ordenacao {
+  width: auto;
+}
+
+/* Modal de nova anotação confidencial */
+#modalNovaAnotacao textarea {
+  resize: vertical;
+}
+
+/* Timeline de anotações confidenciais */
+/* Área com scroll interno da timeline: mantém ~4 anotações visíveis por vez,
+   sem precisar rolar a página inteira. A paginação (10 por página) continua igual. */
+.ms-timeline-scroll {
+  max-height: min(500px, 60vh);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.ms-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.ms-timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.3rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 2px;
+  background-color: rgba(43, 45, 66, 0.1);
+}
+
+.ms-timeline-item {
+  position: relative;
+}
+
+.ms-timeline-marker {
+  position: absolute;
+  left: -1.5rem;
+  top: 0.35rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background-color: var(--ms-orange);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.25);
+}
+
+.ms-timeline-content {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(43, 45, 66, 0.08);
+  padding: 1.25rem 1.5rem;
+}
+
+.ms-timeline-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ms-timeline-title {
+  color: var(--ms-text);
+  font-size: 1rem;
+}
+
+.ms-timeline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.ms-timeline-date {
+  color: #6C757D;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ms-timeline-edit,
+.ms-timeline-delete {
+  background: transparent;
+  border: none;
+  color: #ADB5BD;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.35rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.ms-timeline-edit:hover {
+  color: var(--ms-orange-dark);
+  background-color: rgba(255, 107, 53, 0.08);
+}
+
+.ms-timeline-delete:hover {
+  color: #DC3545;
+  background-color: rgba(220, 53, 69, 0.08);
+}
+
+.ms-timeline-body {
+  color: var(--ms-text);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Paginação das anotações confidenciais, seguindo a paleta do sistema */
+#paginacaoAnotacoes .page-link {
+  color: var(--ms-text);
+}
+
+#paginacaoAnotacoes .page-link:hover {
+  color: var(--ms-orange-dark);
+}
+
+#paginacaoAnotacoes .page-item.active .page-link {
+  background-color: var(--ms-orange);
+  border-color: var(--ms-orange);
+  color: #fff;
+}
+
 /* Responsividade básica: em telas pequenas o conteúdo do navbar é simplificado
    e a sidebar inicia recolhida (ver dashboard.js) para liberar espaço de tela */
 @media (max-width: 768px) {
@@ -617,5 +797,17 @@ body.ms-dashboard-body {
   .ms-dash-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
+  }
+
+  .ms-anotacao-toolbar {
+    width: 100%;
+  }
+
+  .ms-anotacao-search {
+    flex: 1 1 auto;
+  }
+
+  .ms-anotacao-search input {
+    width: 100%;
   }
 }

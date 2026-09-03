@@ -4,8 +4,6 @@ public class PacienteDetalhesViewModel
 {
     public Guid Id { get; set; }
 
-    public Guid ProfissionalId { get; set; }
-
     public string NomeCompleto { get; set; } = string.Empty;
 
     public string? Cpf { get; set; }
@@ -25,6 +23,12 @@ public class PacienteDetalhesViewModel
     public bool Ativo { get; set; }
 
     public DateTime DataCadastro { get; set; }
+
+    public List<AnotacaoConfidencialItemViewModel> Anotacoes { get; set; } = new();
+
+    public int PaginaAtualAnotacoes { get; set; } = 1;
+
+    public int TotalPaginasAnotacoes { get; set; } = 1;
 
     public string Iniciais => PacienteIniciais.Calcular(NomeCompleto);
 

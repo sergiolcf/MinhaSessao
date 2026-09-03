@@ -6,8 +6,6 @@ public class PacienteViewModel
 {
     public Guid? Id { get; set; }
 
-    public Guid ProfissionalId { get; set; }
-
     [Required(ErrorMessage = "Informe o nome completo do paciente.")]
     public string NomeCompleto { get; set; } = string.Empty;
 

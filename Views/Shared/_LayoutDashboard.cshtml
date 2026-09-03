@@ -14,7 +14,7 @@
             <button type="button" class="ms-sidebar-toggle" id="sidebarToggle" aria-label="Alternar menu" aria-expanded="true">
                 <i class="bi bi-list"></i>
             </button>
-            <a asp-controller="Dashboard" asp-action="Index" asp-route-profissionalId="@ViewBag.ProfissionalId" class="ms-dash-brand">
+            <a asp-controller="Dashboard" asp-action="Index" class="ms-dash-brand">
                 <i class="bi bi-house-door-fill"></i>
                 <span><span class="ms-brand-primary-dark">Minha</span><span class="ms-brand-accent">Sessao</span></span>
             </a>
@@ -38,6 +38,12 @@
                 </span>
             }
             <span class="ms-dash-user-name">@nomeProfissional</span>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="ms-dash-logout-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="ms-dash-logout-btn" title="Sair">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
         </div>
     </nav>
 
@@ -52,7 +58,7 @@
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
                 <li>
-                    <a asp-controller="Dashboard" asp-action="Index" asp-route-profissionalId="@ViewBag.ProfissionalId"
+                    <a asp-controller="Dashboard" asp-action="Index"
                        class="ms-dash-menu-link@(isInicioAtivo ? " active" : "")">
                         <i class="bi bi-grid-1x2"></i>
                         <span class="menu-text">Início</span>
@@ -65,7 +71,7 @@
                     </a>
                 </li>
                 <li>
-                    <a asp-controller="Pacientes" asp-action="Index" asp-route-profissionalId="@ViewBag.ProfissionalId"
+                    <a asp-controller="Pacientes" asp-action="Index"
                        class="ms-dash-menu-link@(isPacientesAtivo ? " active" : "")">
                         <i class="bi bi-people"></i>
                         <span class="menu-text">Meus Pacientes</span>
