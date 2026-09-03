@@ -1,0 +1,60 @@
+@model MinhaSessao.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Entrar";
+    Layout = "_LayoutAuth";
+}
+
+<div class="ms-auth-card">
+    <div class="ms-auth-brand">
+        <i class="bi bi-house-door-fill"></i>
+        <span><span class="ms-brand-primary-dark">Minha</span><span class="ms-brand-accent">Sessao</span></span>
+    </div>
+    <p class="ms-auth-subtitle">Entre para acessar seu painel</p>
+
+    @if (ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+    {
+        <div class="ms-alert ms-alert-erro" role="alert">
+            <i class="bi bi-x-circle-fill"></i>
+            <div>
+                <strong>Erro ao Entrar</strong>
+                <p class="mb-0">@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</p>
+            </div>
+        </div>
+    }
+
+    <form asp-controller="Account" asp-action="Login" method="post">
+        @Html.AntiForgeryToken()
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">E-mail</label>
+            <input asp-for="Email" class="form-control" placeholder="seu@email.com" autofocus required>
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Senha" class="form-label">Senha</label>
+            <input asp-for="Senha" class="form-control" placeholder="Sua senha" required>
+            <span asp-validation-for="Senha" class="text-danger small"></span>
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="LembrarMe" class="form-check-input" />
+            <label asp-for="LembrarMe" class="form-check-label">Lembrar de mim</label>
+        </div>
+        <button type="submit" class="btn btn-ms-orange w-100">Entrar</button>
+    </form>
+
+    <div class="ms-auth-divider"><span>ou</span></div>
+
+    <form asp-controller="Account" asp-action="LoginSimuladoTeste" method="post">
+        <button type="submit" class="btn btn-outline-secondary w-100">
+            ⚡ Entrar com Conta de Teste (Maria Silva)
+        </button>
+    </form>
+
+    <p class="ms-auth-signup-text">
+        Ainda não tem conta?
+        <a asp-controller="Home" asp-action="Index" asp-route-cadastro="profissional">Cadastre-se</a>
+    </p>
+
+    <a asp-controller="Home" asp-action="Index" class="ms-auth-back-link">
+        <i class="bi bi-arrow-left"></i> Voltar para a página inicial
+    </a>
+</div>

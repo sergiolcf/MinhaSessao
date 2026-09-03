@@ -1,0 +1,166 @@
+:root {
+  --ms-text: #2B2D42;
+  --ms-orange: #FF6B35;
+  --ms-orange-dark: #E0551F;
+  --ms-bg: #F8F9FA;
+}
+
+html, body {
+  height: 100%;
+}
+
+body.ms-auth-body {
+  background-color: var(--ms-bg);
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.ms-auth-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.ms-auth-card {
+  background-color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(43, 45, 66, 0.1);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.ms-auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ms-text);
+  margin-bottom: 0.3rem;
+}
+
+.ms-auth-brand i {
+  color: var(--ms-orange);
+}
+
+.ms-brand-primary-dark {
+  color: var(--ms-text);
+  font-weight: 500;
+}
+
+.ms-brand-accent {
+  color: var(--ms-orange);
+  font-weight: 700;
+}
+
+.ms-auth-subtitle {
+  text-align: center;
+  color: #6C757D;
+  margin-bottom: 1.75rem;
+}
+
+.btn-ms-orange {
+  background-color: var(--ms-orange);
+  border-color: var(--ms-orange);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.btn-ms-orange:hover,
+.btn-ms-orange:focus {
+  background-color: var(--ms-orange-dark);
+  border-color: var(--ms-orange-dark);
+  color: #fff;
+}
+
+.ms-auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #ADB5BD;
+  font-size: 0.85rem;
+  margin: 1.5rem 0;
+}
+
+.ms-auth-divider::before,
+.ms-auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid rgba(43, 45, 66, 0.1);
+}
+
+.ms-auth-divider span {
+  padding: 0 0.75rem;
+}
+
+.ms-auth-signup-text {
+  text-align: center;
+  color: #6C757D;
+  font-size: 0.9rem;
+  margin: 1.5rem 0 0;
+}
+
+.ms-auth-signup-text a {
+  color: var(--ms-orange);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ms-auth-signup-text a:hover {
+  color: var(--ms-orange-dark);
+  text-decoration: underline;
+}
+
+.ms-auth-back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  color: #6C757D;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.ms-auth-back-link:hover {
+  color: var(--ms-orange);
+}
+
+/* Alerta de erro (mesmo padrão visual usado no dashboard) */
+.ms-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.ms-alert i {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.ms-alert-erro {
+  background-color: rgba(220, 53, 69, 0.06);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  color: #DC3545;
+}
+
+.ms-alert-erro strong {
+  color: #DC3545;
+}
+
+.ms-alert-erro p {
+  color: var(--ms-text);
+}

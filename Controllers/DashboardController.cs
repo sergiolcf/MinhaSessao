@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinhaSessao.Data;
+using MinhaSessao.Extensions;
 using MinhaSessao.Models.ViewModels;
 
 namespace MinhaSessao.Controllers;
 
+[Authorize]
 public class DashboardController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -14,15 +17,14 @@ public class DashboardController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index(Guid? profissionalId)
+    public async Task<IActionResult> Index()
     {
-        var profissional = profissionalId.HasValue
-            ? await _context.Profissionais.FirstOrDefaultAsync(p => p.Id == profissionalId.Value)
-            : await _context.Profissionais.FirstOrDefaultAsync();
+        var profissionalId = User.ObterProfissionalId();
+        var profissional = await _context.Profissionais.FirstOrDefaultAsync(p => p.Id == profissionalId);
 
         if (profissional is null)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login", "Account");
         }
 
         var model = new DashboardViewModel

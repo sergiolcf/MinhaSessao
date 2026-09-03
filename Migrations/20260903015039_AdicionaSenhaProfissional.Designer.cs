@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MinhaSessao.Data;
 
@@ -10,43 +11,14 @@ using MinhaSessao.Data;
 namespace MinhaSessao.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903015039_AdicionaSenhaProfissional")]
+    partial class AdicionaSenhaProfissional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
-
-            modelBuilder.Entity("MinhaSessao.Models.Entities.AnotacaoConfidencial", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Conteudo")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DataRegistro")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("PacienteId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ProfissionalId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Titulo")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PacienteId");
-
-                    b.HasIndex("ProfissionalId");
-
-                    b.ToTable("AnotacoesConfidenciais");
-                });
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.Paciente", b =>
                 {
@@ -133,25 +105,6 @@ namespace MinhaSessao.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Profissionais");
-                });
-
-            modelBuilder.Entity("MinhaSessao.Models.Entities.AnotacaoConfidencial", b =>
-                {
-                    b.HasOne("MinhaSessao.Models.Entities.Paciente", "Paciente")
-                        .WithMany()
-                        .HasForeignKey("PacienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MinhaSessao.Models.Entities.Profissional", "Profissional")
-                        .WithMany()
-                        .HasForeignKey("ProfissionalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Paciente");
-
-                    b.Navigation("Profissional");
                 });
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.Paciente", b =>

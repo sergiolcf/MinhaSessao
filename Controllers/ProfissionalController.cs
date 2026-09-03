@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MinhaSessao.Data;
 using MinhaSessao.Models.Entities;
 using MinhaSessao.Models.ViewModels;
+using MinhaSessao.Services;
 
 namespace MinhaSessao.Controllers;
 
@@ -62,16 +63,20 @@ public class ProfissionalController : Controller
                 Id = Guid.NewGuid(),
                 NomeCompleto = model.NomeCompleto,
                 RegistroCRP = model.RegistroCRP,
-                Email = model.Email,
+                Email = model.Email.Trim().ToLower(),
                 Telefone = model.Telefone,
                 Apresentacao = model.Apresentacao,
                 FotoUrl = fotoUrl
             };
+            profissional.Senha = AutenticacaoService.HashSenha(profissional, model.Senha.Trim());
 
             _context.Profissionais.Add(profissional);
             await _context.SaveChangesAsync();
 
-            var redirectUrl = Url.Action("Index", "Dashboard", new { profissionalId = profissional.Id });
+            // Autentica automaticamente o profissional recém-cadastrado para acessar o Dashboard
+            await AutenticacaoService.AutenticarProfissionalAsync(HttpContext, profissional);
+
+            var redirectUrl = Url.Action("Index", "Dashboard");
 
             return Json(new { success = true, message = "Profissional cadastrado com sucesso!", redirectUrl });
         }

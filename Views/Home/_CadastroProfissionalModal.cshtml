@@ -48,6 +48,18 @@
                         <input asp-for="Email" type="email" class="form-control" placeholder="seu@email.com">
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Senha" class="form-label">Senha<span class="ms-required">*</span></label>
+                            <input asp-for="Senha" type="password" class="form-control" placeholder="Mínimo 6 caracteres">
+                            <span asp-validation-for="Senha" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ConfirmarSenha" class="form-label">Confirmar Senha<span class="ms-required">*</span></label>
+                            <input asp-for="ConfirmarSenha" type="password" class="form-control" placeholder="Repita a senha">
+                            <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label asp-for="Apresentacao" class="form-label">Apresentação / Sobre mim</label>
                         <textarea asp-for="Apresentacao" class="form-control" rows="3" maxlength="500" placeholder="Conte um pouco sobre sua abordagem e experiência..."></textarea>

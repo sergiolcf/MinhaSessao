@@ -41,7 +41,7 @@ else
                     {
                         <tr>
                             <td>
-                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" asp-route-profissionalId="@Model.ProfissionalId" class="ms-dash-paciente-link">
+                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" class="ms-dash-paciente-link">
                                     <span class="ms-avatar-iniciais">@paciente.Iniciais</span>
                                     <span>@paciente.NomeCompleto</span>
                                 </a>
@@ -65,7 +65,7 @@ else
                                 }
                             </td>
                             <td class="text-end">
-                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" asp-route-profissionalId="@Model.ProfissionalId" class="btn btn-sm ms-dash-btn-ficha d-inline-flex align-items-center gap-1">
+                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" class="btn btn-sm ms-dash-btn-ficha d-inline-flex align-items-center gap-1">
                                     <i class="bi bi-folder2-open"></i> Ver Ficha
                                 </a>
                             </td>
@@ -105,7 +105,6 @@ else
                 </div>
                 <form id="formCadastroPaciente">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="ProfissionalId" value="@Model.ProfissionalId" />
                     <div class="mb-3">
                         <label for="PacienteNomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
                         <input type="text" id="PacienteNomeCompleto" name="NomeCompleto" class="form-control" placeholder="Nome completo do paciente">
