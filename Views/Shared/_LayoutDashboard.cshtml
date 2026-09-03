@@ -47,6 +47,7 @@
             var acaoAtual = ViewContext.RouteData.Values["action"]?.ToString();
             var isInicioAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
+            var isPacientesAtivo = string.Equals(controladorAtual, "Pacientes", StringComparison.OrdinalIgnoreCase);
         }
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
@@ -64,7 +65,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="Pacientes" asp-action="Index" asp-route-profissionalId="@ViewBag.ProfissionalId"
+                       class="ms-dash-menu-link@(isPacientesAtivo ? " active" : "")">
                         <i class="bi bi-people"></i>
                         <span class="menu-text">Meus Pacientes</span>
                     </a>

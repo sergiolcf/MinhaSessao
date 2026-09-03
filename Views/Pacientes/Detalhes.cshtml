@@ -1,0 +1,119 @@
+@model MinhaSessao.Models.ViewModels.PacienteDetalhesViewModel
+@{
+    ViewData["Title"] = Model.NomeCompleto;
+    Layout = "_LayoutDashboard";
+}
+
+<a asp-action="Index" asp-route-profissionalId="@Model.ProfissionalId" class="btn btn-light border shadow-sm btn-sm ms-dash-back-link mb-3">
+    <i class="bi bi-arrow-left me-1"></i> Voltar para Pacientes
+</a>
+
+<div class="ms-dash-detail-header">
+    <div class="ms-dash-detail-identity">
+        <span class="ms-avatar-iniciais ms-avatar-iniciais-lg">@Model.Iniciais</span>
+        <div>
+            <h1 class="ms-dash-detail-title">
+                @Model.NomeCompleto
+                @if (Model.Ativo)
+                {
+                    <span class="badge ms-badge-ativo">Ativo</span>
+                }
+                else
+                {
+                    <span class="badge ms-badge-inativo">Inativo</span>
+                }
+            </h1>
+            <p class="ms-dash-welcome-subtitle mb-0">@Model.Idade anos &middot; Paciente desde @Model.DataCadastro.ToString("dd/MM/yyyy")</p>
+        </div>
+    </div>
+    <div class="ms-dash-detail-shortcuts">
+        <a href="tel:@Model.Telefone" class="btn btn-sm ms-dash-btn-icon" title="Ligar para o paciente">
+            <i class="bi bi-telephone"></i>
+        </a>
+        <a href="mailto:@Model.Email" class="btn btn-sm ms-dash-btn-icon" title="Enviar e-mail">
+            <i class="bi bi-envelope"></i>
+        </a>
+        <button type="button" class="btn btn-sm ms-dash-btn-icon" title="Em breve" disabled>
+            <i class="bi bi-calendar-plus"></i>
+        </button>
+    </div>
+</div>
+
+<ul class="nav nav-tabs ms-dash-tabs" id="pacienteTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="prontuario-tab" data-bs-toggle="tab" data-bs-target="#prontuario" type="button" role="tab" aria-controls="prontuario" aria-selected="true">
+            <i class="bi bi-shield-lock me-1"></i> Anotações Confidenciais
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="sessoes-tab" data-bs-toggle="tab" data-bs-target="#sessoes" type="button" role="tab" aria-controls="sessoes" aria-selected="false">
+            <i class="bi bi-clock-history me-1"></i> Histórico de Sessões
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados" type="button" role="tab" aria-controls="dados" aria-selected="false">
+            <i class="bi bi-person-vcard me-1"></i> Dados Cadastrais
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="pacienteTabsContent">
+    <div class="tab-pane fade show active" id="prontuario" role="tabpanel" aria-labelledby="prontuario-tab">
+        <div class="ms-dash-empty-state">
+            <i class="bi bi-journal-lock"></i>
+            <h5>Prontuário / Anotações Confidenciais</h5>
+            <p>Em breve você poderá registrar aqui suas anotações confidenciais sobre @Model.NomeCompleto.</p>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="sessoes" role="tabpanel" aria-labelledby="sessoes-tab">
+        <div class="ms-dash-empty-state">
+            <i class="bi bi-clock-history"></i>
+            <h5>Histórico de Sessões</h5>
+            <p>Em breve você poderá acompanhar aqui as sessões realizadas com @Model.NomeCompleto.</p>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="dados" role="tabpanel" aria-labelledby="dados-tab">
+        <div class="ms-dash-card">
+            <div class="ms-dash-card-header">
+                <h5 class="mb-0">Dados Cadastrais</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" title="Em breve" disabled>
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
+            </div>
+            <div class="ms-dash-info-grid">
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Telefone</span>
+                    <span class="ms-dash-info-value">@Model.Telefone</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">E-mail</span>
+                    <span class="ms-dash-info-value">@Model.Email</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Data de Nascimento</span>
+                    <span class="ms-dash-info-value">@Model.DataNascimento.ToString("dd/MM/yyyy") (@Model.Idade anos)</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">CPF</span>
+                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.Cpf) ? "Não informado" : Model.Cpf)</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Sexo</span>
+                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.Sexo) ? "Não informado" : Model.Sexo)</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Profissão</span>
+                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.Profissao) ? "Não informado" : Model.Profissao)</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Contato de Emergência</span>
+                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.ContatoEmergencia) ? "Não informado" : Model.ContatoEmergencia)</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Cadastrado em</span>
+                    <span class="ms-dash-info-value">@Model.DataCadastro.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -10,4 +10,6 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Profissional> Profissionais => Set<Profissional>();
+
+    public DbSet<Paciente> Pacientes => Set<Paciente>();
 }
