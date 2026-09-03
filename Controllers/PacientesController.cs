@@ -9,7 +9,7 @@ using MinhaSessao.Services;
 
 namespace MinhaSessao.Controllers;
 
-[Authorize]
+[Authorize(Roles = AutenticacaoService.PapelProfissional)]
 public class PacientesController : Controller
 {
     private const int AnotacoesPorPagina = 10;

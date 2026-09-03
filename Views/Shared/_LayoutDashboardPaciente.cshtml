@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - MinhaSessao</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="ms-dashboard-body">
+    <nav class="ms-dash-navbar">
+        <div class="ms-dash-navbar-left">
+            <button type="button" class="ms-sidebar-toggle" id="sidebarToggle" aria-label="Alternar menu" aria-expanded="true">
+                <i class="bi bi-list"></i>
+            </button>
+            <a asp-controller="PainelPaciente" asp-action="Index" class="ms-dash-brand">
+                <i class="bi bi-house-door-fill"></i>
+                <span><span class="ms-brand-primary-dark">Minha</span><span class="ms-brand-accent">Sessao</span></span>
+            </a>
+            <partial name="_BadgeAlfa" />
+        </div>
+        <div class="ms-dash-navbar-center">
+            <span>Painel do Paciente</span>
+        </div>
+        <div class="ms-dash-navbar-right">
+            @{
+                var nomePaciente = ViewBag.PacienteNome as string ?? string.Empty;
+            }
+            <span class="ms-dash-avatar ms-dash-avatar-placeholder" aria-hidden="true">
+                <i class="bi bi-person-fill"></i>
+            </span>
+            <span class="ms-dash-user-name">@nomePaciente</span>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="ms-dash-logout-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="ms-dash-logout-btn" title="Sair">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="ms-dash-body">
+        @{
+            var controladorAtual = ViewContext.RouteData.Values["controller"]?.ToString();
+            var acaoAtual = ViewContext.RouteData.Values["action"]?.ToString();
+            var isInicioAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
+        }
+        <aside class="ms-dash-sidebar" id="dashSidebar">
+            <ul class="ms-dash-menu">
+                <li>
+                    <a asp-controller="PainelPaciente" asp-action="Index"
+                       class="ms-dash-menu-link@(isInicioAtivo ? " active" : "")">
+                        <i class="bi bi-grid-1x2"></i>
+                        <span class="menu-text">Início</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="ms-dash-menu-link">
+                        <i class="bi bi-journal-medical"></i>
+                        <span class="menu-text">Minhas Sessões</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="ms-dash-menu-link">
+                        <i class="bi bi-people"></i>
+                        <span class="menu-text">Meu(s) Psicólogo(s)</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="ms-dash-menu-link">
+                        <i class="bi bi-gear"></i>
+                        <span class="menu-text">Configurações</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="ms-dash-main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

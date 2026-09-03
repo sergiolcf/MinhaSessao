@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using MinhaSessao.Data;
 using MinhaSessao.Extensions;
 using MinhaSessao.Models.ViewModels;
+using MinhaSessao.Services;
 
 namespace MinhaSessao.Controllers;
 
-[Authorize]
+[Authorize(Roles = AutenticacaoService.PapelProfissional)]
 public class DashboardController : Controller
 {
     private readonly ApplicationDbContext _context;
