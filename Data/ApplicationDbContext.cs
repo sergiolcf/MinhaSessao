@@ -14,4 +14,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Paciente> Pacientes => Set<Paciente>();
 
     public DbSet<AnotacaoConfidencial> AnotacoesConfidenciais => Set<AnotacaoConfidencial>();
+
+    public DbSet<VinculoPacienteProfissional> Vinculos => Set<VinculoPacienteProfissional>();
 }
