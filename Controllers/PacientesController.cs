@@ -16,11 +16,13 @@ public class PacientesController : Controller
 
     private readonly ApplicationDbContext _context;
     private readonly ILogger<PacientesController> _logger;
+    private readonly VinculoService _vinculoService;
 
-    public PacientesController(ApplicationDbContext context, ILogger<PacientesController> logger)
+    public PacientesController(ApplicationDbContext context, ILogger<PacientesController> logger, VinculoService vinculoService)
     {
         _context = context;
         _logger = logger;
+        _vinculoService = vinculoService;
     }
 
     public async Task<IActionResult> Index()
@@ -33,9 +35,8 @@ public class PacientesController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var pacientes = await _context.Pacientes
-            .Where(p => p.ProfissionalId == profissional.Id)
-            .OrderBy(p => p.NomeCompleto)
+        var pacientesAtivos = await _vinculoService.ObterPacientesAtivosAsync(profissional.Id);
+        var pacientes = pacientesAtivos
             .Select(p => new PacienteListItemViewModel
             {
                 Id = p.Id,
@@ -45,7 +46,7 @@ public class PacientesController : Controller
                 DataNascimento = p.DataNascimento,
                 Ativo = p.Ativo
             })
-            .ToListAsync();
+            .ToList();
 
         ViewBag.ProfissionalId = profissional.Id;
         ViewBag.ProfissionalNome = profissional.NomeCompleto;
@@ -70,8 +71,8 @@ public class PacientesController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var paciente = await _context.Pacientes
-            .FirstOrDefaultAsync(p => p.Id == id && p.ProfissionalId == profissionalId);
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(id, profissionalId);
+        var paciente = pacienteValido ? await _context.Pacientes.FirstOrDefaultAsync(p => p.Id == id) : null;
 
         if (paciente is null)
         {
@@ -125,8 +126,7 @@ public class PacientesController : Controller
     {
         var profissionalId = User.ObterProfissionalId();
 
-        var pacienteValido = await _context.Pacientes
-            .AnyAsync(p => p.Id == pacienteId && p.ProfissionalId == profissionalId);
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteId, profissionalId);
 
         if (!pacienteValido)
         {
@@ -174,8 +174,7 @@ public class PacientesController : Controller
             return Json(new { success = true, titulos = Array.Empty<string>() });
         }
 
-        var pacienteValido = await _context.Pacientes
-            .AnyAsync(p => p.Id == pacienteId && p.ProfissionalId == profissionalId);
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteId, profissionalId);
 
         if (!pacienteValido)
         {
@@ -215,8 +214,7 @@ public class PacientesController : Controller
         var profissionalId = User.ObterProfissionalId();
 
         // Garante que o paciente pertence ao profissional logado antes de gravar a anotação
-        var pacienteValido = await _context.Pacientes
-            .AnyAsync(p => p.Id == model.PacienteId && p.ProfissionalId == profissionalId);
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(model.PacienteId, profissionalId);
 
         if (!pacienteValido)
         {
@@ -360,7 +358,6 @@ public class PacientesController : Controller
             var paciente = new Paciente
             {
                 Id = Guid.NewGuid(),
-                ProfissionalId = User.ObterProfissionalId(),
                 NomeCompleto = model.NomeCompleto,
                 Telefone = model.Telefone,
                 Email = model.Email,
@@ -376,6 +373,7 @@ public class PacientesController : Controller
             paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, senhaTemporaria);
 
             _context.Pacientes.Add(paciente);
+            _vinculoService.CriarVinculo(paciente.Id, User.ObterProfissionalId());
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Paciente cadastrado com sucesso!", senhaTemporaria });
@@ -393,8 +391,8 @@ public class PacientesController : Controller
     {
         var profissionalId = User.ObterProfissionalId();
 
-        var paciente = await _context.Pacientes
-            .FirstOrDefaultAsync(p => p.Id == id && p.ProfissionalId == profissionalId);
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(id, profissionalId);
+        var paciente = pacienteValido ? await _context.Pacientes.FirstOrDefaultAsync(p => p.Id == id) : null;
 
         if (paciente is null)
         {

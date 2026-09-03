@@ -60,11 +60,18 @@ Esta seção descreve o estado atual do projeto por módulo/domínio (não por c
 - Estilos/scripts isolados em `wwwroot/css/dashboard.css` e `wwwroot/js/dashboard.js` (não compartilham `site.css`/`site.js` da landing page).
 
 ### Pacientes
-- `Controllers/PacientesController.cs`: `Index` (lista os pacientes do profissional logado), `Detalhes` (ficha do paciente), `Criar`, `GerarNovaSenha`.
-- Toda consulta/gravação revalida que o paciente pertence ao `ProfissionalId` do usuário logado.
+- `Controllers/PacientesController.cs`: `Index` (lista os pacientes vinculados ao profissional logado), `Detalhes` (ficha do paciente), `Criar`, `GerarNovaSenha`.
+- Toda consulta/gravação revalida a posse via `VinculoService` (ver seção "Vínculo Paciente-Profissional" abaixo) — **nunca** compara um `ProfissionalId` direto na entidade `Paciente` (ela não tem mais esse campo).
 - Acesso do paciente: ao cadastrar, `Criar` gera uma senha temporária aleatória (`AutenticacaoService.GerarSenhaTemporaria`), salva só o hash (`HashSenhaPaciente`) e retorna o texto puro **uma única vez** no JSON de sucesso. O front-end (`wwwroot/js/pacientes.js` + modal compartilhada `#modalSenhaTemporaria` em `_LayoutDashboard.cshtml`, via `window.exibirSenhaTemporaria`) exibe essa senha com um botão de copiar (`navigator.clipboard`) — ela nunca é armazenada em texto puro nem pode ser recuperada depois.
 - Se a senha for perdida, o profissional usa o botão "Gerar nova senha" na aba Dados Cadastrais da ficha (`wwwroot/js/pacientes-detalhes.js`, action `GerarNovaSenha`), que sobrescreve o hash antigo (invalidando-o) e mostra a nova senha do mesmo jeito. Não existe fluxo de "recuperar" a senha antiga — só resetar.
 - O paciente já consegue logar com essa senha em `/Account/Login` (ver seção "Autenticação" acima) e cai no seu próprio painel — ver "Painel do Paciente" abaixo.
+
+### Vínculo Paciente-Profissional
+- Relação N:N via `Models/Entities/VinculoPacienteProfissional.cs` (`PacienteId`, `ProfissionalId`, `Status` — enum `StatusVinculo.Ativo`/`Encerrado`, `DataInicio`, `DataFim`) — substituiu a antiga FK direta `Paciente.ProfissionalId` (removida), permitindo que um paciente tenha vários profissionais ao longo do tempo.
+- `Services/VinculoService.cs` (registrado no DI como scoped) centraliza toda a checagem de posse e criação de vínculo: `PacientePertenceAoProfissionalAsync(pacienteId, profissionalId)` (só considera vínculo com `Status = Ativo`), `ObterPacientesAtivosAsync(profissionalId)` (lista para o `Index`) e `CriarVinculo(pacienteId, profissionalId)` (usado por `PacientesController.Criar`; não chama `SaveChangesAsync` sozinho — quem chama inclui na mesma unidade de trabalho que grava o `Paciente`).
+- Nenhuma controller compara `ProfissionalId` direto na entidade `Paciente` — toda checagem de posse (Pacientes e Anotações Confidenciais) passa por `VinculoService`.
+- Migration `AddVinculoPacienteProfissional`: cria a tabela `Vinculos` **antes** de mexer em `Pacientes`, faz um `INSERT ... SELECT` migrando cada paciente existente para um vínculo `Ativo` (com a `DataCadastro` do paciente como `DataInicio`) e só depois remove a FK/coluna antiga — a ordem importa, senão os dados são perdidos antes de serem copiados.
+- Ainda não existe tela de gerenciar vínculos (ex.: encerrar vínculo com um paciente) — fica para um card futuro.
 
 ### Painel do Paciente
 - Autenticação e diferenciação de papel (Profissional vs Paciente) descritas na seção "Autenticação" acima.
