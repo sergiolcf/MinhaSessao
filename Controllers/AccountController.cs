@@ -25,7 +25,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", User.IsInRole(AutenticacaoService.PapelPaciente) ? "PainelPaciente" : "Dashboard");
         }
 
         return View(new LoginViewModel());
@@ -41,18 +41,29 @@ public class AccountController : Controller
         }
 
         var emailNormalizado = model.Email.Trim().ToLower();
+        var senhaInformada = model.Senha.Trim();
+
+        // O e-mail pode pertencer a um Profissional ou a um Paciente; identifica antes de autenticar
         var profissional = await _context.Profissionais
             .FirstOrDefaultAsync(p => p.Email.ToLower() == emailNormalizado);
 
-        if (profissional is null || !AutenticacaoService.VerificarSenha(profissional, model.Senha.Trim()))
+        if (profissional is not null && AutenticacaoService.VerificarSenha(profissional, senhaInformada))
         {
-            ModelState.AddModelError(string.Empty, "E-mail ou senha inválidos.");
-            return View(model);
+            await AutenticacaoService.AutenticarProfissionalAsync(HttpContext, profissional, model.LembrarMe);
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        await AutenticacaoService.AutenticarProfissionalAsync(HttpContext, profissional, model.LembrarMe);
+        var paciente = await _context.Pacientes
+            .FirstOrDefaultAsync(p => p.Email.ToLower() == emailNormalizado);
 
-        return RedirectToAction("Index", "Dashboard");
+        if (paciente is not null && AutenticacaoService.VerificarSenhaPaciente(paciente, senhaInformada))
+        {
+            await AutenticacaoService.AutenticarPacienteAsync(HttpContext, paciente, model.LembrarMe);
+            return RedirectToAction("Index", "PainelPaciente");
+        }
+
+        ModelState.AddModelError(string.Empty, "E-mail ou senha inválidos.");
+        return View(model);
     }
 
     // Ação rápida de desenvolvimento: loga automaticamente com o primeiro profissional cadastrado

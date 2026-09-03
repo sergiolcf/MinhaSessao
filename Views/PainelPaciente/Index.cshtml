@@ -1,0 +1,33 @@
+@model MinhaSessao.Models.ViewModels.PainelPacienteViewModel
+@{
+    ViewData["Title"] = "Início";
+    Layout = "_LayoutDashboardPaciente";
+}
+
+<div class="ms-dash-welcome">
+    <h1 class="ms-dash-welcome-title">Bem-vindo(a), @Model.NomeCompleto</h1>
+    <p class="ms-dash-welcome-subtitle">Acompanhe suas sessões e informações por aqui.</p>
+</div>
+
+<div class="ms-dash-cards">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-event"></i>
+        <h5>Próxima Sessão</h5>
+        <p>Em breve você poderá acompanhar sua próxima sessão por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-journal-medical"></i>
+        <h5>Minhas Sessões</h5>
+        <p>Em breve você poderá acompanhar o histórico das suas sessões por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-people"></i>
+        <h5>Meu(s) Psicólogo(s)</h5>
+        <p>Em breve você poderá visualizar os profissionais que te acompanham por aqui.</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-gear"></i>
+        <h5>Configurações</h5>
+        <p>Em breve você poderá ajustar as configurações da sua conta.</p>
+    </div>
+</div>

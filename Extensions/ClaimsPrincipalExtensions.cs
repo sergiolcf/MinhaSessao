@@ -9,4 +9,10 @@ public static class ClaimsPrincipalExtensions
     {
         return Guid.Parse(usuario.FindFirstValue(ClaimTypes.NameIdentifier)!);
     }
+
+    // Lê o PacienteId do paciente autenticado a partir do Cookie/Claims
+    public static Guid ObterPacienteId(this ClaimsPrincipal usuario)
+    {
+        return Guid.Parse(usuario.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    }
 }
