@@ -55,6 +55,8 @@
             var isInicioAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
             var isPacientesAtivo = string.Equals(controladorAtual, "Pacientes", StringComparison.OrdinalIgnoreCase);
+            var isConfiguracoesAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "Configuracoes", StringComparison.OrdinalIgnoreCase);
         }
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
@@ -85,7 +87,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="Dashboard" asp-action="Configuracoes"
+                       class="ms-dash-menu-link@(isConfiguracoesAtivo ? " active" : "")">
                         <i class="bi bi-gear"></i>
                         <span class="menu-text">Configurações</span>
                     </a>

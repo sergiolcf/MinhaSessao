@@ -61,8 +61,21 @@ Esta seção descreve o estado atual do projeto por módulo/domínio (não por c
 ### Dashboard
 - `Views/Shared/_LayoutDashboard.cshtml`: layout do painel interno, navbar/sidebar em grafite (`#2B2D42`) com destaques em laranja (`#FF6B35`), Bootstrap Icons via CDN.
 - Sidebar retrátil (botão hambúrguer alterna `.sidebar-collapsed`), estado persistido em `localStorage` (`wwwroot/js/dashboard.js`); item ativo do menu calculado dinamicamente pela rota atual (`ViewContext.RouteData`), nunca fixo no HTML.
-- Itens "Minha Agenda", "Minhas Sessões" e "Configurações" ainda são placeholders (`href="#"`) — sem controller/action própria até o momento.
+- Itens "Minha Agenda" e "Minhas Sessões" ainda são placeholders (`href="#"`) — sem controller/action própria até o momento. "Configurações" já é real (ver seção "Configurações (Profissional)" abaixo).
 - Estilos/scripts isolados em `wwwroot/css/dashboard.css` e `wwwroot/js/dashboard.js` (não compartilham `site.css`/`site.js` da landing page).
+
+### Configurações (Profissional)
+- Tela única em `Views/Dashboard/Configuracoes.cshtml` (layout `_LayoutDashboard`), com abas Bootstrap ("Perfil Profissional" / "Preferências da Clínica" / "Segurança"), mesmo padrão visual/AJAX da tela `Configuracoes` do Paciente (Fetch API por form, feedback em Bootstrap Toast, sem reload de página).
+- Aba "Perfil Profissional": Nome/CRP/Telefone/Abordagem/Biografia começam `readonly`, com botão "Editar Perfil" que libera esses campos e troca pelos botões "Salvar Alterações"/"Cancelar" (`wwwroot/js/dashboard-configuracoes.js`, mesmo padrão de `wwwroot/js/painel-configuracoes.js`); "Cancelar" restaura os valores originais e volta pro modo leitura, e um salvamento bem-sucedido também volta pro modo leitura. O campo E-mail é **sempre** `readonly` (nunca entra em modo edição, mas continua sendo enviado no POST — só `readonly`, não `disabled`, porque um campo `disabled` não é incluído no `FormData` e quebraria a validação `[Required]` do e-mail no servidor) e mostra abaixo um texto explicando que ele é o login de acesso.
+- `Models/Entities/Profissional.cs` ganhou `AbordagemEspecialidades` (string?, até 200 caracteres — distinto de `Apresentacao`, que continua sendo a biografia livre) e as preferências da clínica `DuracaoPadraoSessaoMinutos` (int, default 50) e `ValorPadraoConsulta` (decimal) — migration `AdicionaConfiguracoesProfissional`. Registros criados antes dessa migration ficaram com `DuracaoPadraoSessaoMinutos = 0`; `DashboardController.Configuracoes` corrige isso na leitura (exibe 50 se o valor salvo for 0), sem precisar tocar no banco.
+- `Models/ViewModels/ConfiguracoesProfissionalViewModel.cs` (dados pra renderizar a tela), `AtualizarPerfilProfissionalViewModel.cs`, `AtualizarPreferenciasProfissionalViewModel.cs` e `AlterarSenhaProfissionalViewModel.cs` — um ViewModel por form, cada um postado direto como parâmetro (mesmo padrão do Cadastro/Configurações do Paciente).
+- `DashboardController` (`[Authorize(Roles = AutenticacaoService.PapelProfissional)]`, já aplicado à classe):
+  - `Configuracoes()` (GET) — carrega o próprio Profissional logado via `User.ObterProfissionalId()`.
+  - `AtualizarPerfil(AtualizarPerfilProfissionalViewModel)` (POST, JSON) — atualiza Nome/E-mail/Telefone/CRP/Abordagem/Apresentação; revalida duplicidade de e-mail contra outros Profissionais antes de salvar.
+  - `AtualizarPreferencias(AtualizarPreferenciasProfissionalViewModel)` (POST, JSON) — atualiza Duração Padrão da Sessão e Valor Padrão da Consulta (ainda não consumidos por nenhuma tela de agendamento — ficam para um card futuro).
+  - `AlterarSenha(AlterarSenhaProfissionalViewModel)` (POST, JSON) — exige a senha atual e confere com `AutenticacaoService.VerificarSenha` antes de trocar o hash com `HashSenha`.
+  - Todas usam `User.ObterProfissionalId()` (nunca um Id do corpo da requisição) e têm `[ValidateAntiForgeryToken]`.
+- `wwwroot/js/dashboard-configuracoes.js` — um listener de `submit` por form (3 forms independentes), reaproveitando a mesma função `exibirToast` duplicada do padrão usado em `painel-configuracoes.js` (cada painel carrega seu próprio JS, sem script compartilhado entre Profissional e Paciente).
 
 ### Pacientes
 - `Controllers/PacientesController.cs`: `Index` (lista os pacientes vinculados ao profissional logado), `Detalhes` (ficha do paciente), `VerificarPacienteExistente`, `Vincular`, `Criar`, `GerarNovaSenha`.

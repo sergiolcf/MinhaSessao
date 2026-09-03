@@ -25,5 +25,13 @@ public class Profissional
     [StringLength(500, ErrorMessage = "A apresentação deve ter no máximo 500 caracteres.")]
     public string? Apresentacao { get; set; }
 
+    [StringLength(200, ErrorMessage = "A abordagem/especialidades deve ter no máximo 200 caracteres.")]
+    public string? AbordagemEspecialidades { get; set; }
+
     public string? FotoUrl { get; set; }
+
+    // Preferências da clínica, usadas como padrão ao agendar novas sessões
+    public int DuracaoPadraoSessaoMinutos { get; set; } = 50;
+
+    public decimal ValorPadraoConsulta { get; set; }
 }

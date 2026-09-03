@@ -1,0 +1,154 @@
+@model MinhaSessao.Models.ViewModels.ConfiguracoesProfissionalViewModel
+@{
+    ViewData["Title"] = "Configurações";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Configurações</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Gerencie seu perfil, as preferências da clínica e a segurança da sua conta.</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs ms-dash-tabs" id="configuracoesTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="perfil-tab" data-bs-toggle="tab" data-bs-target="#perfil" type="button" role="tab" aria-controls="perfil" aria-selected="true">
+            <i class="bi bi-person-vcard"></i> Perfil Profissional
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="preferencias-tab" data-bs-toggle="tab" data-bs-target="#preferencias" type="button" role="tab" aria-controls="preferencias" aria-selected="false">
+            <i class="bi bi-sliders"></i> Preferências da Clínica
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="seguranca-tab" data-bs-toggle="tab" data-bs-target="#seguranca" type="button" role="tab" aria-controls="seguranca" aria-selected="false">
+            <i class="bi bi-shield-lock"></i> Segurança
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="configuracoesTabsContent">
+    <div class="tab-pane fade show active" id="perfil" role="tabpanel" aria-labelledby="perfil-tab">
+        <div class="ms-dash-card" style="max-width: 720px;">
+            <form id="formPerfilProfissional">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label for="perfilNomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
+                        <input type="text" id="perfilNomeCompleto" name="NomeCompleto" class="form-control" value="@Model.NomeCompleto" readonly required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="perfilRegistroCRP" class="form-label">CRP<span class="ms-required">*</span></label>
+                        <input type="text" id="perfilRegistroCRP" name="RegistroCRP" class="form-control" value="@Model.RegistroCRP" readonly required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="perfilEmail" class="form-label">E-mail<span class="ms-required">*</span></label>
+                        <input type="email" id="perfilEmail" name="Email" class="form-control" value="@Model.Email" readonly required>
+                        <div class="form-text">O e-mail é o seu login de acesso e não pode ser alterado por aqui.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="perfilTelefone" class="form-label">Telefone<span class="ms-required">*</span></label>
+                        <input type="tel" id="perfilTelefone" name="Telefone" class="form-control" value="@Model.Telefone" readonly required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="perfilAbordagem" class="form-label">Abordagem / Especialidades</label>
+                    <input type="text" id="perfilAbordagem" name="AbordagemEspecialidades" class="form-control" value="@Model.AbordagemEspecialidades" readonly maxlength="200">
+                </div>
+                <div class="mb-3">
+                    <label for="perfilApresentacao" class="form-label">Biografia / Apresentação</label>
+                    <textarea id="perfilApresentacao" name="Apresentacao" class="form-control" rows="4" readonly maxlength="500">@Model.Apresentacao</textarea>
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-secondary" id="btnEditarPerfil">
+                        <i class="bi bi-pencil"></i> Editar Perfil
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary d-none" id="btnCancelarPerfil">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-ms-orange d-none" id="btnSalvarPerfil">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarPerfilSpinner"></span>
+                        <span id="btnSalvarPerfilTexto">Salvar Alterações</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="preferencias" role="tabpanel" aria-labelledby="preferencias-tab">
+        <div class="ms-dash-card" style="max-width: 640px;">
+            <form id="formPreferenciasProfissional">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="preferenciasDuracao" class="form-label">Duração Padrão da Sessão<span class="ms-required">*</span></label>
+                        <select id="preferenciasDuracao" name="DuracaoPadraoSessaoMinutos" class="form-select" required>
+                            @{
+                                var duracoesDisponiveis = new[] { 30, 45, 50, 60, 90 };
+                            }
+                            @foreach (var duracao in duracoesDisponiveis)
+                            {
+                                <option value="@duracao" selected="@(Model.DuracaoPadraoSessaoMinutos == duracao)">@duracao minutos</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="preferenciasValor" class="form-label">Valor Padrão da Consulta (R$)<span class="ms-required">*</span></label>
+                        <input type="number" id="preferenciasValor" name="ValorPadraoConsulta" class="form-control" value="@Model.ValorPadraoConsulta.ToString(System.Globalization.CultureInfo.InvariantCulture)" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-ms-orange" id="btnSalvarPreferencias">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarPreferenciasSpinner"></span>
+                        <span id="btnSalvarPreferenciasTexto">Salvar Alterações</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="seguranca" role="tabpanel" aria-labelledby="seguranca-tab">
+        <div class="ms-dash-card" style="max-width: 640px;">
+            <form id="formSenhaProfissional">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label for="senhaAtualProfissional" class="form-label">Senha Atual<span class="ms-required">*</span></label>
+                    <input type="password" id="senhaAtualProfissional" name="SenhaAtual" class="form-control" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="novaSenhaProfissional" class="form-label">Nova Senha<span class="ms-required">*</span></label>
+                        <input type="password" id="novaSenhaProfissional" name="NovaSenha" class="form-control" placeholder="Mínimo de 6 caracteres" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="confirmarNovaSenhaProfissional" class="form-label">Confirmar Nova Senha<span class="ms-required">*</span></label>
+                        <input type="password" id="confirmarNovaSenhaProfissional" name="ConfirmarNovaSenha" class="form-control" required>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-ms-orange" id="btnAlterarSenhaProfissional">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnAlterarSenhaProfissionalSpinner"></span>
+                        <span id="btnAlterarSenhaProfissionalTexto">Alterar Senha</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="toastConfiguracoesProfissional" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastConfiguracoesProfissionalMensagem"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/dashboard-configuracoes.js" asp-append-version="true"></script>
+}
