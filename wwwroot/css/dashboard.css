@@ -423,6 +423,25 @@ body.ms-dashboard-body {
   color: var(--ms-text);
 }
 
+/* Caixa de exibição da senha temporária (cadastro de paciente / gerar nova senha) */
+.ms-senha-temp-box {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ms-senha-temp-box .form-control {
+  font-family: "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background-color: var(--ms-bg);
+}
+
+.ms-senha-temp-copiado {
+  color: #198754;
+  font-size: 0.85rem;
+  margin: 0.6rem 0 0;
+}
+
 /* Avatar circular com iniciais (tabela e ficha do paciente) */
 .ms-avatar-iniciais {
   display: inline-flex;

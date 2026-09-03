@@ -18,33 +18,55 @@ Tech Stack: .NET 8 MVC, Entity Framework Core, SQLite, Bootstrap 5.
 
 ## Regras de Código
 - Sempre mantenha os botões de confirmação/ação no canto inferior DIREITO dos modais.
-- Um único formulário/modal de login para ambos os perfis (identificação via DB).
+- Um único formulário de login para ambos os perfis (identificação via DB) — hoje é a página `/Account/Login`, não mais um modal.
 - Código e comentários em Português (PT-BR).
 - Sempre validar alterações compilando a solução antes de finalizar tarefas.
+- Toda action que lê/grava dados vinculados a um Profissional (Pacientes, Anotações, etc.) deve usar `[Authorize]` e obter o Id do profissional logado via `User.ObterProfissionalId()` — nunca confiar em um Id vindo de querystring, rota ou corpo da requisição para autorização.
+- Operações de CRUD dentro do Dashboard (criar/editar/excluir/paginar/buscar) devem ser feitas via Fetch API (AJAX), sem recarregar a página inteira.
 
 ## Segurança & Dependências
 - NUNCA instale pacotes NuGet, bibliotecas externas ou serviços de terceiros sem solicitar autorização prévia ao usuário.
 - O projeto DEVE utilizar exclusivamente tecnologias e bibliotecas 100% gratuitas e open-source (sem custos de licença ou planos pagos).
 
-## CARD-03: Cadastro de Profissional e Dashboard (Implementado)
-- Namespace raiz do projeto é `MinhaSessao` (não `SLCF_MinhaSessao` — este é só o nome do arquivo `.sln`). Toda a estrutura de Models usa `MinhaSessao.Models.*`.
-- Models divididos por responsabilidade:
-  - `Models/Entities/Profissional.cs` — entidade mapeada pelo EF Core (`Id` como `Guid`, gerado via `Guid.NewGuid()`, `FotoUrl` string).
-  - `Models/ViewModels/ProfissionalViewModel.cs` — model do formulário (`Id` também `Guid`, campo `Foto` como `IFormFile` para upload, não persistido diretamente).
-- Persistência via EF Core + SQLite: `Data/ApplicationDbContext.cs` (`DbSet<Profissional> Profissionais`), connection string em `appsettings.json` (`ConnectionStrings:DefaultConnection`), migration `CriarTabelaProfissional` já aplicada ao banco local (`minhasessao.db`, gitignored).
-- `Controllers/ProfissionalController.cs`: action `[HttpPost] Criar(ProfissionalViewModel model)`, protegida com `[ValidateAntiForgeryToken]`, injeta `ApplicationDbContext` e `IWebHostEnvironment`. Faz upload da foto (se enviada) para `wwwroot/uploads/profissionais/` com nome único (Guid + extensão), cria a pasta dinamicamente se não existir, salva a entidade em `try/catch` e sempre retorna JSON (`success`, `message`, `errors` quando inválido).
-- View (`Views/Home/_CadastroProfissionalModal.cshtml`) usa Tag Helpers (`asp-for`, `asp-validation-for`) ligados à `ProfissionalViewModel`.
-- Feedback visual via JavaScript nativo (Fetch API, sem jQuery/AJAX de terceiros):
-  - Botão "Criar Conta" desabilita e mostra spinner Bootstrap durante o envio.
-  - Sucesso: fecha a modal do formulário e abre `#modalSucessoCadastro` (ícone de check verde `#198754`, "Cadastrado com Sucesso!").
-  - Erro: mantém a modal do formulário aberta com os dados preenchidos, exibe alerta vermelho (`#DC3545`, ícone de X) com a mensagem específica vinda da Controller/ModelState, reabilita o botão.
-- Pacotes NuGet instalados (autorização já concedida pelo usuário): `Microsoft.EntityFrameworkCore.Sqlite` e `Microsoft.EntityFrameworkCore.Design`, fixados em `8.0.10` (compatibilidade com `net8.0`).
-- Pós-cadastro, `ProfissionalController.Criar` retorna `redirectUrl` (`/Dashboard?profissionalId={id}`) no JSON de sucesso; o botão "Continuar" do modal de sucesso (`wwwroot/js/site.js`) redireciona o navegador para essa URL.
+## Arquitetura Implementada
+Esta seção descreve o estado atual do projeto por módulo/domínio (não por card). Ao implementar um novo card que altera um módulo existente, atualize a seção correspondente em vez de adicionar uma seção nova.
 
-### Login Simulado / Dashboard do Profissional
-- `Controllers/DashboardController.cs`: action `Index(Guid? profissionalId)` busca o profissional pelo id informado ou, se omitido, o primeiro cadastrado no banco (facilita o desenvolvimento sem autenticação real ainda). Se nenhum profissional existir, redireciona para `Home/Index`. Expõe `ProfissionalId`, `ProfissionalNome`, `ProfissionalFotoUrl` e `ProfissionalCRP` via `ViewBag` (consumidos pelo layout) e retorna `Models/ViewModels/DashboardViewModel.cs` como model da view.
-- `Views/Shared/_LayoutDashboard.cshtml`: layout próprio do painel interno (não usa o `_Layout.cshtml` da landing page pública), com navbar e sidebar na cor grafite (`#2B2D42`) e destaques em laranja (`#FF6B35`). Bootstrap Icons via CDN (`cdn.jsdelivr.net/npm/bootstrap-icons`). Avatar do profissional em `rounded-circle` 40x40 com fallback de ícone neutro (`bi-person-fill`) quando `FotoUrl` é nulo/vazio.
-- Sidebar retrátil: botão hambúrguer alterna a classe `.sidebar-collapsed` no `#dashSidebar` (largura 250px → 70px, `transition: all 0.3s ease`, oculta `.menu-text` e centraliza os ícones); estado persistido em `localStorage` (`wwwroot/js/dashboard.js`, chave `msSidebarCollapsed`). Sem preferência salva, a sidebar inicia recolhida em telas ≤768px e expandida em telas maiores.
-- Estado ativo (`.active`) do menu é calculado dinamicamente por rota (`ViewContext.RouteData` — controller/action atuais), nunca fixo no HTML. O item "Início" (topo da sidebar, ícone `bi-grid-1x2`) aponta para `Dashboard/Index`; todos os links reais da sidebar e a logo do navbar usam Tag Helpers (`asp-route-profissionalId`) para preservar o profissional "logado" (sessão simulada, sem autenticação real) durante a navegação.
-- Demais itens da sidebar (Minha Agenda, Meus Pacientes, Minhas Sessões, Configurações) ainda são placeholders (`href="#"`) — controllers/actions reais serão implementados em cards futuros, seguindo o mesmo padrão de link com `asp-route-profissionalId`.
-- Estilos em `wwwroot/css/dashboard.css` e script em `wwwroot/js/dashboard.js`, isolados do `site.css`/`site.js` da landing page pública.
+### Estrutura de Models e Projeto
+- Namespace raiz do projeto é `MinhaSessao` (não `SLCF_MinhaSessao` — este é só o nome do arquivo `.sln`).
+- `Models/Entities/*` — entidades mapeadas pelo EF Core (`Id` como `Guid`, gerado via `Guid.NewGuid()`).
+- `Models/ViewModels/*` — models de formulário/exibição, um por finalidade (criação, edição, listagem, detalhes).
+- `Services/*` — lógica de domínio reutilizável (ex.: `AutenticacaoService`).
+- `Extensions/*` — extension methods auxiliares (ex.: `ClaimsPrincipalExtensions`).
+- Persistência via EF Core + SQLite: `Data/ApplicationDbContext.cs`, connection string em `appsettings.json` (`ConnectionStrings:DefaultConnection`), banco local `minhasessao.db` (gitignored).
+
+### Autenticação (Cookie + Senha)
+- Autenticação real por Cookie (`Program.cs`: `AddAuthentication().AddCookie()`, `LoginPath = /Account/Login`, expira em 7 dias com sliding expiration).
+- Senha nunca é armazenada em texto puro: hash via `PasswordHasher<Profissional>` (`Microsoft.AspNetCore.Identity`, já incluso no SDK `Microsoft.NET.Sdk.Web`, sem pacote NuGet adicional).
+- `Services/AutenticacaoService.cs` centraliza `HashSenha`, `VerificarSenha` e `AutenticarProfissionalAsync` (monta os Claims e chama `SignInAsync`).
+- `Extensions/ClaimsPrincipalExtensions.ObterProfissionalId()` extrai o Id do profissional logado a partir dos Claims — é assim que toda controller descobre "quem está logado".
+- `Controllers/AccountController.cs`: `Login` (GET/POST, normaliza e-mail com `.Trim().ToLower()`), `LoginSimuladoTeste` (atalho de desenvolvimento, loga automaticamente o primeiro profissional do banco), `Logout`.
+- Views: `Views/Account/Login.cshtml` com `Views/Shared/_LayoutAuth.cshtml` (layout minimalista, não usa o `_Layout.cshtml` público nem o `_LayoutDashboard.cshtml`).
+
+### Cadastro de Profissional
+- `Views/Home/_CadastroProfissionalModal.cshtml` — modal na landing page pública, Tag Helpers (`asp-for`, `asp-validation-for`) ligados à `ProfissionalViewModel` (inclui `Senha`/`ConfirmarSenha`).
+- `Controllers/ProfissionalController.cs` (`[HttpPost] Criar`, protegida com `[ValidateAntiForgeryToken]`): faz upload da foto opcional para `wwwroot/uploads/profissionais/` (nome único via Guid), salva o profissional com e-mail normalizado e senha já hasheada, sempre retorna JSON (`success`, `message`, `errors`).
+- Após cadastro bem-sucedido, autentica automaticamente (Cookie) e retorna `redirectUrl` para o Dashboard; feedback visual (spinner, modal de sucesso/erro) via `wwwroot/js/site.js`, sem jQuery/AJAX de terceiros.
+
+### Dashboard
+- `Views/Shared/_LayoutDashboard.cshtml`: layout do painel interno, navbar/sidebar em grafite (`#2B2D42`) com destaques em laranja (`#FF6B35`), Bootstrap Icons via CDN.
+- Sidebar retrátil (botão hambúrguer alterna `.sidebar-collapsed`), estado persistido em `localStorage` (`wwwroot/js/dashboard.js`); item ativo do menu calculado dinamicamente pela rota atual (`ViewContext.RouteData`), nunca fixo no HTML.
+- Itens "Minha Agenda", "Minhas Sessões" e "Configurações" ainda são placeholders (`href="#"`) — sem controller/action própria até o momento.
+- Estilos/scripts isolados em `wwwroot/css/dashboard.css` e `wwwroot/js/dashboard.js` (não compartilham `site.css`/`site.js` da landing page).
+
+### Pacientes
+- `Controllers/PacientesController.cs`: `Index` (lista os pacientes do profissional logado), `Detalhes` (ficha do paciente), `Criar`, `GerarNovaSenha`.
+- Toda consulta/gravação revalida que o paciente pertence ao `ProfissionalId` do usuário logado.
+- Acesso do paciente: ao cadastrar, `Criar` gera uma senha temporária aleatória (`AutenticacaoService.GerarSenhaTemporaria`), salva só o hash (`HashSenhaPaciente`) e retorna o texto puro **uma única vez** no JSON de sucesso. O front-end (`wwwroot/js/pacientes.js` + modal compartilhada `#modalSenhaTemporaria` em `_LayoutDashboard.cshtml`, via `window.exibirSenhaTemporaria`) exibe essa senha com um botão de copiar (`navigator.clipboard`) — ela nunca é armazenada em texto puro nem pode ser recuperada depois.
+- Se a senha for perdida, o profissional usa o botão "Gerar nova senha" na aba Dados Cadastrais da ficha (`wwwroot/js/pacientes-detalhes.js`, action `GerarNovaSenha`), que sobrescreve o hash antigo (invalidando-o) e mostra a nova senha do mesmo jeito. Não existe fluxo de "recuperar" a senha antiga — só resetar.
+- Login do próprio paciente com essa senha ainda não foi implementado (fora de escopo até agora); por enquanto a senha existe só para ser repassada manualmente ao paciente.
+
+### Anotações Confidenciais (dentro da Ficha do Paciente)
+- Entidade `Models/Entities/AnotacaoConfidencial.cs`, vinculada a `Paciente` e `Profissional`.
+- CRUD completo via AJAX, sem reload de página: `SalvarAnotacao`, `AtualizarAnotacao`, `ExcluirAnotacao`, `BuscarAnotacoes` (paginação de 10 por página + busca por título + ordenação por data), `SugerirTitulosAnotacao` (autocomplete, sempre as 3 mais recentes que dão match).
+- Timeline visual com scroll interno (`.ms-timeline-scroll`, ~4 itens visíveis por vez) e paginação Bootstrap abaixo.
+- Toda action verifica que a anotação/paciente pertence ao profissional logado antes de ler ou gravar.

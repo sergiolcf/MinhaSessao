@@ -5,6 +5,7 @@ using MinhaSessao.Data;
 using MinhaSessao.Extensions;
 using MinhaSessao.Models.Entities;
 using MinhaSessao.Models.ViewModels;
+using MinhaSessao.Services;
 
 namespace MinhaSessao.Controllers;
 
@@ -370,15 +371,50 @@ public class PacientesController : Controller
                 Profissao = model.Profissao
             };
 
+            // Gera a senha temporária de acesso do paciente; só existe em texto puro nesta resposta
+            var senhaTemporaria = AutenticacaoService.GerarSenhaTemporaria();
+            paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, senhaTemporaria);
+
             _context.Pacientes.Add(paciente);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Paciente cadastrado com sucesso!" });
+            return Json(new { success = true, message = "Paciente cadastrado com sucesso!", senhaTemporaria });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao cadastrar paciente.");
             return Json(new { success = false, message = "Ocorreu um erro ao salvar o cadastro. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GerarNovaSenha(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var paciente = await _context.Pacientes
+            .FirstOrDefaultAsync(p => p.Id == id && p.ProfissionalId == profissionalId);
+
+        if (paciente is null)
+        {
+            return Json(new { success = false, message = "Paciente não encontrado." });
+        }
+
+        try
+        {
+            // A senha antiga é sobrescrita e fica definitivamente inutilizável
+            var senhaTemporaria = AutenticacaoService.GerarSenhaTemporaria();
+            paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, senhaTemporaria);
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, senhaTemporaria });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao gerar nova senha do paciente.");
+            return Json(new { success = false, message = "Ocorreu um erro ao gerar a nova senha. Tente novamente." });
         }
     }
 }

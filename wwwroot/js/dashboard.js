@@ -21,3 +21,44 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem(STORAGE_KEY, String(novoEstado));
     });
 });
+
+// Modal de Senha Temporária: usado tanto no cadastro de paciente quanto na regeneração de senha (Ficha do Paciente)
+document.addEventListener("DOMContentLoaded", function () {
+    const modalEl = document.getElementById("modalSenhaTemporaria");
+    if (!modalEl) return;
+
+    const inputSenha = document.getElementById("senhaTemporariaValor");
+    const btnCopiar = document.getElementById("btnCopiarSenhaTemporaria");
+    const mensagemCopiado = document.getElementById("senhaTemporariaCopiadoMsg");
+    let callbackAoFechar = null;
+
+    window.exibirSenhaTemporaria = function (senha, aoFechar) {
+        callbackAoFechar = typeof aoFechar === "function" ? aoFechar : null;
+        if (inputSenha) inputSenha.value = senha;
+        if (mensagemCopiado) mensagemCopiado.classList.add("d-none");
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
+
+    if (btnCopiar) {
+        btnCopiar.addEventListener("click", async function () {
+            if (!inputSenha) return;
+            try {
+                await navigator.clipboard.writeText(inputSenha.value);
+            } catch {
+                inputSenha.select();
+                document.execCommand("copy");
+            }
+            if (mensagemCopiado) mensagemCopiado.classList.remove("d-none");
+        });
+    }
+
+    modalEl.addEventListener("hidden.bs.modal", function () {
+        if (inputSenha) inputSenha.value = "";
+        if (mensagemCopiado) mensagemCopiado.classList.add("d-none");
+        if (callbackAoFechar) {
+            const callback = callbackAoFechar;
+            callbackAoFechar = null;
+            callback();
+        }
+    });
+});
