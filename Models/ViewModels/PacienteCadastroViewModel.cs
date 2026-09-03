@@ -18,7 +18,8 @@ public class PacienteCadastroViewModel
     [DataType(DataType.Date)]
     public DateTime DataNascimento { get; set; }
 
-    public string? Cpf { get; set; }
+    [Required(ErrorMessage = "Informe o CPF.")]
+    public string Cpf { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "A senha é obrigatória.")]
     [MinLength(6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres")]

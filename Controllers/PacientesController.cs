@@ -25,6 +25,20 @@ public class PacientesController : Controller
         _vinculoService = vinculoService;
     }
 
+    // Busca um Paciente pelo CPF normalizado (só dígitos) — o CPF é o identificador usado para evitar duplicidade
+    private async Task<Paciente?> BuscarPacientePorCpfAsync(string cpf)
+    {
+        var cpfNormalizado = CpfUtil.Normalizar(cpf);
+
+        if (string.IsNullOrEmpty(cpfNormalizado))
+        {
+            return null;
+        }
+
+        return await _context.Pacientes
+            .FirstOrDefaultAsync(p => p.Cpf == cpfNormalizado);
+    }
+
     public async Task<IActionResult> Index()
     {
         var profissionalId = User.ObterProfissionalId();
@@ -336,6 +350,59 @@ public class PacientesController : Controller
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> VerificarPacienteExistente(string cpf)
+    {
+        var paciente = await BuscarPacientePorCpfAsync(cpf);
+
+        if (paciente is null)
+        {
+            return Json(new { existe = false });
+        }
+
+        return Json(new
+        {
+            existe = true,
+            pacienteId = paciente.Id,
+            nomeCompleto = paciente.NomeCompleto,
+            iniciais = PacienteIniciais.Calcular(paciente.NomeCompleto)
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Vincular(Guid pacienteId)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.Id == pacienteId);
+
+        if (paciente is null)
+        {
+            return Json(new { success = false, message = "Paciente não encontrado." });
+        }
+
+        var jaVinculado = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteId, profissionalId);
+
+        if (jaVinculado)
+        {
+            return Json(new { success = false, message = "Este paciente já está na sua lista." });
+        }
+
+        try
+        {
+            _vinculoService.CriarVinculo(pacienteId, profissionalId);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Paciente vinculado com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao vincular paciente existente.");
+            return Json(new { success = false, message = "Ocorreu um erro ao vincular o paciente. Tente novamente." });
+        }
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(PacienteViewModel model)
@@ -356,27 +423,15 @@ public class PacientesController : Controller
         try
         {
             var profissionalId = User.ObterProfissionalId();
-            var emailNormalizado = model.Email.Trim().ToLower();
 
-            // Evita duplicar Paciente: o e-mail é o identificador de login, então um paciente com
-            // esse e-mail já cadastrado (por este profissional ou por outro) não deve virar um novo registro
-            var pacienteExistente = await _context.Pacientes
-                .FirstOrDefaultAsync(p => p.Email.ToLower() == emailNormalizado);
+            // A tela já verificou o CPF antes de chegar aqui (VerificarPacienteExistente); esta é só uma
+            // rede de segurança contra condição de corrida. Não deveria ocorrer no fluxo normal — se ocorrer,
+            // não cadastra e pede pra verificar de novo (o profissional deve reabrir o modal e checar o CPF).
+            var pacienteExistente = await BuscarPacientePorCpfAsync(model.Cpf);
 
             if (pacienteExistente is not null)
             {
-                var jaVinculado = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteExistente.Id, profissionalId);
-
-                if (jaVinculado)
-                {
-                    return Json(new { success = false, message = "Este paciente já está na sua lista." });
-                }
-
-                // Paciente já existe: não sobrescreve os dados dele (já são dele) nem gera senha nova, só cria o vínculo
-                _vinculoService.CriarVinculo(pacienteExistente.Id, profissionalId);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Paciente vinculado com sucesso!", vinculoExistente = true });
+                return Json(new { success = false, message = "Já existe um paciente cadastrado com esse CPF. Feche e reabra o cadastro para verificar novamente." });
             }
 
             var paciente = new Paciente
@@ -386,7 +441,7 @@ public class PacientesController : Controller
                 Telefone = model.Telefone,
                 Email = model.Email,
                 DataNascimento = model.DataNascimento,
-                Cpf = model.Cpf,
+                Cpf = CpfUtil.Normalizar(model.Cpf),
                 Sexo = model.Sexo,
                 ContatoEmergencia = model.ContatoEmergencia,
                 Profissao = model.Profissao

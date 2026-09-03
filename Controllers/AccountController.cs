@@ -171,7 +171,7 @@ public class AccountController : Controller
                 Telefone = model.Telefone,
                 Email = emailNormalizado,
                 DataNascimento = model.DataNascimento,
-                Cpf = model.Cpf
+                Cpf = CpfUtil.Normalizar(model.Cpf)
             };
 
             paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, model.Senha.Trim());
