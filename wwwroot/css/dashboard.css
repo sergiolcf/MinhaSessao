@@ -219,6 +219,31 @@ body.ms-dashboard-body {
   flex: 1;
   padding: 2rem;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-copyright-footer {
+  margin-top: auto;
+  border-top: 1px solid #e2e8f0;
+  padding: 15px 0;
+}
+
+.ms-copyright-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 8.5pt;
+  color: #718096;
+}
+
+@media (max-width: 576px) {
+  .ms-copyright-footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
 /* Conteúdo padrão do dashboard */
@@ -324,39 +349,14 @@ body.ms-dashboard-body {
   margin: 0;
 }
 
-/* Diretório de Profissionais (Painel do Paciente) */
+/* Busca da aba "Todos os Profissionais" (Painel do Paciente) */
 .ms-diretorio-busca .input-group-text {
   border-right: 0;
 }
 
-.ms-diretorio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
-}
-
-.ms-diretorio-card {
-  text-align: center;
-}
-
-.ms-diretorio-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 0.75rem;
-}
-
-.ms-diretorio-apresentacao {
-  color: #6C757D;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 1rem;
-}
-
-.ms-diretorio-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
+/* Linhas clicáveis nas tabelas de Profissionais (Painel do Paciente) */
+.ms-dash-table tbody tr[data-profissional-id] {
+  cursor: pointer;
 }
 
 /* Tabela de pacientes */

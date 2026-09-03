@@ -1,0 +1,204 @@
+@model MinhaSessao.Models.ViewModels.PainelProfissionaisViewModel
+@{
+    ViewData["Title"] = "Profissionais";
+    Layout = "_LayoutDashboardPaciente";
+    var abaTodosAtiva = Model.AbaInicial == "todos";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Profissionais</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Consulte os profissionais que acompanham ou já acompanharam sua jornada.</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs ms-dash-tabs" id="profissionaisTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link@(abaTodosAtiva ? "" : " active")" id="meus-profissionais-tab" data-bs-toggle="tab" data-bs-target="#meusProfissionais" type="button" role="tab" aria-controls="meusProfissionais" aria-selected="@(abaTodosAtiva ? "false" : "true")">
+            <i class="bi bi-person-check"></i> Meus Profissionais
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link@(abaTodosAtiva ? " active" : "")" id="todos-profissionais-tab" data-bs-toggle="tab" data-bs-target="#todosProfissionais" type="button" role="tab" aria-controls="todosProfissionais" aria-selected="@(abaTodosAtiva ? "true" : "false")">
+            <i class="bi bi-people"></i> Todos os Profissionais
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="profissionaisTabsContent">
+    <div class="tab-pane fade@(abaTodosAtiva ? "" : " show active")" id="meusProfissionais" role="tabpanel" aria-labelledby="meus-profissionais-tab">
+        @if (Model.MeusProfissionais.Count == 0)
+        {
+            <div class="ms-dash-empty-state">
+                <i class="bi bi-person-check"></i>
+                <h5>Nenhum profissional vinculado ainda</h5>
+                <p>Quando um profissional te adicionar à lista de pacientes dele, ele aparecerá aqui.</p>
+            </div>
+        }
+        else
+        {
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Profissional</th>
+                                <th>CRP</th>
+                                <th>Abordagem / Especialidades</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaMeusProfissionais">
+                            @foreach (var profissional in Model.MeusProfissionais)
+                            {
+                                <tr data-profissional-id="@profissional.Id">
+                                    <td>
+                                        <div class="ms-dash-paciente-link">
+                                            @if (!string.IsNullOrWhiteSpace(profissional.FotoUrl))
+                                            {
+                                                <img src="@profissional.FotoUrl" alt="Foto de @profissional.NomeCompleto" class="ms-avatar-iniciais" style="object-fit:cover;">
+                                            }
+                                            else
+                                            {
+                                                <span class="ms-avatar-iniciais">@profissional.Iniciais</span>
+                                            }
+                                            <span>@profissional.NomeCompleto</span>
+                                        </div>
+                                    </td>
+                                    <td>@profissional.RegistroCRP</td>
+                                    <td class="ms-dash-table-subtext">@(string.IsNullOrWhiteSpace(profissional.Apresentacao) ? "-" : profissional.Apresentacao)</td>
+                                    <td>
+                                        @if (profissional.VinculoAtivo == true)
+                                        {
+                                            <span class="badge ms-badge-ativo">Ativo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge ms-badge-inativo">Histórico</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-ver-detalhes-profissional" data-profissional-id="@profissional.Id">
+                                            <i class="bi bi-eye"></i> Ver Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="tab-pane fade@(abaTodosAtiva ? " show active" : "")" id="todosProfissionais" role="tabpanel" aria-labelledby="todos-profissionais-tab">
+        <div class="ms-diretorio-busca mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" id="buscaTodosProfissionais" class="form-control" placeholder="Buscar por nome ou CRP..." autocomplete="off" value="@Model.TermoBusca">
+            </div>
+        </div>
+
+        <div id="todosProfissionaisContainer">
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Profissional</th>
+                                <th>CRP</th>
+                                <th>Abordagem / Especialidades</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaTodosProfissionais">
+                            @foreach (var profissional in Model.TodosProfissionais)
+                            {
+                                <tr data-profissional-id="@profissional.Id">
+                                    <td>
+                                        <div class="ms-dash-paciente-link">
+                                            @if (!string.IsNullOrWhiteSpace(profissional.FotoUrl))
+                                            {
+                                                <img src="@profissional.FotoUrl" alt="Foto de @profissional.NomeCompleto" class="ms-avatar-iniciais" style="object-fit:cover;">
+                                            }
+                                            else
+                                            {
+                                                <span class="ms-avatar-iniciais">@profissional.Iniciais</span>
+                                            }
+                                            <span>@profissional.NomeCompleto</span>
+                                        </div>
+                                    </td>
+                                    <td>@profissional.RegistroCRP</td>
+                                    <td class="ms-dash-table-subtext">@(string.IsNullOrWhiteSpace(profissional.Apresentacao) ? "-" : profissional.Apresentacao)</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-ver-detalhes-profissional" data-profissional-id="@profissional.Id">
+                                            <i class="bi bi-eye"></i> Ver Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Detalhes do Profissional (exclusivamente informativo) -->
+<div class="modal fade" id="modalDetalhesProfissional" tabindex="-1" aria-labelledby="modalDetalhesProfissionalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalhesProfissionalLabel">Detalhes do Profissional</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalhesProfissionalCarregando" class="text-center py-4">
+                    <div class="spinner-border text-secondary" role="status" aria-hidden="true"></div>
+                </div>
+                <div id="detalhesProfissionalConteudo" class="d-none">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <img id="detalhesProfissionalFoto" src="" alt="" class="ms-avatar-iniciais ms-avatar-iniciais-lg d-none" style="object-fit:cover;">
+                        <span id="detalhesProfissionalIniciais" class="ms-avatar-iniciais ms-avatar-iniciais-lg"></span>
+                        <div>
+                            <h5 class="mb-0" id="detalhesProfissionalNome"></h5>
+                            <p class="ms-dash-table-subtext mb-0" id="detalhesProfissionalCrp"></p>
+                        </div>
+                    </div>
+                    <div class="mb-2 d-flex align-items-center justify-content-between gap-2">
+                        <div class="ms-dash-contact-line"><i class="bi bi-envelope"></i> <span id="detalhesProfissionalEmail"></span></div>
+                        <button type="button" class="btn btn-sm ms-dash-btn-icon btn-copiar-dado" data-alvo="detalhesProfissionalEmail" title="Copiar e-mail">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="mb-3 d-flex align-items-center justify-content-between gap-2">
+                        <div class="ms-dash-contact-line"><i class="bi bi-telephone"></i> <span id="detalhesProfissionalTelefone"></span></div>
+                        <button type="button" class="btn btn-sm ms-dash-btn-icon btn-copiar-dado" data-alvo="detalhesProfissionalTelefone" title="Copiar telefone">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Biografia e Especialidades</h6>
+                        <p class="ms-dash-table-subtext mb-0" id="detalhesProfissionalApresentacao"></p>
+                    </div>
+                </div>
+                <div id="detalhesProfissionalErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro</strong>
+                        <p class="mb-0">Não foi possível carregar os detalhes deste profissional.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/painel-profissionais.js" asp-append-version="true"></script>
+}

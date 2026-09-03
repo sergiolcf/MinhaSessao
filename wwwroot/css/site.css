@@ -167,6 +167,32 @@ body {
   text-align: center;
 }
 
+.ms-copyright-footer {
+  margin-top: auto;
+  border-top: 1px solid #e2e8f0;
+  padding: 15px 0;
+}
+
+.ms-copyright-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  font-size: 8.5pt;
+  color: #718096;
+}
+
+@media (max-width: 576px) {
+  .ms-copyright-footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 .ms-link {
   color: var(--ms-orange);
   font-weight: 600;

@@ -90,14 +90,31 @@ Esta seção descreve o estado atual do projeto por módulo/domínio (não por c
 - Autenticação e diferenciação de papel (Profissional vs Paciente) descritas na seção "Autenticação" acima.
 - `Controllers/PainelPacienteController.cs` (`[Authorize(Roles = AutenticacaoService.PapelPaciente)]`): action `Index` — obtém o Id do paciente via `User.ObterPacienteId()`, carrega o próprio registro e exibe a tela "Início" (boas-vindas + cards placeholder).
 - Layout próprio `Views/Shared/_LayoutDashboardPaciente.cshtml` — **não** reaproveita o `_LayoutDashboard.cshtml` do Profissional (layouts separados por perfil, mesmo padrão de isolamento já usado no restante do projeto), mas reaproveita `wwwroot/css/dashboard.css` e `wwwroot/js/dashboard.js` (sidebar retrátil, item ativo por rota — mesmo comportamento do dashboard do Profissional).
-- Sidebar do Paciente: "Início" (real), "Minhas Sessões", "Meu(s) Psicólogo(s)" (placeholder, vai listar só os profissionais já vinculados — card futuro) e "Configurações" (placeholder) — sem controller/action própria ainda. "Buscar Profissionais" (ver Diretório abaixo) já é real.
+- Sidebar do Paciente: só "Minhas Sessões" ainda é placeholder (sem controller/action própria). "Início", "Profissionais" (ver seção própria abaixo) e "Configurações" (ver seção própria abaixo) já são reais — não existe mais um item separado de busca no menu, a busca geral virou uma aba dentro de "Profissionais".
 - Views em `Views/PainelPaciente/*`, model `Models/ViewModels/PainelPacienteViewModel.cs`.
 
-### Diretório de Profissionais (dentro do Painel do Paciente)
-- Lista somente leitura de **todos** os Profissionais cadastrados (sem conceito de "ativo" na entidade `Profissional`, sem paginação — lista pequena nesta fase) — não cria nenhum `VinculoPacienteProfissional` nem agenda nada, serve só para o paciente encontrar um profissional e chamar por fora do sistema (ligação/WhatsApp).
-- `PainelPacienteController.Diretorio(string? busca)` (GET): busca por `NomeCompleto`/`RegistroCRP` case-insensitive (mesmo padrão de `PacientesController.BuscarAnotacoes`), ordena por `NomeCompleto`, retorna `DiretorioViewModel`. Não é AJAX — form GET tradicional, recarrega a página (mesmo padrão do Login/Cadastro, já que fica fora do CRUD do Dashboard do Profissional).
-- View `Views/PainelPaciente/Diretorio.cshtml`: cards em grid (`.ms-diretorio-grid`, CSS em `dashboard.css`) com foto (ou iniciais via `PacienteIniciais.Calcular`, apesar do nome é um utilitário genérico), nome, CRP, apresentação e dois atalhos de contato — `tel:` e link do WhatsApp (`DiretorioProfissionalItemViewModel.TelefoneWhatsApp`, monta `55` + só os dígitos do telefone).
-- Link "Buscar Profissionais" na sidebar do Paciente (`_LayoutDashboardPaciente.cshtml`) — não confundir com "Meu(s) Psicólogo(s)" (placeholder separado, vai mostrar só os profissionais já vinculados).
+### Profissionais (dentro do Painel do Paciente)
+- Tela única com abas ("Meus Profissionais" / "Todos os Profissionais") — concentra tanto os profissionais com quem o paciente já teve/tem vínculo quanto o diretório geral de busca; **não existe mais** uma página separada de diretório/busca (a antiga tela `Diretorio.cshtml`, com cards e atalhos de `tel:`/WhatsApp, foi removida — a interface agora é só informativa, sem nenhum atalho de contato direto).
+- `Models/ViewModels/PainelProfissionaisViewModel.cs`: `PainelProfissionaisViewModel` (duas listas, `MeusProfissionais`/`TodosProfissionais`, mais `AbaInicial` — `"meus"` ou `"todos"` — e `TermoBusca`, usados para abrir a aba certa já com a busca preenchida) e `ProfissionalListaItemViewModel` (item comum às duas abas — `VinculoAtivo` é `null` na aba "Todos", `true`/`false` conforme `Status` do vínculo na aba "Meus").
+- `PainelPacienteController`:
+  - `Profissionais(string? aba, string? busca)` (GET) — monta as duas listas via os métodos privados `ObterMeusProfissionaisAsync`/`ObterTodosProfissionaisAsync` (este reaproveitado pela busca AJAX abaixo); `aba="todos"` abre direto na aba de busca (com `busca` já aplicado ao carregar a View, sem esperar o primeiro fetch do JS).
+  - `Diretorio(string? busca)` (GET) — rota antiga, mantida **só como redirect** (`RedirectToAction(nameof(Profissionais), new { aba = "todos", busca })`) para não quebrar links/favoritos existentes.
+  - `BuscarProfissionais(string? busca)` (GET, JSON) — chamado via Fetch API pela aba "Todos os Profissionais" a cada tecla digitada (debounce de 300ms em `wwwroot/js/painel-profissionais.js`), mesmo padrão de `PacientesController.BuscarAnotacoes` (retorna a lista plana em JSON, o JS remonta as linhas da tabela no cliente). A aba "Meus Profissionais" não tem busca — é sempre a lista completa de vínculos do paciente.
+  - `DetalhesProfissional(Guid id)` (GET, JSON) — alimenta a modal `#modalDetalhesProfissional` (nome, CRP, e-mail, telefone, apresentação, foto/iniciais); é **só leitura**, sem checagem de vínculo (mesma info já pública nas duas abas), chamada tanto pela aba "Meus" quanto "Todos".
+- Modal `#modalDetalhesProfissional` (em `Views/PainelPaciente/Profissionais.cshtml`) é exclusivamente informativa: exibe biografia/apresentação e permite copiar e-mail/telefone (`navigator.clipboard`, ícone muda pra "check" por 1,5s) — **sem** nenhum botão de agendamento ou link de WhatsApp. Abre tanto pelo botão "Ver Detalhes" quanto por clicar em qualquer ponto da linha da tabela (`wwwroot/js/painel-profissionais.js`, delegação em `tr[data-profissional-id]`, ignorando cliques em botões dentro da linha).
+- Coluna "Abordagem / Especialidades" reaproveita o campo único `Profissional.Apresentacao` — a entidade não tem um campo de especialidades separado; se isso mudar no futuro, atualizar `ProfissionalListaItemViewModel` e as duas queries do controller.
+- Sidebar do Paciente tem só um item "Profissionais" (sem item separado de busca) — link real em `_LayoutDashboardPaciente.cshtml`.
+
+### Configurações (dentro do Painel do Paciente)
+- Tela com abas ("Meus Dados" / "Segurança"), ambas com submit via Fetch API e feedback em Bootstrap Toast (`#toastConfiguracoes` em `Views/PainelPaciente/Configuracoes.cshtml`, cores `text-bg-success`/`text-bg-danger` do próprio Bootstrap — sem CSS customizado) — não recarrega a página em nenhum dos dois casos.
+- Aba "Meus Dados": Nome/E-mail/Telefone começam `readonly`, com botão "Editar Dados" que libera os três campos e troca pelos botões "Salvar Alterações"/"Cancelar" (`wwwroot/js/painel-configuracoes.js`); "Cancelar" restaura os valores originais e volta pro modo leitura, e um salvamento bem-sucedido também volta pro modo leitura (guardando os novos valores como "originais"). O campo CPF é **sempre** `readonly`/`disabled` (nunca entra em modo edição) e mostra abaixo um texto explicando que a correção precisa ser pedida ao profissional responsável.
+- `Models/ViewModels/ConfiguracoesPacienteViewModel.cs` (dados pra renderizar a tela, incluindo `CpfFormatado` via `CpfUtil.Formatar`), `AtualizarDadosPacienteViewModel.cs` e `AlterarSenhaPacienteViewModel.cs` (um por form, cada um postado direto como parâmetro — mesmo padrão do Cadastro).
+- `PainelPacienteController`:
+  - `Configuracoes()` (GET) — carrega o próprio Paciente logado.
+  - `AtualizarDados(AtualizarDadosPacienteViewModel)` (POST, JSON) — atualiza Nome/E-mail/Telefone; **CPF nunca é aceito aqui** (nem está no ViewModel — o campo na tela é só `readonly`/`disabled`, então nem é enviado no POST). Revalida duplicidade de e-mail contra outros Pacientes antes de salvar (mesmo padrão do `CadastroPaciente`).
+  - `AlterarSenha(AlterarSenhaPacienteViewModel)` (POST, JSON) — exige a senha atual e confere com `AutenticacaoService.VerificarSenhaPaciente` antes de trocar o hash com `HashSenhaPaciente`; erra com mensagem genérica ("senha atual incorreta") sem revelar mais detalhes.
+  - Ambas as actions usam `User.ObterPacienteId()` (nunca um Id do corpo da requisição) e têm `[ValidateAntiForgeryToken]`, igual todo `[HttpPost]` do projeto.
+- `wwwroot/js/painel-configuracoes.js` — um listener de `submit` por form, com `FormData` (inclui o token antifalsificação automaticamente) e a função `exibirToast(mensagem, sucesso)` compartilhada pelos dois.
 
 ### Badge "Alfa"
 - `Views/Shared/_BadgeAlfa.cshtml` — partial isolado, incluído ao lado do logo em `Views/Home/Index.cshtml`, `_LayoutDashboard.cshtml` e `_LayoutDashboardPaciente.cshtml`.
@@ -108,3 +125,13 @@ Esta seção descreve o estado atual do projeto por módulo/domínio (não por c
 - CRUD completo via AJAX, sem reload de página: `SalvarAnotacao`, `AtualizarAnotacao`, `ExcluirAnotacao`, `BuscarAnotacoes` (paginação de 10 por página + busca por título + ordenação por data), `SugerirTitulosAnotacao` (autocomplete, sempre as 3 mais recentes que dão match).
 - Timeline visual com scroll interno (`.ms-timeline-scroll`, ~4 itens visíveis por vez) e paginação Bootstrap abaixo.
 - Toda action verifica que a anotação/paciente pertence ao profissional logado antes de ler ou gravar.
+
+### Rodapé Global (Copyright/LGPD)
+- `<footer class="ms-copyright-footer">` presente nos 4 layouts do projeto (`_Layout.cshtml`, `_LayoutAuth.cshtml`, `_LayoutDashboard.cshtml`, `_LayoutDashboardPaciente.cshtml`), com o texto de copyright e o aviso de conformidade com a LGPD.
+- Estilo (`.ms-copyright-footer`/`.ms-copyright-footer-inner`) duplicado em `site.css`, `auth.css` e `dashboard.css` (cada layout carrega sua própria folha de estilos, não há CSS compartilhado entre eles) — se o texto/estilo mudar, replicar nos três arquivos.
+- Fixado na parte inferior mesmo em páginas com pouco conteúdo via `margin-top: auto` no footer dentro de um container pai `flex-direction: column` com `min-height: 100vh` (`body` em `_Layout`/`_LayoutAuth`, `.ms-dash-main` nos layouts de dashboard) — não é `position: fixed`, então nunca sobrepõe conteúdo.
+
+### Teste durante desenvolvimento
+- NÃO utilize ferramentas de browser/headless/screenshot para validação visual.
+- A validação de código deve ser feita EXCLUSIVAMENTE via `dotnet build` e testes de código.
+- Deixe o teste de interface/UI no navegador sob responsabilidade do usuário.
