@@ -20,7 +20,8 @@ public class PacienteViewModel
     [DataType(DataType.Date)]
     public DateTime DataNascimento { get; set; }
 
-    public string? Cpf { get; set; }
+    [Required(ErrorMessage = "Informe o CPF do paciente.")]
+    public string Cpf { get; set; } = string.Empty;
 
     public string? Sexo { get; set; }
 

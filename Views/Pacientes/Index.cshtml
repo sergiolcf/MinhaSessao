@@ -77,18 +77,45 @@ else
     </div>
 }
 
-<!-- Modal: Cadastro de Paciente -->
+<!-- Modal: Novo Paciente (fluxo em 2 passos: verificar e-mail antes de cadastrar) -->
 <div class="modal fade" id="modalCadastroPaciente" tabindex="-1" aria-labelledby="modalCadastroPacienteLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title" id="modalCadastroPacienteLabel">Novo Paciente</h5>
-                    <p class="ms-modal-subtitle mb-0">Preencha os dados para cadastrar o paciente</p>
+                    <p class="ms-modal-subtitle mb-0">Informe o CPF do paciente para começar</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
+                @* Token único, reaproveitado pelos POSTs de Vincular e Criar *@
+                @Html.AntiForgeryToken()
+
+                <!-- Etapa 1: Verificar CPF -->
+                <div id="etapaVerificarCpf">
+                    <div id="verificarCpfFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <div>
+                            <strong>Erro</strong>
+                            <p class="mb-0" id="verificarCpfFeedbackErroMensagem"></p>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="verificarCpfInput" class="form-label">CPF do Paciente<span class="ms-required">*</span></label>
+                        <input type="text" id="verificarCpfInput" class="form-control" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+                    </div>
+                </div>
+
+                <!-- Etapa 2: Paciente já cadastrado, só falta vincular -->
+                <div id="etapaPacienteEncontrado" class="d-none text-center py-3">
+                    <span class="ms-avatar-iniciais ms-avatar-iniciais-lg mb-3" id="pacienteEncontradoIniciais"></span>
+                    <h5 class="mb-1" id="pacienteEncontradoNome"></h5>
+                    <p class="ms-dash-table-subtext mb-3">Encontramos um paciente cadastrado com esse CPF. Deseja adicioná-lo à sua lista de pacientes?</p>
+                    <button type="button" class="btn btn-link btn-sm p-0" id="btnVerificarOutroCpf">Não é esse paciente? Verificar outro CPF</button>
+                </div>
+
+                <!-- Etapa 3: Cadastro completo (e-mail ainda não existe) -->
                 <div id="cadastroPacienteFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
                     <i class="bi bi-x-circle-fill"></i>
                     <div>
@@ -96,8 +123,7 @@ else
                         <p class="mb-0" id="cadastroPacienteFeedbackErroMensagem"></p>
                     </div>
                 </div>
-                <form id="formCadastroPaciente">
-                    @Html.AntiForgeryToken()
+                <form id="formCadastroPaciente" class="d-none">
                     <div class="mb-3">
                         <label for="PacienteNomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
                         <input type="text" id="PacienteNomeCompleto" name="NomeCompleto" class="form-control" placeholder="Nome completo do paciente">
@@ -118,8 +144,9 @@ else
                             <input type="date" id="PacienteDataNascimento" name="DataNascimento" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="PacienteCpf" class="form-label">CPF</label>
-                            <input type="text" id="PacienteCpf" name="Cpf" class="form-control" placeholder="000.000.000-00">
+                            <label for="PacienteCpf" class="form-label">CPF<span class="ms-required">*</span></label>
+                            <input type="text" id="PacienteCpf" name="Cpf" class="form-control" readonly>
+                            <button type="button" class="btn btn-link btn-sm p-0 mt-1" id="btnTrocarCpf">trocar CPF</button>
                         </div>
                     </div>
                     <div class="row">
@@ -146,7 +173,15 @@ else
             </div>
             <div class="modal-footer justify-content-end">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="formCadastroPaciente" class="btn btn-ms-orange" id="btnSalvarPaciente">
+                <button type="button" class="btn btn-ms-orange" id="btnVerificarCpf">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnVerificarCpfSpinner"></span>
+                    <span id="btnVerificarCpfTexto">Verificar</span>
+                </button>
+                <button type="button" class="btn btn-ms-orange d-none" id="btnVincularPaciente">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnVincularPacienteSpinner"></span>
+                    <span id="btnVincularPacienteTexto">Vincular este paciente</span>
+                </button>
+                <button type="submit" form="formCadastroPaciente" class="btn btn-ms-orange d-none" id="btnSalvarPaciente">
                     <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarPacienteSpinner"></span>
                     <span id="btnSalvarPacienteTexto">Salvar Paciente</span>
                 </button>
