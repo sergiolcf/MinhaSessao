@@ -1,0 +1,26 @@
+@model MinhaSessao.Models.ViewModels.SessaoListItemViewModel
+@{
+    var classeBadge = Model.Status switch
+    {
+        "Agendada" => "ms-badge-agendada",
+        "Realizada" => "ms-badge-realizada",
+        _ => "ms-badge-cancelada"
+    };
+    var rotuloStatus = Model.Status switch
+    {
+        "Agendada" => "Agendada",
+        "Realizada" => "Realizada",
+        _ => "Cancelada"
+    };
+}
+<tr>
+    <td>@Model.DataHora.ToString("dd/MM/yyyy")</td>
+    <td>@Model.DataHora.ToString("HH:mm")</td>
+    <td>@Model.ProfissionalNome</td>
+    <td><span class="badge @classeBadge">@rotuloStatus</span></td>
+    <td class="text-end">
+        <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-ver-detalhes-sessao" data-sessao-id="@Model.Id">
+            <i class="bi bi-eye"></i> Ver Detalhes
+        </button>
+    </td>
+</tr>

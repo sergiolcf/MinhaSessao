@@ -1,0 +1,155 @@
+@model MinhaSessao.Models.ViewModels.PainelSessoesViewModel
+@{
+    ViewData["Title"] = "Minhas Sessões";
+    Layout = "_LayoutDashboardPaciente";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Minhas Sessões</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Acompanhe suas sessões agendadas e o histórico de atendimentos.</p>
+    </div>
+</div>
+
+<div class="ms-dash-cards mb-4">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-event"></i>
+        <h5>Próxima Sessão</h5>
+        @if (Model.ProximaSessao is not null)
+        {
+            <p class="ms-stat-numero mb-0">@Model.ProximaSessao.DataHora.ToString("dd/MM/yyyy") às @Model.ProximaSessao.DataHora.ToString("HH:mm")</p>
+            <p class="mb-0">com @Model.ProximaSessao.ProfissionalNome</p>
+        }
+        else
+        {
+            <p class="mb-0">Nenhuma sessão agendada no momento.</p>
+        }
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-check2-circle"></i>
+        <h5>Total de Sessões Realizadas</h5>
+        <p class="ms-stat-numero mb-0">@Model.TotalSessoesRealizadas</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs ms-dash-tabs" id="sessoesTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="agendadas-tab" data-bs-toggle="tab" data-bs-target="#agendadasSessoes" type="button" role="tab" aria-controls="agendadasSessoes" aria-selected="true">
+            <i class="bi bi-calendar-week"></i> Agendadas
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historicoSessoes" type="button" role="tab" aria-controls="historicoSessoes" aria-selected="false">
+            <i class="bi bi-clock-history"></i> Histórico
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="sessoesTabsContent">
+    <div class="tab-pane fade show active" id="agendadasSessoes" role="tabpanel" aria-labelledby="agendadas-tab">
+        @if (Model.Agendadas.Count == 0)
+        {
+            <div class="ms-dash-empty-state">
+                <i class="bi bi-calendar-week"></i>
+                <h5>Nenhuma sessão agendada</h5>
+                <p>Quando um profissional agendar uma sessão com você, ela aparecerá aqui.</p>
+            </div>
+        }
+        else
+        {
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Profissional Responsável</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sessao in Model.Agendadas)
+                            {
+                                <partial name="_LinhaSessao" model="sessao" />
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="tab-pane fade" id="historicoSessoes" role="tabpanel" aria-labelledby="historico-tab">
+        @if (Model.Historico.Count == 0)
+        {
+            <div class="ms-dash-empty-state">
+                <i class="bi bi-clock-history"></i>
+                <h5>Nenhum histórico ainda</h5>
+                <p>Suas sessões realizadas ou canceladas aparecerão aqui.</p>
+            </div>
+        }
+        else
+        {
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Profissional Responsável</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sessao in Model.Historico)
+                            {
+                                <partial name="_LinhaSessao" model="sessao" />
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: Detalhes da Sessão (somente dados administrativos, sem prontuário/anotações) -->
+<div class="modal fade" id="modalDetalhesSessao" tabindex="-1" aria-labelledby="modalDetalhesSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalhesSessaoLabel">Detalhes da Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalhesSessaoCarregando" class="text-center py-4">
+                    <div class="spinner-border text-secondary" role="status" aria-hidden="true"></div>
+                </div>
+                <div id="detalhesSessaoConteudo" class="d-none">
+                    <div class="mb-2"><strong>Data:</strong> <span id="detalhesSessaoData"></span></div>
+                    <div class="mb-2"><strong>Hora:</strong> <span id="detalhesSessaoHora"></span></div>
+                    <div class="mb-2"><strong>Profissional Responsável:</strong> <span id="detalhesSessaoProfissional"></span></div>
+                    <div class="mb-0"><strong>Status:</strong> <span id="detalhesSessaoStatus"></span></div>
+                </div>
+                <div id="detalhesSessaoErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro</strong>
+                        <p class="mb-0">Não foi possível carregar os detalhes desta sessão.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/painel-sessoes.js" asp-append-version="true"></script>
+}

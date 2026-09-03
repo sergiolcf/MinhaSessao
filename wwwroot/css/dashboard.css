@@ -406,6 +406,32 @@ body.ms-dashboard-body {
   font-weight: 600;
 }
 
+/* Badges de status das Sessões (Painel do Paciente) */
+.ms-badge-agendada {
+  background-color: rgba(255, 107, 53, 0.15);
+  color: var(--ms-orange-dark);
+  font-weight: 600;
+}
+
+.ms-badge-realizada {
+  background-color: rgba(25, 135, 84, 0.12);
+  color: #198754;
+  font-weight: 600;
+}
+
+.ms-badge-cancelada {
+  background-color: rgba(220, 53, 69, 0.12);
+  color: #DC3545;
+  font-weight: 600;
+}
+
+/* Números de destaque nos cards de resumo (ex.: Minhas Sessões) */
+.ms-stat-numero {
+  color: var(--ms-text);
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
 .ms-dash-btn-icon {
   background: transparent;
   border: 1px solid rgba(43, 45, 66, 0.15);

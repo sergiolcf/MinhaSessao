@@ -94,15 +94,20 @@ primeira vez que a branch é publicada.)
 Depois do merge, `git branch --show-current` já deve mostrar `Develop` (o `git checkout Develop`
 do Passo 3 cuidou disso). Só confirme com `git status`.
 
-## Fim do workflow — o que NÃO fazer automaticamente
+## Passo 5 — Sync final da Develop (push)
 
-O merge commit fica **local** ao final deste workflow — não dê `git push` da Develop
-automaticamente. Isso foi uma escolha explícita do usuário ao configurar este skill (ele só quer
-sync via `pull`, não publicação automática do merge). Termine avisando claramente o estado final,
-por exemplo:
+Depois do merge, publique a Develop atualizada no remoto:
 
-> Card CARD-XX finalizado: commit e push feitos na branch, merge feito localmente na Develop
-> (ainda não publicado). Para publicar, rode `git push origin Develop` quando quiser.
+```
+git push origin Develop
+```
+
+Esse é o "sync" completo: a `Develop` local ficou atualizada com o remoto antes do merge (Passo 3)
+e agora o remoto fica atualizado com o merge que acabou de ser feito — ninguém mais precisa lembrar
+de publicar manualmente depois. Termine avisando o estado final, por exemplo:
+
+> Card CARD-XX finalizado: commit e push feitos na branch, merge feito na Develop e publicado no
+> remoto (`git push origin Develop`).
 
 ## Quando parar e perguntar
 
