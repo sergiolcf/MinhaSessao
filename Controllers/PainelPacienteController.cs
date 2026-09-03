@@ -104,6 +104,82 @@ public class PainelPacienteController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> Sessoes()
+    {
+        var pacienteId = User.ObterPacienteId();
+        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.Id == pacienteId);
+
+        if (paciente is null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        ViewBag.PacienteId = paciente.Id;
+        ViewBag.PacienteNome = paciente.NomeCompleto;
+
+        var agora = DateTime.UtcNow;
+
+        var sessoes = await _context.Sessoes
+            .Where(s => s.PacienteId == pacienteId)
+            .OrderBy(s => s.DataHora)
+            .Select(s => new SessaoListItemViewModel
+            {
+                Id = s.Id,
+                DataHora = s.DataHora,
+                ProfissionalNome = s.Profissional!.NomeCompleto,
+                Status = s.Status.ToString()
+            })
+            .ToListAsync();
+
+        var model = new PainelSessoesViewModel
+        {
+            ProximaSessao = sessoes
+                .Where(s => s.Status == StatusSessao.Agendada.ToString() && s.DataHora >= agora)
+                .FirstOrDefault(),
+            TotalSessoesRealizadas = sessoes.Count(s => s.Status == StatusSessao.Realizada.ToString()),
+            Agendadas = sessoes
+                .Where(s => s.Status == StatusSessao.Agendada.ToString())
+                .ToList(),
+            Historico = sessoes
+                .Where(s => s.Status != StatusSessao.Agendada.ToString())
+                .OrderByDescending(s => s.DataHora)
+                .ToList()
+        };
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DetalhesSessao(Guid id)
+    {
+        var pacienteId = User.ObterPacienteId();
+
+        var sessao = await _context.Sessoes
+            .Where(s => s.Id == id && s.PacienteId == pacienteId)
+            .Select(s => new
+            {
+                s.DataHora,
+                ProfissionalNome = s.Profissional!.NomeCompleto,
+                Status = s.Status.ToString()
+            })
+            .FirstOrDefaultAsync();
+
+        if (sessao is null)
+        {
+            return Json(new { success = false, message = "Sessão não encontrada." });
+        }
+
+        return Json(new
+        {
+            success = true,
+            data = sessao.DataHora.ToString("dd/MM/yyyy"),
+            hora = sessao.DataHora.ToString("HH:mm"),
+            profissionalNome = sessao.ProfissionalNome,
+            status = sessao.Status
+        });
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Configuracoes()
     {
         var pacienteId = User.ObterPacienteId();
