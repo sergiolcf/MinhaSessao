@@ -126,6 +126,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnCriarConta = document.getElementById("btnCriarConta");
     const btnCriarContaSpinner = document.getElementById("btnCriarContaSpinner");
     const btnCriarContaTexto = document.getElementById("btnCriarContaTexto");
+    const btnContinuarSucessoCadastro = document.getElementById("btnContinuarSucessoCadastro");
+
+    let redirectUrlCadastro = null;
 
     function definirCarregando(carregando) {
         if (!btnCriarConta) return;
@@ -172,6 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (resposta.ok && resultado.success) {
                     // Sucesso: limpa o formulário e alterna para a modal de confirmação
+                    redirectUrlCadastro = resultado.redirectUrl || null;
                     formCadastroProfissional.reset();
                     if (apresentacaoCounterEl) {
                         apresentacaoCounterEl.textContent = "0/500";
@@ -196,6 +200,13 @@ document.addEventListener("DOMContentLoaded", function () {
             } finally {
                 definirCarregando(false);
             }
+        });
+    }
+
+    // Redireciona para o Dashboard após o cadastro do profissional
+    if (btnContinuarSucessoCadastro) {
+        btnContinuarSucessoCadastro.addEventListener("click", function () {
+            window.location.href = redirectUrlCadastro || "/";
         });
     }
 });

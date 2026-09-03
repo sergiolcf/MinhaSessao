@@ -1,0 +1,260 @@
+:root {
+  --ms-text: #2B2D42;
+  --ms-orange: #FF6B35;
+  --ms-orange-dark: #E0551F;
+  --ms-bg: #F8F9FA;
+  --ms-sidebar-width: 250px;
+  --ms-sidebar-collapsed-width: 70px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body.ms-dashboard-body {
+  background-color: var(--ms-bg);
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar superior */
+.ms-dash-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--ms-text);
+  color: #fff;
+  padding: 0.6rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.ms-dash-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 0;
+}
+
+.ms-sidebar-toggle {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.ms-sidebar-toggle:hover,
+.ms-sidebar-toggle:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ms-dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.ms-dash-brand:hover,
+.ms-dash-brand:focus {
+  color: var(--ms-orange);
+  text-decoration: none;
+}
+
+.ms-dash-brand .ms-brand-primary-dark {
+  color: #fff;
+  font-weight: 500;
+}
+
+.ms-dash-brand .ms-brand-accent {
+  color: var(--ms-orange);
+  font-weight: 700;
+}
+
+.ms-dash-navbar-center {
+  flex: 2 1 0;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ms-dash-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 0;
+  justify-content: flex-end;
+}
+
+.ms-dash-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.ms-dash-avatar-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.ms-dash-user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* Corpo: sidebar + área principal */
+.ms-dash-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.ms-dash-sidebar {
+  width: var(--ms-sidebar-width);
+  flex-shrink: 0;
+  background-color: var(--ms-text);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar retrátil: colapsa para uma trilha de ícones (~70px) em qualquer tamanho de tela */
+.ms-dash-sidebar.sidebar-collapsed {
+  width: var(--ms-sidebar-collapsed-width);
+}
+
+.ms-dash-menu {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 0;
+}
+
+.ms-dash-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.ms-dash-menu-link i {
+  font-size: 1.1rem;
+  width: 1.3rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-collapsed .ms-dash-menu-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar-collapsed .menu-text {
+  display: none;
+}
+
+.ms-dash-menu-link:hover,
+.ms-dash-menu-link:focus {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  border-left-color: var(--ms-orange);
+  text-decoration: none;
+}
+
+.ms-dash-menu-link.active {
+  background-color: rgba(255, 107, 53, 0.15);
+  color: #fff;
+  border-left-color: var(--ms-orange);
+}
+
+.ms-dash-main {
+  flex: 1;
+  padding: 2rem;
+  min-width: 0;
+}
+
+/* Conteúdo padrão do dashboard */
+.ms-dash-welcome-title {
+  color: var(--ms-text);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.ms-dash-welcome-subtitle {
+  color: #6C757D;
+  margin-bottom: 2rem;
+}
+
+.ms-dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.ms-dash-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(43, 45, 66, 0.08);
+  padding: 1.5rem;
+}
+
+.ms-dash-card i {
+  font-size: 1.75rem;
+  color: var(--ms-orange);
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.ms-dash-card h5 {
+  color: var(--ms-text);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.ms-dash-card p {
+  color: #6C757D;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Responsividade básica: em telas pequenas o conteúdo do navbar é simplificado
+   e a sidebar inicia recolhida (ver dashboard.js) para liberar espaço de tela */
+@media (max-width: 768px) {
+  .ms-dash-navbar-center {
+    display: none;
+  }
+
+  .ms-dash-user-name {
+    display: none;
+  }
+
+  .ms-dash-main {
+    padding: 1.25rem;
+  }
+}
