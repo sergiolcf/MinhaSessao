@@ -46,8 +46,10 @@
             var acaoAtual = ViewContext.RouteData.Values["action"]?.ToString();
             var isInicioAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
-            var isDiretorioAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(acaoAtual, "Diretorio", StringComparison.OrdinalIgnoreCase);
+            var isProfissionaisAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "Profissionais", StringComparison.OrdinalIgnoreCase);
+            var isConfiguracoesAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "Configuracoes", StringComparison.OrdinalIgnoreCase);
         }
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
@@ -65,20 +67,15 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="PainelPaciente" asp-action="Profissionais"
+                       class="ms-dash-menu-link@(isProfissionaisAtivo ? " active" : "")">
                         <i class="bi bi-people"></i>
-                        <span class="menu-text">Meu(s) Psicólogo(s)</span>
+                        <span class="menu-text">Profissionais</span>
                     </a>
                 </li>
                 <li>
-                    <a asp-controller="PainelPaciente" asp-action="Diretorio"
-                       class="ms-dash-menu-link@(isDiretorioAtivo ? " active" : "")">
-                        <i class="bi bi-search"></i>
-                        <span class="menu-text">Buscar Profissionais</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="PainelPaciente" asp-action="Configuracoes"
+                       class="ms-dash-menu-link@(isConfiguracoesAtivo ? " active" : "")">
                         <i class="bi bi-gear"></i>
                         <span class="menu-text">Configurações</span>
                     </a>
@@ -88,6 +85,13 @@
 
         <main class="ms-dash-main">
             @RenderBody()
+
+            <footer class="ms-copyright-footer">
+                <div class="ms-copyright-footer-inner">
+                    <span class="ms-copyright-footer-lgpd">Ambiente seguro em conformidade com a LGPD.</span>
+                    <span class="ms-copyright-footer-copyright">&copy; 2026 MinhaSessao. Todos os direitos reservados.</span>
+                </div>
+            </footer>
         </main>
     </div>
 

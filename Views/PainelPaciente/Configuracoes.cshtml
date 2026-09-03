@@ -1,0 +1,107 @@
+@model MinhaSessao.Models.ViewModels.ConfiguracoesPacienteViewModel
+@{
+    ViewData["Title"] = "Configurações";
+    Layout = "_LayoutDashboardPaciente";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Configurações</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Gerencie seus dados cadastrais e a segurança da sua conta.</p>
+    </div>
+</div>
+
+<ul class="nav nav-tabs ms-dash-tabs" id="configuracoesTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="meus-dados-tab" data-bs-toggle="tab" data-bs-target="#meusDados" type="button" role="tab" aria-controls="meusDados" aria-selected="true">
+            <i class="bi bi-person-vcard"></i> Meus Dados
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="seguranca-tab" data-bs-toggle="tab" data-bs-target="#seguranca" type="button" role="tab" aria-controls="seguranca" aria-selected="false">
+            <i class="bi bi-shield-lock"></i> Segurança
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="configuracoesTabsContent">
+    <div class="tab-pane fade show active" id="meusDados" role="tabpanel" aria-labelledby="meus-dados-tab">
+        <div class="ms-dash-card" style="max-width: 640px;">
+            <form id="formDadosPaciente">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label for="dadosNomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
+                    <input type="text" id="dadosNomeCompleto" name="NomeCompleto" class="form-control" value="@Model.NomeCompleto" readonly required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="dadosEmail" class="form-label">E-mail<span class="ms-required">*</span></label>
+                        <input type="email" id="dadosEmail" name="Email" class="form-control" value="@Model.Email" readonly required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="dadosTelefone" class="form-label">Telefone<span class="ms-required">*</span></label>
+                        <input type="tel" id="dadosTelefone" name="Telefone" class="form-control" value="@Model.Telefone" readonly required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="dadosCpf" class="form-label">CPF</label>
+                    <input type="text" id="dadosCpf" class="form-control" value="@Model.CpfFormatado" readonly disabled>
+                    <div class="form-text">O CPF é a sua chave de identificação no sistema. Caso esteja incorreto, solicite a correção ao seu profissional responsável.</div>
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-secondary" id="btnEditarDados">
+                        <i class="bi bi-pencil"></i> Editar Dados
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary d-none" id="btnCancelarDados">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-ms-orange d-none" id="btnSalvarDados">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarDadosSpinner"></span>
+                        <span id="btnSalvarDadosTexto">Salvar Alterações</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="seguranca" role="tabpanel" aria-labelledby="seguranca-tab">
+        <div class="ms-dash-card" style="max-width: 640px;">
+            <form id="formSenhaPaciente">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label for="senhaAtual" class="form-label">Senha Atual<span class="ms-required">*</span></label>
+                    <input type="password" id="senhaAtual" name="SenhaAtual" class="form-control" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="novaSenha" class="form-label">Nova Senha<span class="ms-required">*</span></label>
+                        <input type="password" id="novaSenha" name="NovaSenha" class="form-control" placeholder="Mínimo de 6 caracteres" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="confirmarNovaSenha" class="form-label">Confirmar Nova Senha<span class="ms-required">*</span></label>
+                        <input type="password" id="confirmarNovaSenha" name="ConfirmarNovaSenha" class="form-control" required>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-ms-orange" id="btnAlterarSenha">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnAlterarSenhaSpinner"></span>
+                        <span id="btnAlterarSenhaTexto">Alterar Senha</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="toastConfiguracoes" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastConfiguracoesMensagem"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/painel-configuracoes.js" asp-append-version="true"></script>
+}

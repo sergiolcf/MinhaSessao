@@ -13,16 +13,43 @@ body.ms-auth-body {
   background-color: var(--ms-bg);
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   min-height: 100vh;
-  padding: 1.5rem;
 }
 
 .ms-auth-wrapper {
+  flex: 1;
   width: 100%;
   display: flex;
+  align-items: center;
   justify-content: center;
+  padding: 1.5rem;
+}
+
+.ms-copyright-footer {
+  margin-top: auto;
+  border-top: 1px solid #e2e8f0;
+  padding: 15px 0;
+}
+
+.ms-copyright-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  font-size: 8.5pt;
+  color: #718096;
+}
+
+@media (max-width: 576px) {
+  .ms-copyright-footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
 .ms-auth-card {
