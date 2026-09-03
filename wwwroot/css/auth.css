@@ -34,6 +34,41 @@ body.ms-auth-body {
   max-width: 420px;
 }
 
+/* Variante mais larga para o Cadastro (mais campos que o Login) */
+.ms-auth-card-wide {
+  max-width: 560px;
+}
+
+/* Abas da tela de Cadastro (Sou Profissional / Sou Paciente), mesma linguagem visual das abas do Dashboard */
+.ms-auth-tabs {
+  border-bottom-color: rgba(43, 45, 66, 0.1);
+  justify-content: center;
+}
+
+.ms-auth-tabs .nav-link {
+  color: #6C757D;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.75rem 1rem;
+}
+
+.ms-auth-tabs .nav-link i {
+  margin-right: 0.35rem;
+}
+
+.ms-auth-tabs .nav-link:hover {
+  color: var(--ms-orange-dark);
+  border-color: transparent;
+}
+
+.ms-auth-tabs .nav-link.active {
+  color: var(--ms-orange);
+  background-color: transparent;
+  border-bottom-color: var(--ms-orange);
+}
+
 .ms-auth-brand {
   display: flex;
   align-items: center;

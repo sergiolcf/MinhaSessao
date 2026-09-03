@@ -324,6 +324,41 @@ body.ms-dashboard-body {
   margin: 0;
 }
 
+/* Diretório de Profissionais (Painel do Paciente) */
+.ms-diretorio-busca .input-group-text {
+  border-right: 0;
+}
+
+.ms-diretorio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.ms-diretorio-card {
+  text-align: center;
+}
+
+.ms-diretorio-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.75rem;
+}
+
+.ms-diretorio-apresentacao {
+  color: #6C757D;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.ms-diretorio-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
 /* Tabela de pacientes */
 .ms-dash-table-card {
   padding: 0;

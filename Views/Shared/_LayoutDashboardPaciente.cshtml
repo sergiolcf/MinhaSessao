@@ -46,6 +46,8 @@
             var acaoAtual = ViewContext.RouteData.Values["action"]?.ToString();
             var isInicioAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
+            var isDiretorioAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "Diretorio", StringComparison.OrdinalIgnoreCase);
         }
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
@@ -66,6 +68,13 @@
                     <a href="#" class="ms-dash-menu-link">
                         <i class="bi bi-people"></i>
                         <span class="menu-text">Meu(s) Psicólogo(s)</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="PainelPaciente" asp-action="Diretorio"
+                       class="ms-dash-menu-link@(isDiretorioAtivo ? " active" : "")">
+                        <i class="bi bi-search"></i>
+                        <span class="menu-text">Buscar Profissionais</span>
                     </a>
                 </li>
                 <li>
