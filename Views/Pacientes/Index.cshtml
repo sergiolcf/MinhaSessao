@@ -1,0 +1,168 @@
+@model MinhaSessao.Models.ViewModels.PacientesIndexViewModel
+@{
+    ViewData["Title"] = "Meus Pacientes";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Meus Pacientes</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Gerencie os pacientes vinculados ao seu atendimento.</p>
+    </div>
+    <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#modalCadastroPaciente">
+        <i class="bi bi-plus-lg"></i> Novo Paciente
+    </button>
+</div>
+
+@if (Model.Pacientes.Count == 0)
+{
+    <div class="ms-dash-empty-state">
+        <i class="bi bi-people"></i>
+        <h5>Nenhum paciente cadastrado ainda</h5>
+        <p>Clique em "Novo Paciente" para cadastrar o primeiro paciente da sua agenda.</p>
+    </div>
+}
+else
+{
+    <div class="ms-dash-card ms-dash-table-card">
+        <div class="table-responsive">
+            <table class="table table-hover ms-dash-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>Contato</th>
+                        <th>Data de Nascimento</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var paciente in Model.Pacientes)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" asp-route-profissionalId="@Model.ProfissionalId" class="ms-dash-paciente-link">
+                                    <span class="ms-avatar-iniciais">@paciente.Iniciais</span>
+                                    <span>@paciente.NomeCompleto</span>
+                                </a>
+                            </td>
+                            <td>
+                                <div class="ms-dash-contact-line"><i class="bi bi-whatsapp"></i> @paciente.Telefone</div>
+                                <div class="ms-dash-contact-line ms-dash-table-subtext"><i class="bi bi-envelope"></i> @paciente.Email</div>
+                            </td>
+                            <td>
+                                @paciente.DataNascimento.ToString("dd/MM/yyyy")
+                                <div class="ms-dash-table-subtext">@paciente.Idade anos</div>
+                            </td>
+                            <td>
+                                @if (paciente.Ativo)
+                                {
+                                    <span class="badge ms-badge-ativo">Ativo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge ms-badge-inativo">Inativo</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" asp-route-profissionalId="@Model.ProfissionalId" class="btn btn-sm ms-dash-btn-ficha d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-folder2-open"></i> Ver Ficha
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Modal: Cadastro de Paciente -->
+<div class="modal fade" id="modalCadastroPaciente" tabindex="-1" aria-labelledby="modalCadastroPacienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="modalCadastroPacienteLabel">Novo Paciente</h5>
+                    <p class="ms-modal-subtitle mb-0">Preencha os dados para cadastrar o paciente</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cadastroPacienteFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro ao Cadastrar</strong>
+                        <p class="mb-0" id="cadastroPacienteFeedbackErroMensagem"></p>
+                    </div>
+                </div>
+                <div id="cadastroPacienteFeedbackSucesso" class="ms-alert ms-alert-sucesso d-none" role="alert">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <div>
+                        <strong>Sucesso!</strong>
+                        <p class="mb-0">Paciente cadastrado com sucesso!</p>
+                    </div>
+                </div>
+                <form id="formCadastroPaciente">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProfissionalId" value="@Model.ProfissionalId" />
+                    <div class="mb-3">
+                        <label for="PacienteNomeCompleto" class="form-label">Nome Completo<span class="ms-required">*</span></label>
+                        <input type="text" id="PacienteNomeCompleto" name="NomeCompleto" class="form-control" placeholder="Nome completo do paciente">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteTelefone" class="form-label">Telefone<span class="ms-required">*</span></label>
+                            <input type="tel" id="PacienteTelefone" name="Telefone" class="form-control" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteEmail" class="form-label">E-mail<span class="ms-required">*</span></label>
+                            <input type="email" id="PacienteEmail" name="Email" class="form-control" placeholder="paciente@email.com">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteDataNascimento" class="form-label">Data de Nascimento<span class="ms-required">*</span></label>
+                            <input type="date" id="PacienteDataNascimento" name="DataNascimento" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteCpf" class="form-label">CPF</label>
+                            <input type="text" id="PacienteCpf" name="Cpf" class="form-control" placeholder="000.000.000-00">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteSexo" class="form-label">Sexo</label>
+                            <select id="PacienteSexo" name="Sexo" class="form-select">
+                                <option value="">Selecione</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Outro">Outro</option>
+                                <option value="Prefiro não informar">Prefiro não informar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="PacienteContatoEmergencia" class="form-label">Contato de Emergência</label>
+                            <input type="text" id="PacienteContatoEmergencia" name="ContatoEmergencia" class="form-control" placeholder="Nome e telefone">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="PacienteProfissao" class="form-label">Profissão</label>
+                        <input type="text" id="PacienteProfissao" name="Profissao" class="form-control" placeholder="Profissão do paciente">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formCadastroPaciente" class="btn btn-ms-orange" id="btnSalvarPaciente">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarPacienteSpinner"></span>
+                    <span id="btnSalvarPacienteTexto">Salvar Paciente</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pacientes.js" asp-append-version="true"></script>
+}
