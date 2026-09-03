@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -11,10 +12,24 @@ namespace MinhaSessao.Services;
 public static class AutenticacaoService
 {
     private static readonly PasswordHasher<Profissional> Hasher = new();
+    private static readonly PasswordHasher<Paciente> HasherPaciente = new();
+
+    // Sem caracteres ambíguos (0/O, 1/l/I) para facilitar a digitação manual caso o profissional não copie a senha
+    private const string CaracteresSenhaTemporaria = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+
+    public static string GerarSenhaTemporaria(int tamanho = 10)
+    {
+        return RandomNumberGenerator.GetString(CaracteresSenhaTemporaria, tamanho);
+    }
 
     public static string HashSenha(Profissional profissional, string senha)
     {
         return Hasher.HashPassword(profissional, senha);
+    }
+
+    public static string HashSenhaPaciente(Paciente paciente, string senha)
+    {
+        return HasherPaciente.HashPassword(paciente, senha);
     }
 
     public static bool VerificarSenha(Profissional profissional, string senhaInformada)

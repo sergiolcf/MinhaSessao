@@ -97,6 +97,35 @@
         </main>
     </div>
 
+    <!-- Modal: Senha Temporária (reutilizado no cadastro e na regeneração de senha do paciente) -->
+    <div class="modal fade" id="modalSenhaTemporaria" tabindex="-1" aria-labelledby="modalSenhaTemporariaLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSenhaTemporariaLabel">
+                        <i class="bi bi-key-fill me-2"></i>Senha Temporária Gerada
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="ms-dash-table-subtext">Copie e repasse esta senha ao paciente. Por segurança, ela não poderá ser exibida novamente — se perdê-la, gere uma nova.</p>
+                    <div class="ms-senha-temp-box">
+                        <input type="text" id="senhaTemporariaValor" class="form-control" readonly>
+                        <button type="button" class="btn ms-dash-btn-icon" id="btnCopiarSenhaTemporaria" title="Copiar senha">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <p class="ms-senha-temp-copiado d-none" id="senhaTemporariaCopiadoMsg">
+                        <i class="bi bi-check-circle-fill"></i> Senha copiada!
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-ms-orange" data-bs-dismiss="modal">Concluído</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/dashboard.js" asp-append-version="true"></script>

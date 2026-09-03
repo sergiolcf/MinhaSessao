@@ -15,6 +15,9 @@ public class Paciente
 
     public string Email { get; set; } = string.Empty;
 
+    // Armazena o hash da senha temporária (gerada automaticamente no cadastro ou ao regenerar), nunca o texto puro
+    public string Senha { get; set; } = string.Empty;
+
     public DateTime DataNascimento { get; set; }
 
     public string? Sexo { get; set; }

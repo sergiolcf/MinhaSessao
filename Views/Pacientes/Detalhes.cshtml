@@ -186,6 +186,19 @@
                 </div>
             </div>
         </div>
+
+        <div class="ms-dash-card mt-3">
+            <div class="ms-dash-card-header">
+                <h5 class="mb-0">Acesso do Paciente</h5>
+            </div>
+            <p class="ms-dash-table-subtext mb-3">Caso o paciente perca a senha temporária de acesso, gere uma nova a qualquer momento.</p>
+            <div id="tokenGerarNovaSenhaPaciente">@Html.AntiForgeryToken()</div>
+            <button type="button" class="btn btn-outline-secondary" id="btnGerarNovaSenhaPaciente" data-paciente-id="@Model.Id">
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnGerarNovaSenhaPacienteSpinner"></span>
+                <i class="bi bi-key" id="btnGerarNovaSenhaPacienteIcone"></i>
+                <span id="btnGerarNovaSenhaPacienteTexto">Gerar nova senha</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -235,4 +248,5 @@
 
 @section Scripts {
     <script src="~/js/anotacoes.js" asp-append-version="true"></script>
+    <script src="~/js/pacientes-detalhes.js" asp-append-version="true"></script>
 }
