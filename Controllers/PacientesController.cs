@@ -355,6 +355,30 @@ public class PacientesController : Controller
 
         try
         {
+            var profissionalId = User.ObterProfissionalId();
+            var emailNormalizado = model.Email.Trim().ToLower();
+
+            // Evita duplicar Paciente: o e-mail é o identificador de login, então um paciente com
+            // esse e-mail já cadastrado (por este profissional ou por outro) não deve virar um novo registro
+            var pacienteExistente = await _context.Pacientes
+                .FirstOrDefaultAsync(p => p.Email.ToLower() == emailNormalizado);
+
+            if (pacienteExistente is not null)
+            {
+                var jaVinculado = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteExistente.Id, profissionalId);
+
+                if (jaVinculado)
+                {
+                    return Json(new { success = false, message = "Este paciente já está na sua lista." });
+                }
+
+                // Paciente já existe: não sobrescreve os dados dele (já são dele) nem gera senha nova, só cria o vínculo
+                _vinculoService.CriarVinculo(pacienteExistente.Id, profissionalId);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Paciente vinculado com sucesso!", vinculoExistente = true });
+            }
+
             var paciente = new Paciente
             {
                 Id = Guid.NewGuid(),
@@ -373,7 +397,7 @@ public class PacientesController : Controller
             paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, senhaTemporaria);
 
             _context.Pacientes.Add(paciente);
-            _vinculoService.CriarVinculo(paciente.Id, User.ObterProfissionalId());
+            _vinculoService.CriarVinculo(paciente.Id, profissionalId);
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Paciente cadastrado com sucesso!", senhaTemporaria });

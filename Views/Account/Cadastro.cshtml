@@ -1,0 +1,78 @@
+@model MinhaSessao.Models.ViewModels.CadastroViewModel
+@{
+    ViewData["Title"] = "Cadastro";
+    Layout = "_LayoutAuth";
+    var profissionalAtivo = Model.PerfilAtivo != "paciente";
+}
+
+<div class="ms-auth-card ms-auth-card-wide">
+    <div class="ms-auth-brand">
+        <i class="bi bi-house-door-fill"></i>
+        <span><span class="ms-brand-primary-dark">Minha</span><span class="ms-brand-accent">Sessao</span></span>
+    </div>
+    <p class="ms-auth-subtitle">Crie sua conta na MinhaSessao</p>
+
+    <ul class="nav nav-tabs ms-auth-tabs mb-4" id="cadastroTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link@(profissionalAtivo ? " active" : "")" id="tab-profissional-btn" data-bs-toggle="tab" data-bs-target="#tab-profissional" type="button" role="tab" aria-controls="tab-profissional" aria-selected="@(profissionalAtivo ? "true" : "false")">
+                <i class="bi bi-briefcase"></i> Sou Profissional
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link@(profissionalAtivo ? "" : " active")" id="tab-paciente-btn" data-bs-toggle="tab" data-bs-target="#tab-paciente" type="button" role="tab" aria-controls="tab-paciente" aria-selected="@(profissionalAtivo ? "false" : "true")">
+                <i class="bi bi-person-heart"></i> Sou Paciente
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="cadastroTabsContent">
+        <div class="tab-pane fade@(profissionalAtivo ? " show active" : "")" id="tab-profissional" role="tabpanel" aria-labelledby="tab-profissional-btn">
+            @if (profissionalAtivo && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="ms-alert ms-alert-erro" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro ao Cadastrar</strong>
+                        <p class="mb-0">@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</p>
+                    </div>
+                </div>
+            }
+            <form asp-controller="Account" asp-action="CadastroProfissional" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <partial name="_CamposCadastroProfissional" model="Model.Profissional" />
+                <button type="submit" class="btn btn-ms-orange w-100">Criar Conta</button>
+            </form>
+        </div>
+        <div class="tab-pane fade@(profissionalAtivo ? "" : " show active")" id="tab-paciente" role="tabpanel" aria-labelledby="tab-paciente-btn">
+            @if (!profissionalAtivo && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="ms-alert ms-alert-erro" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro ao Cadastrar</strong>
+                        <p class="mb-0">@ViewData.ModelState[string.Empty]!.Errors[0].ErrorMessage</p>
+                    </div>
+                </div>
+            }
+            <form asp-controller="Account" asp-action="CadastroPaciente" method="post">
+                @Html.AntiForgeryToken()
+                <partial name="_CamposCadastroPaciente" model="Model.Paciente" />
+                <button type="submit" class="btn btn-ms-orange w-100">Criar Conta</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="ms-auth-signup-text">
+        Já tem conta?
+        <a asp-controller="Account" asp-action="Login">Entrar</a>
+    </p>
+
+    <a asp-controller="Home" asp-action="Index" class="ms-auth-back-link">
+        <i class="bi bi-arrow-left"></i> Voltar para a página inicial
+    </a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/cadastro.js" asp-append-version="true"></script>
+}

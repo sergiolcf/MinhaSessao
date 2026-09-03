@@ -50,7 +50,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (resposta.ok && resultado.success) {
-                // Sucesso: fecha a modal de cadastro e exibe a senha temporária gerada para o paciente
+                // Sucesso: fecha a modal de cadastro. Se veio senha temporária (paciente novo), exibe a modal
+                // de senha; se veio vinculoExistente (paciente já cadastrado), só avisa e recarrega.
                 const modalCadastroEl = document.getElementById("modalCadastroPaciente");
                 if (modalCadastroEl) {
                     modalCadastroEl.addEventListener("hidden.bs.modal", function aoFecharCadastro() {
@@ -61,6 +62,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             window.exibirSenhaTemporaria(resultado.senhaTemporaria, function () {
                                 window.location.reload();
                             });
+                        } else if (resultado.vinculoExistente) {
+                            window.alert(resultado.message || "Paciente vinculado com sucesso!");
+                            window.location.reload();
                         } else {
                             window.location.reload();
                         }
