@@ -184,115 +184,7 @@ else
     </div>
 </div>
 
-<!-- Modal: Nova Sessão -->
-<div class="modal fade" id="modalNovaSessao" tabindex="-1" aria-labelledby="modalNovaSessaoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalNovaSessaoLabel">Nova Sessão</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                @Html.AntiForgeryToken()
-                <div id="novaSessaoFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
-                    <i class="bi bi-x-circle-fill"></i>
-                    <div>
-                        <strong>Erro</strong>
-                        <p class="mb-0" id="novaSessaoFeedbackErroMensagem"></p>
-                    </div>
-                </div>
-                <form id="formNovaSessao">
-                    <div class="mb-3">
-                        <label for="NovaSessaoPacienteBusca" class="form-label">Paciente<span class="ms-required">*</span></label>
-                        <div class="ms-lookup-paciente">
-                            <input type="hidden" id="NovaSessaoPacienteId" name="PacienteId" value="">
-                            <div class="ms-lookup-paciente-campo">
-                                <input type="text" id="NovaSessaoPacienteBusca" class="form-control" placeholder="Buscar paciente por nome ou CPF..." autocomplete="off">
-                                <button type="button" id="btnLimparNovaSessaoPaciente" class="btn-close ms-lookup-paciente-limpar d-none" aria-label="Limpar paciente"></button>
-                                <button type="button" id="btnProcurarNovaSessaoPaciente" class="btn btn-outline-secondary ms-lookup-paciente-procurar" title="Procurar paciente">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            <div id="sugestoesNovaSessaoPaciente" class="ms-filtro-paciente-sugestoes d-none"></div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="NovaSessaoData" class="form-label">Data e Hora<span class="ms-required">*</span></label>
-                        <div class="row g-2">
-                            <div class="col-7">
-                                <input type="date" id="NovaSessaoData" class="form-control">
-                            </div>
-                            <div class="col-5">
-                                <div class="ms-time-picker">
-                                    <input type="text" id="NovaSessaoHoraTexto" class="form-control" placeholder="Selecionar hora" readonly autocomplete="off">
-                                    <input type="hidden" id="NovaSessaoHora" value="">
-                                    <div class="ms-time-picker-painel d-none" id="NovaSessaoHoraPainel">
-                                        <div class="ms-time-picker-colunas">
-                                            <select id="NovaSessaoHoraSelectH" class="form-select form-select-sm"></select>
-                                            <span class="ms-time-picker-separador">:</span>
-                                            <select id="NovaSessaoHoraSelectM" class="form-select form-select-sm"></select>
-                                        </div>
-                                        <button type="button" class="btn btn-ms-orange btn-sm w-100 mt-2" id="btnSelecionarNovaSessaoHora">Selecionar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="NovaSessaoDataHora" name="DataHora">
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="NovaSessaoDuracaoMinutos" class="form-label">Duração (min)<span class="ms-required">*</span></label>
-                            <input type="number" id="NovaSessaoDuracaoMinutos" name="DuracaoMinutos" class="form-control" min="1" max="600" value="@Model.DuracaoPadraoSessaoMinutos">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="NovaSessaoStatus" class="form-label">Status Inicial<span class="ms-required">*</span></label>
-                            <select id="NovaSessaoStatus" name="Status" class="form-select">
-                                <option value="Agendada" selected>Agendada</option>
-                                <option value="Realizada">Realizada</option>
-                                <option value="Cancelada">Cancelada</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer justify-content-end">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="formNovaSessao" class="btn btn-ms-orange" id="btnSalvarNovaSessao">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarNovaSessaoSpinner"></span>
-                    <span id="btnSalvarNovaSessaoTexto">Agendar Sessão</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Procurar Paciente (lookup, aberto pelo botão de lupa do campo Paciente da Nova Sessão) -->
-<div class="modal fade" id="modalProcurarPacienteSessao" tabindex="-1" aria-labelledby="modalProcurarPacienteSessaoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalProcurarPacienteSessaoLabel">Selecionar Paciente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <input type="text" id="buscaModalProcurarPaciente" class="form-control mb-3" placeholder="Buscar por nome ou CPF...">
-                <div class="ms-lookup-paciente-lista" id="listaModalProcurarPaciente">
-                    @foreach (var paciente in Model.Pacientes)
-                    {
-                        <button type="button" class="ms-lookup-paciente-item" data-paciente-id="@paciente.Id" data-paciente-nome="@paciente.NomeCompleto" data-paciente-cpf-normalizado="@CpfUtil.Normalizar(paciente.CpfFormatado)">
-                            <span class="ms-lookup-paciente-item-nome">@paciente.NomeCompleto</span>
-                            <span class="ms-lookup-paciente-item-cpf">@paciente.CpfFormatado</span>
-                        </button>
-                    }
-                </div>
-                <div id="listaModalProcurarPacienteVazia" class="ms-dash-empty-state d-none">
-                    <i class="bi bi-search"></i>
-                    <h5>Nenhum paciente encontrado</h5>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<partial name="_ModalNovaSessao" model="new NovaSessaoModalViewModel { Pacientes = Model.Pacientes, DuracaoPadraoSessaoMinutos = Model.DuracaoPadraoSessaoMinutos }" />
 
 <!-- Modal: Editar Sessão -->
 <div class="modal fade" id="modalEditarSessao" tabindex="-1" aria-labelledby="modalEditarSessaoLabel" aria-hidden="true">
@@ -374,5 +266,7 @@ else
 </div>
 
 @section Scripts {
+    <script src="~/js/sessao-utils.js" asp-append-version="true"></script>
+    <script src="~/js/nova-sessao.js" asp-append-version="true"></script>
     <script src="~/js/sessoes.js" asp-append-version="true"></script>
 }

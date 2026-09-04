@@ -1,0 +1,111 @@
+@model MinhaSessao.Models.ViewModels.PainelAgendaProfissionalViewModel
+@{
+    ViewData["Title"] = "Minha Agenda";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Minha Agenda</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Acompanhe sua agenda de sessões por semana ou por mês.</p>
+    </div>
+</div>
+
+<div class="ms-dash-cards mb-4">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-week"></i>
+        <h5>Sessões na Semana</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesSemana</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar3"></i>
+        <h5>Sessões no Mês</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesMes</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-x"></i>
+        <h5>Sessões Canceladas</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesCanceladasMes</p>
+    </div>
+</div>
+
+<div class="ms-dash-card ms-agenda-card">
+    <div class="ms-agenda-toolbar">
+        <div class="btn-group" role="group" aria-label="Visão da agenda">
+            <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnAgendaVisaoSemana">Semana</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAgendaVisaoMes">Mês</button>
+        </div>
+        <span class="ms-agenda-periodo" id="agendaPeriodoLabel"></span>
+        <div class="ms-agenda-navegacao">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAgendaAnterior" title="Período anterior">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAgendaHoje">Hoje</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAgendaProximo" title="Próximo período">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="ms-agenda-legenda">
+        <span class="ms-agenda-legenda-item"><span class="ms-agenda-dot ms-agenda-dot-agendada"></span> Agendada</span>
+        <span class="ms-agenda-legenda-item"><span class="ms-agenda-dot ms-agenda-dot-realizada"></span> Realizada</span>
+        <span class="ms-agenda-legenda-item"><span class="ms-agenda-dot ms-agenda-dot-cancelada"></span> Cancelada</span>
+    </div>
+
+    <div id="agendaGradeSemana" class="ms-agenda-grade-semana"></div>
+    <div id="agendaCabecalhoMes" class="ms-agenda-cabecalho-mes d-none">
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+    </div>
+    <div id="agendaGradeMes" class="ms-agenda-grade-mes d-none"></div>
+</div>
+
+<partial name="_ModalNovaSessao" model="new NovaSessaoModalViewModel { Pacientes = Model.Pacientes, DuracaoPadraoSessaoMinutos = Model.DuracaoPadraoSessaoMinutos }" />
+
+<!-- Modal: Detalhes da Sessão (Agenda) -->
+<div class="modal fade" id="modalDetalhesSessaoAgenda" tabindex="-1" aria-labelledby="modalDetalhesSessaoAgendaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalhesSessaoAgendaLabel">Detalhes da Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ms-agenda-detalhe-linha">
+                    <span class="ms-agenda-detalhe-rotulo">Paciente</span>
+                    <span id="agendaDetalhePaciente"></span>
+                </div>
+                <div class="ms-agenda-detalhe-linha">
+                    <span class="ms-agenda-detalhe-rotulo">Data e Hora</span>
+                    <span id="agendaDetalheDataHora"></span>
+                </div>
+                <div class="ms-agenda-detalhe-linha">
+                    <span class="ms-agenda-detalhe-rotulo">Duração</span>
+                    <span id="agendaDetalheDuracao"></span>
+                </div>
+                <div class="ms-agenda-detalhe-linha">
+                    <span class="ms-agenda-detalhe-rotulo">Status</span>
+                    <span id="agendaDetalheStatus"></span>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                <a href="#" id="agendaDetalheLinkProntuario" class="btn btn-ms-orange">
+                    <i class="bi bi-folder2-open"></i> Acessar Prontuário
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/sessao-utils.js" asp-append-version="true"></script>
+    <script src="~/js/nova-sessao.js" asp-append-version="true"></script>
+    <script src="~/js/agenda.js" asp-append-version="true"></script>
+}

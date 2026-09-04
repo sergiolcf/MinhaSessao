@@ -54,6 +54,7 @@
             var acaoAtual = ViewContext.RouteData.Values["action"]?.ToString();
             var isInicioAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
+            var isAgendaAtivo = string.Equals(controladorAtual, "Agenda", StringComparison.OrdinalIgnoreCase);
             var isPacientesAtivo = string.Equals(controladorAtual, "Pacientes", StringComparison.OrdinalIgnoreCase);
             var isSessoesAtivo = string.Equals(controladorAtual, "Sessoes", StringComparison.OrdinalIgnoreCase);
             var isConfiguracoesAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
@@ -69,7 +70,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="Agenda" asp-action="Index"
+                       class="ms-dash-menu-link@(isAgendaAtivo ? " active" : "")">
                         <i class="bi bi-calendar-check"></i>
                         <span class="menu-text">Minha Agenda</span>
                     </a>
