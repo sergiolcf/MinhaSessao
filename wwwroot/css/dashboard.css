@@ -290,6 +290,24 @@ body.ms-dashboard-body {
   margin: 0;
 }
 
+/* Lista de combinados ativos no card "Meus Combinados" (Início do Painel do Paciente) */
+.ms-painel-combinados-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ms-painel-combinados-lista li {
+  color: var(--ms-text);
+  padding: 0.25rem 0;
+}
+
+.ms-painel-combinado-objetivo {
+  color: #6C757D;
+  font-size: 0.8rem;
+}
+
 /* Botão de destaque padrão (laranja) usado nas páginas internas do dashboard */
 .btn-ms-orange {
   background-color: var(--ms-orange);
@@ -1249,7 +1267,14 @@ body.ms-dashboard-body {
   overflow-y: auto;
 }
 
-.ms-dash-table-scroll thead th {
+/* Variante com ~5 linhas visíveis (ex.: "Todos os Profissionais" no Painel do Paciente) */
+.ms-dash-table-scroll-5 {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.ms-dash-table-scroll thead th,
+.ms-dash-table-scroll-5 thead th {
   position: sticky;
   top: 0;
   background-color: #fff;

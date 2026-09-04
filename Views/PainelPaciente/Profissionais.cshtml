@@ -15,7 +15,7 @@
 <ul class="nav nav-tabs ms-dash-tabs" id="profissionaisTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link@(abaTodosAtiva ? "" : " active")" id="meus-profissionais-tab" data-bs-toggle="tab" data-bs-target="#meusProfissionais" type="button" role="tab" aria-controls="meusProfissionais" aria-selected="@(abaTodosAtiva ? "false" : "true")">
-            <i class="bi bi-person-check"></i> Meus Profissionais
+            <i class="bi bi-person-check"></i> Acompanhando Você
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -101,8 +101,9 @@
         </div>
 
         <div id="todosProfissionaisContainer">
-            <div class="ms-dash-card ms-dash-table-card">
-                <div class="table-responsive">
+            <div class="ms-dash-card ms-dash-table-card" id="cardTodosProfissionais"
+                 data-pagina-atual="@Model.PaginaAtualTodos" data-total-paginas="@Model.TotalPaginasTodos">
+                <div class="table-responsive ms-dash-table-scroll-5">
                     <table class="table table-hover ms-dash-table align-middle mb-0">
                         <thead>
                             <tr>
@@ -142,6 +143,19 @@
                     </table>
                 </div>
             </div>
+            <nav aria-label="Paginação de profissionais" class="mt-3">
+                <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoTodosProfissionais">
+                    @if (Model.TotalPaginasTodos > 1)
+                    {
+                        for (var pagina = 1; pagina <= Model.TotalPaginasTodos; pagina++)
+                        {
+                            <li class="page-item@(pagina == Model.PaginaAtualTodos ? " active" : "")">
+                                <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
         </div>
     </div>
 </div>

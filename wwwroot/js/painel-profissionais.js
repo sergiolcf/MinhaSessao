@@ -1,7 +1,15 @@
+let ms_paginaTodosProfissionais = 1;
+let ms_totalPaginasTodosProfissionais = 1;
+
 document.addEventListener("DOMContentLoaded", function () {
     const listaTodosProfissionais = document.getElementById("listaTodosProfissionais");
     const buscaInput = document.getElementById("buscaTodosProfissionais");
+    const paginacaoTodosProfissionais = document.getElementById("paginacaoTodosProfissionais");
     const modalEl = document.getElementById("modalDetalhesProfissional");
+
+    const cardTodosProfissionais = document.getElementById("cardTodosProfissionais");
+    ms_paginaTodosProfissionais = parseInt(cardTodosProfissionais?.dataset.paginaAtual || "1", 10);
+    ms_totalPaginasTodosProfissionais = parseInt(cardTodosProfissionais?.dataset.totalPaginas || "1", 10);
 
     if (!modalEl) return;
 
@@ -75,6 +83,27 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    function renderizarPaginacaoTodosProfissionais(paginaAtual, totalPaginas) {
+        if (!paginacaoTodosProfissionais) return;
+        paginacaoTodosProfissionais.innerHTML = "";
+
+        if (totalPaginas <= 1) return;
+
+        for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+            const li = document.createElement("li");
+            li.className = "page-item" + (pagina === paginaAtual ? " active" : "");
+
+            const botao = document.createElement("button");
+            botao.type = "button";
+            botao.className = "page-link";
+            botao.dataset.pagina = String(pagina);
+            botao.textContent = String(pagina);
+
+            li.appendChild(botao);
+            paginacaoTodosProfissionais.appendChild(li);
+        }
+    }
+
     // Debounce simples: evita disparar uma requisição a cada milissegundo enquanto o usuário digita
     function debounce(fn, atrasoMs) {
         let temporizador;
@@ -84,9 +113,9 @@ document.addEventListener("DOMContentLoaded", function () {
         };
     }
 
-    async function buscarTodosProfissionais(termo) {
+    async function buscarTodosProfissionais(termo, pagina) {
         try {
-            const parametros = new URLSearchParams();
+            const parametros = new URLSearchParams({ pagina: String(pagina || 1) });
             if (termo) parametros.set("busca", termo);
 
             const resposta = await fetch(`/PainelPaciente/BuscarProfissionais?${parametros.toString()}`);
@@ -95,6 +124,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!resposta.ok || !resultado.success) return;
 
             renderizarTodosProfissionais(resultado.profissionais, termo);
+            renderizarPaginacaoTodosProfissionais(resultado.paginaAtual, resultado.totalPaginas);
+            ms_paginaTodosProfissionais = resultado.paginaAtual;
+            ms_totalPaginasTodosProfissionais = resultado.totalPaginas;
         } catch (erro) {
             // Mantém a lista atual em caso de falha de conexão
         }
@@ -102,10 +134,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (buscaInput) {
         const dispararBusca = debounce(function () {
-            buscarTodosProfissionais(buscaInput.value.trim());
+            // Toda nova busca reinicia na página 1 (o termo muda o total de resultados)
+            buscarTodosProfissionais(buscaInput.value.trim(), 1);
         }, 300);
 
         buscaInput.addEventListener("input", dispararBusca);
+    }
+
+    if (paginacaoTodosProfissionais) {
+        paginacaoTodosProfissionais.addEventListener("click", function (e) {
+            const botao = e.target.closest(".page-link");
+            if (!botao) return;
+            const pagina = parseInt(botao.dataset.pagina, 10);
+            if (pagina === ms_paginaTodosProfissionais) return;
+            buscarTodosProfissionais(buscaInput ? buscaInput.value.trim() : "", pagina);
+        });
     }
 
     function definirEstadoModal(estado) {

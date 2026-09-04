@@ -6,6 +6,10 @@ public class PainelProfissionaisViewModel
 
     public List<ProfissionalListaItemViewModel> TodosProfissionais { get; set; } = new();
 
+    public int PaginaAtualTodos { get; set; } = 1;
+
+    public int TotalPaginasTodos { get; set; } = 1;
+
     // "meus" ou "todos" — qual aba deve abrir ativa (ex.: chegada via redirect da antiga rota de busca)
     public string AbaInicial { get; set; } = "meus";
 
