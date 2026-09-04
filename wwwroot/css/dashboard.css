@@ -1382,6 +1382,60 @@ body.ms-dashboard-body {
   color: #6C757D;
 }
 
+.ms-objetivo-historico {
+  margin-bottom: 1rem;
+}
+
+.ms-objetivo-historico-vazio {
+  color: #6C757D;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.ms-objetivo-historico-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ms-orange);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ms-objetivo-historico-toggle:hover {
+  text-decoration: underline;
+}
+
+.ms-objetivo-historico-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+}
+
+.ms-objetivo-historico-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.4rem;
+  background-color: rgba(43, 45, 66, 0.03);
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.ms-objetivo-historico-item:last-child {
+  margin-bottom: 0;
+}
+
+.ms-objetivo-historico-data {
+  font-weight: 600;
+  color: var(--ms-text);
+}
+
+.ms-objetivo-historico-observacao {
+  color: #6C757D;
+}
+
 .ms-objetivo-card-footer {
   display: flex;
   align-items: center;

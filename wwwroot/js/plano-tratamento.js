@@ -163,6 +163,21 @@
                 })
                 .join("");
 
+            const totalSessoesVinculadas = objetivo.totalSessoesVinculadas || 0;
+            const idHistorico = `historicoSessoesObjetivo_${objetivo.id}`;
+
+            const historicoHtml = totalSessoesVinculadas === 0
+                ? `<p class="ms-objetivo-historico-vazio">Nenhuma sessão registrada ainda</p>`
+                : `
+                    <button type="button" class="ms-objetivo-historico-toggle" data-bs-toggle="collapse" data-bs-target="#${idHistorico}">
+                        <i class="bi bi-clock-history"></i> Histórico de Sessões (${totalSessoesVinculadas})
+                    </button>
+                    <div class="collapse ms-objetivo-historico-collapse" id="${idHistorico}" data-objetivo-id="${objetivo.id}" data-carregado="false" data-pagina-atual="0" data-total-paginas="1">
+                        <ul class="ms-objetivo-historico-lista"></ul>
+                        <button type="button" class="btn btn-sm btn-link ms-objetivo-historico-carregar-mais d-none">Carregar mais</button>
+                    </div>
+                `;
+
             card.innerHTML = `
                 <div class="ms-objetivo-card-header">
                     <h6 class="ms-objetivo-titulo">${escaparHtml(objetivo.titulo)}</h6>
@@ -181,6 +196,9 @@
                 <ul class="ms-combinado-lista">
                     ${itensCombinados}
                 </ul>
+                <div class="ms-objetivo-historico">
+                    ${historicoHtml}
+                </div>
                 <div class="ms-objetivo-card-footer">
                     <select class="form-select form-select-sm ms-objetivo-status-select" data-objetivo-id="${objetivo.id}" title="Alterar status">
                         ${opcoesStatus}
@@ -326,6 +344,47 @@
             }
         }
 
+        async function carregarHistoricoSessoes(collapseEl, pagina) {
+            const objetivoId = collapseEl.dataset.objetivoId;
+            const listaEl = collapseEl.querySelector(".ms-objetivo-historico-lista");
+            const btnCarregarMais = collapseEl.querySelector(".ms-objetivo-historico-carregar-mais");
+
+            try {
+                const parametros = new URLSearchParams({ objetivoId, pagina });
+                const resposta = await fetch(`/Pacientes/ListarSessoesDoObjetivo?${parametros.toString()}`);
+                const resultado = await resposta.json();
+
+                if (!resposta.ok || !resultado.success) return;
+
+                const itensHtml = (resultado.sessoes || [])
+                    .map(function (sessao) {
+                        return `
+                            <li class="ms-objetivo-historico-item">
+                                <span class="ms-objetivo-historico-data">${escaparHtml(sessao.dataHora)}</span>
+                                ${sessao.observacao ? `<span class="ms-objetivo-historico-observacao">${escaparHtml(sessao.observacao)}</span>` : ""}
+                            </li>
+                        `;
+                    })
+                    .join("");
+
+                if (pagina === 1) {
+                    listaEl.innerHTML = itensHtml;
+                } else {
+                    listaEl.insertAdjacentHTML("beforeend", itensHtml);
+                }
+
+                collapseEl.dataset.carregado = "true";
+                collapseEl.dataset.paginaAtual = String(resultado.paginaAtual);
+                collapseEl.dataset.totalPaginas = String(resultado.totalPaginas);
+
+                if (btnCarregarMais) {
+                    btnCarregarMais.classList.toggle("d-none", resultado.paginaAtual >= resultado.totalPaginas);
+                }
+            } catch (erro) {
+                // Mantém o estado atual em caso de falha de conexão
+            }
+        }
+
         async function excluirObjetivo(id) {
             if (!window.confirm("Tem certeza que deseja excluir este objetivo? Os combinados dele também serão removidos.")) return;
 
@@ -378,7 +437,23 @@
             const botaoExcluir = e.target.closest(".ms-objetivo-excluir");
             if (botaoExcluir) {
                 excluirObjetivo(botaoExcluir.dataset.objetivoId);
+                return;
             }
+
+            const botaoCarregarMais = e.target.closest(".ms-objetivo-historico-carregar-mais");
+            if (botaoCarregarMais) {
+                const collapseEl = botaoCarregarMais.closest(".ms-objetivo-historico-collapse");
+                const proximaPagina = parseInt(collapseEl.dataset.paginaAtual, 10) + 1;
+                carregarHistoricoSessoes(collapseEl, proximaPagina);
+            }
+        });
+
+        listaObjetivos.addEventListener("show.bs.collapse", function (e) {
+            const collapseEl = e.target;
+            if (!collapseEl.classList.contains("ms-objetivo-historico-collapse")) return;
+            if (collapseEl.dataset.carregado === "true") return;
+
+            carregarHistoricoSessoes(collapseEl, 1);
         });
 
         renderizarCombinadosForm();
