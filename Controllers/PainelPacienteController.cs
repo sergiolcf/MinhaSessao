@@ -12,6 +12,8 @@ namespace MinhaSessao.Controllers;
 [Authorize(Roles = AutenticacaoService.PapelPaciente)]
 public class PainelPacienteController : Controller
 {
+    private const int ProfissionaisPorPagina = 10;
+
     private readonly ApplicationDbContext _context;
 
     public PainelPacienteController(ApplicationDbContext context)
@@ -29,10 +31,38 @@ public class PainelPacienteController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        var agora = DateTime.UtcNow;
+
+        var proximaSessao = await _context.Sessoes
+            .Where(s => s.PacienteId == pacienteId && s.Status == StatusSessao.Agendada && s.DataHora >= agora)
+            .OrderBy(s => s.DataHora)
+            .Select(s => new { s.DataHora, ProfissionalNome = s.Profissional!.NomeCompleto })
+            .FirstOrDefaultAsync();
+
+        var totalSessoesRealizadas = await _context.Sessoes
+            .CountAsync(s => s.PacienteId == pacienteId && s.Status == StatusSessao.Realizada);
+
+        var combinadosAtivos = await _context.Combinados
+            .Where(c => !c.Concluido
+                && c.ObjetivoTerapeutico!.PacienteId == pacienteId
+                && c.ObjetivoTerapeutico!.Status == StatusObjetivo.EmAndamento)
+            .OrderByDescending(c => c.ObjetivoTerapeutico!.DataCriacao)
+            .Take(5)
+            .Select(c => new CombinadoAtivoViewModel
+            {
+                Descricao = c.Descricao,
+                ObjetivoTitulo = c.ObjetivoTerapeutico!.Titulo
+            })
+            .ToListAsync();
+
         var model = new PainelPacienteViewModel
         {
             PacienteId = paciente.Id,
-            NomeCompleto = paciente.NomeCompleto
+            NomeCompleto = paciente.NomeCompleto,
+            ProximaSessaoDataHora = proximaSessao?.DataHora,
+            ProximaSessaoProfissionalNome = proximaSessao?.ProfissionalNome,
+            TotalSessoesRealizadas = totalSessoesRealizadas,
+            CombinadosAtivos = combinadosAtivos
         };
 
         ViewBag.PacienteId = paciente.Id;
@@ -62,10 +92,14 @@ public class PainelPacienteController : Controller
         ViewBag.PacienteId = paciente.Id;
         ViewBag.PacienteNome = paciente.NomeCompleto;
 
+        var (todosProfissionais, paginaAtualTodos, totalPaginasTodos) = await ObterPaginaTodosProfissionaisAsync(busca, 1);
+
         var model = new PainelProfissionaisViewModel
         {
             MeusProfissionais = await ObterMeusProfissionaisAsync(pacienteId),
-            TodosProfissionais = await ObterTodosProfissionaisAsync(busca),
+            TodosProfissionais = todosProfissionais,
+            PaginaAtualTodos = paginaAtualTodos,
+            TotalPaginasTodos = totalPaginasTodos,
             AbaInicial = string.Equals(aba, "todos", StringComparison.OrdinalIgnoreCase) ? "todos" : "meus",
             TermoBusca = busca
         };
@@ -74,10 +108,10 @@ public class PainelPacienteController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> BuscarProfissionais(string? busca)
+    public async Task<IActionResult> BuscarProfissionais(string? busca, int pagina = 1)
     {
-        var profissionais = await ObterTodosProfissionaisAsync(busca);
-        return Json(new { success = true, profissionais });
+        var (profissionais, paginaAtual, totalPaginas) = await ObterPaginaTodosProfissionaisAsync(busca, pagina);
+        return Json(new { success = true, profissionais, paginaAtual, totalPaginas });
     }
 
     [HttpGet]
@@ -295,7 +329,7 @@ public class PainelPacienteController : Controller
             .ToListAsync();
     }
 
-    private async Task<List<ProfissionalListaItemViewModel>> ObterTodosProfissionaisAsync(string? busca)
+    private async Task<(List<ProfissionalListaItemViewModel> Itens, int PaginaAtual, int TotalPaginas)> ObterPaginaTodosProfissionaisAsync(string? busca, int pagina)
     {
         var consulta = _context.Profissionais.AsQueryable();
 
@@ -305,8 +339,15 @@ public class PainelPacienteController : Controller
             consulta = consulta.Where(p => p.NomeCompleto.ToLower().Contains(termoBusca) || p.RegistroCRP.ToLower().Contains(termoBusca));
         }
 
-        return await consulta
-            .OrderBy(p => p.NomeCompleto)
+        consulta = consulta.OrderBy(p => p.NomeCompleto);
+
+        var totalProfissionais = await consulta.CountAsync();
+        var totalPaginas = totalProfissionais == 0 ? 1 : (int)Math.Ceiling(totalProfissionais / (double)ProfissionaisPorPagina);
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+
+        var itens = await consulta
+            .Skip((pagina - 1) * ProfissionaisPorPagina)
+            .Take(ProfissionaisPorPagina)
             .Select(p => new ProfissionalListaItemViewModel
             {
                 Id = p.Id,
@@ -316,5 +357,7 @@ public class PainelPacienteController : Controller
                 FotoUrl = p.FotoUrl
             })
             .ToListAsync();
+
+        return (itens, pagina, totalPaginas);
     }
 }

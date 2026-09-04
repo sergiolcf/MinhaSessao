@@ -13,12 +13,21 @@
     <div class="ms-dash-card">
         <i class="bi bi-calendar-event"></i>
         <h5>Próxima Sessão</h5>
-        <p>Em breve você poderá acompanhar sua próxima sessão por aqui.</p>
+        @if (Model.ProximaSessaoDataHora.HasValue)
+        {
+            <p class="mb-1">@Model.ProximaSessaoDataHora.Value.ToString("dd/MM/yyyy") às @Model.ProximaSessaoDataHora.Value.ToString("HH:mm")</p>
+            <p class="mb-0">@Model.ProximaSessaoProfissionalNome</p>
+        }
+        else
+        {
+            <p>Nenhuma sessão agendada no momento.</p>
+        }
     </div>
     <div class="ms-dash-card">
         <i class="bi bi-journal-medical"></i>
         <h5>Minhas Sessões</h5>
-        <p>Em breve você poderá acompanhar o histórico das suas sessões por aqui.</p>
+        <p class="mb-2">@Model.TotalSessoesRealizadas sessões realizadas</p>
+        <a asp-controller="PainelPaciente" asp-action="Sessoes">Ver histórico completo</a>
     </div>
     <div class="ms-dash-card">
         <i class="bi bi-people"></i>
@@ -26,8 +35,20 @@
         <p>Consulte os profissionais que acompanham ou já acompanharam sua jornada.</p>
     </div>
     <div class="ms-dash-card">
-        <i class="bi bi-gear"></i>
-        <h5>Configurações</h5>
-        <p>Em breve você poderá ajustar as configurações da sua conta.</p>
+        <i class="bi bi-check2-square"></i>
+        <h5>Meus Combinados</h5>
+        @if (Model.CombinadosAtivos.Count == 0)
+        {
+            <p>Nenhum combinado ativo no momento.</p>
+        }
+        else
+        {
+            <ul class="ms-painel-combinados-lista">
+                @foreach (var combinado in Model.CombinadosAtivos)
+                {
+                    <li>@combinado.Descricao <span class="ms-painel-combinado-objetivo">(@combinado.ObjetivoTitulo)</span></li>
+                }
+            </ul>
+        }
     </div>
 </div>
