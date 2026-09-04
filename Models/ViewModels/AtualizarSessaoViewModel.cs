@@ -17,4 +17,6 @@ public class AtualizarSessaoViewModel
     public string Status { get; set; } = string.Empty;
 
     public string? AnotacoesClinicas { get; set; }
+
+    public List<SessaoObjetivoViewModel>? Objetivos { get; set; }
 }

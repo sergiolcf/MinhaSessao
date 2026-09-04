@@ -315,6 +315,49 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const horaTextoEditar = document.getElementById("EditarSessaoHoraTexto");
+        const objetivosContainer = document.getElementById("EditarSessaoObjetivosContainer");
+
+        // Renderiza a lista de objetivos em andamento do paciente, marcando/preenchendo os que já estão
+        // vinculados a esta sessão (checkbox + campo de observação escondido até o objetivo ser marcado)
+        function renderizarObjetivosSessao(objetivosAtivos, objetivosVinculados) {
+            if (!objetivosContainer) return;
+
+            objetivosContainer.innerHTML = "";
+
+            if (!objetivosAtivos || objetivosAtivos.length === 0) {
+                objetivosContainer.innerHTML = `<p class="ms-dash-table-subtext mb-0">Nenhum objetivo em andamento para este paciente.</p>`;
+                return;
+            }
+
+            const vinculados = {};
+            (objetivosVinculados || []).forEach(function (v) {
+                vinculados[v.objetivoTerapeuticoId] = v.observacao || "";
+            });
+
+            objetivosAtivos.forEach(function (objetivo) {
+                const marcado = Object.prototype.hasOwnProperty.call(vinculados, objetivo.id);
+                const observacao = vinculados[objetivo.id] || "";
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "form-check mb-2";
+                wrapper.innerHTML = `
+                    <input class="form-check-input ms-objetivo-sessao-checkbox" type="checkbox" value="${objetivo.id}" id="objetivoSessaoChk_${objetivo.id}" ${marcado ? "checked" : ""}>
+                    <label class="form-check-label" for="objetivoSessaoChk_${objetivo.id}">${escaparHtml(objetivo.titulo)}</label>
+                    <div class="mt-1 ms-objetivo-sessao-observacao-wrapper ${marcado ? "" : "d-none"}">
+                        <input type="text" class="form-control form-control-sm ms-objetivo-sessao-observacao" placeholder="Observação (opcional)" value="${escaparHtml(observacao)}">
+                    </div>
+                `;
+                objetivosContainer.appendChild(wrapper);
+            });
+        }
+
+        if (objetivosContainer) {
+            objetivosContainer.addEventListener("change", function (e) {
+                if (!e.target.classList.contains("ms-objetivo-sessao-checkbox")) return;
+                const wrapper = e.target.closest(".form-check").querySelector(".ms-objetivo-sessao-observacao-wrapper");
+                if (wrapper) wrapper.classList.toggle("d-none", !e.target.checked);
+            });
+        }
 
         function preencherModalEdicao(dados) {
             ocultarErro();
@@ -324,6 +367,7 @@ document.addEventListener("DOMContentLoaded", function () {
             duracaoInput.value = dados.duracaoMinutos || "";
             statusSelect.value = dados.status || "Agendada";
             if (anotacoesClinicasInput) anotacoesClinicasInput.value = dados.anotacoesClinicas || "";
+            renderizarObjetivosSessao(dados.objetivosAtivos, dados.objetivosVinculados);
         }
 
         async function abrirModalEdicao(sessaoId) {
@@ -377,6 +421,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const formData = new FormData(formEditarSessao);
             if (tokenInputEditar) formData.append("__RequestVerificationToken", tokenInputEditar.value);
 
+            if (objetivosContainer) {
+                const checkboxesMarcados = objetivosContainer.querySelectorAll(".ms-objetivo-sessao-checkbox:checked");
+                checkboxesMarcados.forEach(function (checkbox, indice) {
+                    const observacaoInput = checkbox.closest(".form-check").querySelector(".ms-objetivo-sessao-observacao");
+                    formData.append(`Objetivos[${indice}].ObjetivoTerapeuticoId`, checkbox.value);
+                    formData.append(`Objetivos[${indice}].Observacao`, observacaoInput ? observacaoInput.value : "");
+                });
+            }
+
             try {
                 const resposta = await fetch("/Sessoes/Atualizar", { method: "POST", body: formData });
                 let resultado;
@@ -390,7 +443,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     exibirToast(resultado.message || "Sessão atualizada com sucesso!", true);
                     modalEditarSessaoEl.addEventListener("hidden.bs.modal", function aoFecharRecarregar() {
                         modalEditarSessaoEl.removeEventListener("hidden.bs.modal", aoFecharRecarregar);
-                        window.location.reload();
+                        // Remove o parâmetro abrirSessaoId antes de recarregar, senão o modal reabriria sozinho
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete("abrirSessaoId");
+                        window.location.href = url.toString();
                     });
                     bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).hide();
                 } else {

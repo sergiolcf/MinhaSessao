@@ -215,6 +215,17 @@ public class SessoesController : Controller
             return Json(new { success = false, message = "Sessão não encontrada." });
         }
 
+        var objetivosAtivos = await _context.ObjetivosTerapeuticos
+            .Where(o => o.PacienteId == sessao.PacienteId && o.Status == StatusObjetivo.EmAndamento)
+            .OrderBy(o => o.Titulo)
+            .Select(o => new { id = o.Id, titulo = o.Titulo })
+            .ToListAsync();
+
+        var objetivosVinculados = await _context.SessoesObjetivos
+            .Where(so => so.SessaoId == sessao.Id)
+            .Select(so => new { objetivoTerapeuticoId = so.ObjetivoTerapeuticoId, observacao = so.Observacao })
+            .ToListAsync();
+
         return Json(new
         {
             success = true,
@@ -223,7 +234,9 @@ public class SessoesController : Controller
             dataHoraIso = sessao.DataHoraIso,
             duracaoMinutos = sessao.DuracaoMinutos,
             status = sessao.Status,
-            anotacoesClinicas = sessao.AnotacoesClinicas
+            anotacoesClinicas = sessao.AnotacoesClinicas,
+            objetivosAtivos,
+            objetivosVinculados
         });
     }
 
@@ -304,6 +317,40 @@ public class SessoesController : Controller
             sessao.DuracaoMinutos = model.DuracaoMinutos;
             sessao.Status = status;
             sessao.AnotacoesClinicas = model.AnotacoesClinicas;
+
+            var objetivosEnviados = model.Objetivos?
+                .Where(o => o.ObjetivoTerapeuticoId != Guid.Empty)
+                .ToList() ?? new List<SessaoObjetivoViewModel>();
+
+            var vinculosExistentes = await _context.SessoesObjetivos
+                .Where(so => so.SessaoId == sessao.Id)
+                .ToListAsync();
+
+            var idsEnviados = objetivosEnviados.Select(o => o.ObjetivoTerapeuticoId).ToHashSet();
+            var vinculosParaRemover = vinculosExistentes
+                .Where(so => !idsEnviados.Contains(so.ObjetivoTerapeuticoId))
+                .ToList();
+
+            _context.SessoesObjetivos.RemoveRange(vinculosParaRemover);
+
+            foreach (var objetivo in objetivosEnviados)
+            {
+                var vinculo = vinculosExistentes.FirstOrDefault(so => so.ObjetivoTerapeuticoId == objetivo.ObjetivoTerapeuticoId);
+
+                if (vinculo is not null)
+                {
+                    vinculo.Observacao = objetivo.Observacao;
+                }
+                else
+                {
+                    _context.SessoesObjetivos.Add(new SessaoObjetivo
+                    {
+                        SessaoId = sessao.Id,
+                        ObjetivoTerapeuticoId = objetivo.ObjetivoTerapeuticoId,
+                        Observacao = objetivo.Observacao
+                    });
+                }
+            }
 
             await _context.SaveChangesAsync();
 
