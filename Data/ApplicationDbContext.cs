@@ -65,7 +65,7 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<SessaoObjetivo>()
             .HasOne(so => so.ObjetivoTerapeutico)
-            .WithMany()
+            .WithMany(o => o.SessoesObjetivo)
             .HasForeignKey(so => so.ObjetivoTerapeuticoId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);

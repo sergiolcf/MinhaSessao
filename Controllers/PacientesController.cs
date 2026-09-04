@@ -540,11 +540,49 @@ public class PacientesController : Controller
                     concluido = c.Concluido
                 }).ToList(),
                 totalCombinados = o.Combinados.Count,
-                combinadosConcluidos = o.Combinados.Count(c => c.Concluido)
+                combinadosConcluidos = o.Combinados.Count(c => c.Concluido),
+                totalSessoesVinculadas = o.SessoesObjetivo.Count
             })
             .ToListAsync();
 
         return Json(new { success = true, objetivos });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ListarSessoesDoObjetivo(Guid objetivoId, int pagina = 1)
+    {
+        const int tamanhoPagina = 10;
+
+        var profissionalId = User.ObterProfissionalId();
+
+        var objetivoValido = await _context.ObjetivosTerapeuticos
+            .AnyAsync(o => o.Id == objetivoId && o.ProfissionalId == profissionalId);
+
+        if (!objetivoValido)
+        {
+            return Json(new { success = false, message = "Objetivo não encontrado." });
+        }
+
+        if (pagina < 1) pagina = 1;
+
+        var query = _context.SessoesObjetivos
+            .Where(so => so.ObjetivoTerapeuticoId == objetivoId)
+            .OrderByDescending(so => so.Sessao!.DataHora);
+
+        var totalSessoes = await query.CountAsync();
+        var totalPaginas = totalSessoes == 0 ? 1 : (int)Math.Ceiling(totalSessoes / (double)tamanhoPagina);
+
+        var sessoes = await query
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .Select(so => new
+            {
+                dataHora = so.Sessao!.DataHora.ToString("dd/MM/yyyy"),
+                observacao = so.Observacao
+            })
+            .ToListAsync();
+
+        return Json(new { success = true, sessoes, paginaAtual = pagina, totalPaginas });
     }
 
     [HttpPost]

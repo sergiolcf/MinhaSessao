@@ -25,4 +25,6 @@ public class ObjetivoTerapeutico
     public Profissional? Profissional { get; set; }
 
     public ICollection<Combinado> Combinados { get; set; } = new List<Combinado>();
+
+    public ICollection<SessaoObjetivo> SessoesObjetivo { get; set; } = new List<SessaoObjetivo>();
 }
