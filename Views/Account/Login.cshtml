@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Entrar";
     Layout = "_LayoutAuth";
+    // Desativado a pedido do usuário: não excluir, só não exibir o botão de login de teste
+    var exibirLoginContaTeste = false;
 }
 
 <div class="ms-auth-card">
@@ -41,13 +43,16 @@
         <button type="submit" class="btn btn-ms-orange w-100">Entrar</button>
     </form>
 
-    <div class="ms-auth-divider"><span>ou</span></div>
+    @if (exibirLoginContaTeste)
+    {
+        <div class="ms-auth-divider"><span>ou</span></div>
 
-    <form asp-controller="Account" asp-action="LoginSimuladoTeste" method="post">
-        <button type="submit" class="btn btn-outline-secondary w-100">
-            ⚡ Entrar com Conta de Teste (Maria Silva)
-        </button>
-    </form>
+        <form asp-controller="Account" asp-action="LoginSimuladoTeste" method="post">
+            <button type="submit" class="btn btn-outline-secondary w-100">
+                ⚡ Entrar com Conta de Teste (Maria Silva)
+            </button>
+        </form>
+    }
 
     <p class="ms-auth-signup-text">
         Ainda não tem conta?
