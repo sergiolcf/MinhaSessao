@@ -510,4 +510,294 @@ public class PacientesController : Controller
             return Json(new { success = false, message = "Ocorreu um erro ao gerar a nova senha. Tente novamente." });
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> ListarObjetivos(Guid pacienteId)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteId, profissionalId);
+
+        if (!pacienteValido)
+        {
+            return Json(new { success = false, message = "Paciente não encontrado." });
+        }
+
+        var objetivos = await _context.ObjetivosTerapeuticos
+            .Where(o => o.PacienteId == pacienteId)
+            .OrderByDescending(o => o.DataCriacao)
+            .Select(o => new
+            {
+                id = o.Id,
+                titulo = o.Titulo,
+                descricao = o.Descricao,
+                status = o.Status.ToString(),
+                dataCriacao = o.DataCriacao.ToString("dd/MM/yyyy HH:mm"),
+                combinados = o.Combinados.Select(c => new
+                {
+                    id = c.Id,
+                    descricao = c.Descricao,
+                    concluido = c.Concluido
+                }).ToList(),
+                totalCombinados = o.Combinados.Count,
+                combinadosConcluidos = o.Combinados.Count(c => c.Concluido)
+            })
+            .ToListAsync();
+
+        return Json(new { success = true, objetivos });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SalvarObjetivo(ObjetivoTerapeuticoViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var primeiroErro = ModelState
+                .Where(par => par.Value?.Errors.Count > 0)
+                .SelectMany(par => par.Value!.Errors)
+                .Select(erro => erro.ErrorMessage)
+                .FirstOrDefault();
+
+            return Json(new { success = false, message = primeiroErro ?? "Verifique os campos destacados." });
+        }
+
+        var profissionalId = User.ObterProfissionalId();
+
+        // Garante que o paciente pertence ao profissional logado antes de gravar o objetivo
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(model.PacienteId, profissionalId);
+
+        if (!pacienteValido)
+        {
+            return Json(new { success = false, message = "Paciente não encontrado." });
+        }
+
+        try
+        {
+            var objetivo = new ObjetivoTerapeutico
+            {
+                Id = Guid.NewGuid(),
+                PacienteId = model.PacienteId,
+                ProfissionalId = profissionalId,
+                Titulo = model.Titulo,
+                Descricao = model.Descricao,
+                Status = StatusObjetivo.EmAndamento,
+                DataCriacao = DateTime.UtcNow
+            };
+
+            // Ignora combinados em branco digitados na mesma tela de criação (Proposta A: tudo em uma tela)
+            var combinados = model.Combinados
+                .Where(descricao => !string.IsNullOrWhiteSpace(descricao))
+                .Select(descricao => new Combinado
+                {
+                    Id = Guid.NewGuid(),
+                    ObjetivoTerapeuticoId = objetivo.Id,
+                    Descricao = descricao.Trim(),
+                    Concluido = false,
+                    DataCriacao = DateTime.UtcNow
+                })
+                .ToList();
+
+            objetivo.Combinados = combinados;
+
+            _context.ObjetivosTerapeuticos.Add(objetivo);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Objetivo criado com sucesso!",
+                objetivo = new
+                {
+                    id = objetivo.Id,
+                    titulo = objetivo.Titulo,
+                    descricao = objetivo.Descricao,
+                    status = objetivo.Status.ToString(),
+                    dataCriacao = objetivo.DataCriacao.ToString("dd/MM/yyyy HH:mm"),
+                    combinados = combinados.Select(c => new
+                    {
+                        id = c.Id,
+                        descricao = c.Descricao,
+                        concluido = c.Concluido
+                    }).ToList(),
+                    totalCombinados = combinados.Count,
+                    combinadosConcluidos = 0
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao salvar objetivo terapêutico.");
+            return Json(new { success = false, message = "Ocorreu um erro ao salvar o objetivo. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AtualizarStatusObjetivo(Guid id, StatusObjetivo status)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var objetivo = await _context.ObjetivosTerapeuticos
+            .FirstOrDefaultAsync(o => o.Id == id && o.ProfissionalId == profissionalId);
+
+        if (objetivo is null)
+        {
+            return Json(new { success = false, message = "Objetivo não encontrado." });
+        }
+
+        try
+        {
+            objetivo.Status = status;
+            objetivo.DataAtualizacao = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Status atualizado com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar status do objetivo terapêutico.");
+            return Json(new { success = false, message = "Ocorreu um erro ao atualizar o status. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExcluirObjetivo(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var objetivo = await _context.ObjetivosTerapeuticos
+            .FirstOrDefaultAsync(o => o.Id == id && o.ProfissionalId == profissionalId);
+
+        if (objetivo is null)
+        {
+            return Json(new { success = false, message = "Objetivo não encontrado." });
+        }
+
+        try
+        {
+            // O delete em cascata configurado no ApplicationDbContext remove os Combinados junto
+            _context.ObjetivosTerapeuticos.Remove(objetivo);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Objetivo removido com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao excluir objetivo terapêutico.");
+            return Json(new { success = false, message = "Ocorreu um erro ao remover o objetivo. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AlternarCombinado(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var combinado = await _context.Combinados
+            .Include(c => c.ObjetivoTerapeutico)
+            .FirstOrDefaultAsync(c => c.Id == id && c.ObjetivoTerapeutico!.ProfissionalId == profissionalId);
+
+        if (combinado is null)
+        {
+            return Json(new { success = false, message = "Combinado não encontrado." });
+        }
+
+        try
+        {
+            combinado.Concluido = !combinado.Concluido;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, concluido = combinado.Concluido });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao alternar combinado.");
+            return Json(new { success = false, message = "Ocorreu um erro ao atualizar o combinado. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdicionarCombinado(Guid objetivoId, string descricao)
+    {
+        if (string.IsNullOrWhiteSpace(descricao))
+        {
+            return Json(new { success = false, message = "Escreva a descrição do combinado." });
+        }
+
+        var profissionalId = User.ObterProfissionalId();
+
+        var objetivo = await _context.ObjetivosTerapeuticos
+            .FirstOrDefaultAsync(o => o.Id == objetivoId && o.ProfissionalId == profissionalId);
+
+        if (objetivo is null)
+        {
+            return Json(new { success = false, message = "Objetivo não encontrado." });
+        }
+
+        try
+        {
+            var combinado = new Combinado
+            {
+                Id = Guid.NewGuid(),
+                ObjetivoTerapeuticoId = objetivo.Id,
+                Descricao = descricao.Trim(),
+                Concluido = false,
+                DataCriacao = DateTime.UtcNow
+            };
+
+            _context.Combinados.Add(combinado);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                combinado = new
+                {
+                    id = combinado.Id,
+                    descricao = combinado.Descricao,
+                    concluido = combinado.Concluido
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao adicionar combinado.");
+            return Json(new { success = false, message = "Ocorreu um erro ao adicionar o combinado. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExcluirCombinado(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var combinado = await _context.Combinados
+            .Include(c => c.ObjetivoTerapeutico)
+            .FirstOrDefaultAsync(c => c.Id == id && c.ObjetivoTerapeutico!.ProfissionalId == profissionalId);
+
+        if (combinado is null)
+        {
+            return Json(new { success = false, message = "Combinado não encontrado." });
+        }
+
+        try
+        {
+            _context.Combinados.Remove(combinado);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Combinado removido com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao excluir combinado.");
+            return Json(new { success = false, message = "Ocorreu um erro ao remover o combinado. Tente novamente." });
+        }
+    }
 }

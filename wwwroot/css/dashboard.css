@@ -1312,3 +1312,116 @@ body.ms-dashboard-body {
   border-radius: 0.5rem;
   font-size: 0.9rem;
 }
+
+/* Plano de Tratamento (aba da Ficha do Paciente) */
+.ms-objetivos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.ms-objetivos-grid .ms-dash-empty-state {
+  grid-column: 1 / -1;
+}
+
+.ms-objetivo-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ms-objetivo-titulo {
+  color: var(--ms-text);
+  font-weight: 700;
+  margin: 0;
+}
+
+.ms-objetivo-descricao {
+  color: #6C757D;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.ms-objetivo-progresso {
+  margin-bottom: 1rem;
+}
+
+.ms-objetivo-progresso-label {
+  font-size: 0.78rem;
+  color: #6C757D;
+  margin-bottom: 0.35rem;
+}
+
+.ms-objetivo-progresso .progress {
+  height: 0.5rem;
+}
+
+.ms-objetivo-progresso .progress-bar {
+  background-color: var(--ms-orange);
+}
+
+.ms-combinado-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+
+.ms-combinado-item {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(43, 45, 66, 0.06);
+}
+
+.ms-combinado-item:last-child {
+  border-bottom: 0;
+}
+
+.ms-combinado-concluido {
+  text-decoration: line-through;
+  color: #6C757D;
+}
+
+.ms-objetivo-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ms-objetivo-status-select {
+  width: auto;
+  flex: 1 1 auto;
+}
+
+/* Combinados dentro do modal "Novo Objetivo" */
+.ms-combinado-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ms-combinado-lista-form {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.ms-combinado-lista-form li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background-color: rgba(43, 45, 66, 0.03);
+  border-radius: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.ms-combinado-lista-form button {
+  background: none;
+  border: 0;
+  color: #DC3545;
+  line-height: 1;
+  padding: 0;
+}

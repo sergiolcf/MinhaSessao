@@ -65,8 +65,25 @@
 
 <div class="tab-content ms-dash-tab-content" id="pacienteTabsContent">
     <div class="tab-pane fade" id="plano-tratamento" role="tabpanel" aria-labelledby="plano-tratamento-tab">
-        <h5 class="mb-1">Plano de Tratamento</h5>
-        <p class="ms-dash-table-subtext mb-0">Conteúdo em construção...</p>
+        <div class="ms-dash-page-header ms-anotacao-tab-header">
+            <div>
+                <h5 class="mb-1">Plano de Tratamento</h5>
+                <p class="ms-dash-table-subtext mb-0">Objetivos terapêuticos e combinados definidos com @Model.NomeCompleto.</p>
+            </div>
+            <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#modalNovoObjetivo">
+                <i class="bi bi-plus-lg"></i> Novo Objetivo
+            </button>
+        </div>
+
+        <div id="objetivosContainer" data-paciente-id="@Model.Id">
+            <div class="ms-objetivos-grid" id="listaObjetivos">
+                <div class="ms-dash-empty-state" id="objetivosEmptyState">
+                    <i class="bi bi-bullseye"></i>
+                    <h5>Nenhum objetivo definido</h5>
+                    <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico de @Model.NomeCompleto.</p>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="tab-pane fade show active" id="prontuario" role="tabpanel" aria-labelledby="prontuario-tab">
         <div class="ms-dash-page-header ms-anotacao-tab-header">
@@ -282,6 +299,59 @@
     </div>
 </div>
 
+<!-- Modal: Novo Objetivo Terapêutico (Proposta A: objetivo e combinados na mesma tela) -->
+<div class="modal fade" id="modalNovoObjetivo" tabindex="-1" aria-labelledby="modalNovoObjetivoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovoObjetivoLabel">
+                    <i class="bi bi-bullseye me-2"></i>Novo Objetivo Terapêutico
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="objetivoFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro ao Salvar</strong>
+                        <p class="mb-0" id="objetivoFeedbackErroMensagem"></p>
+                    </div>
+                </div>
+
+                <form id="formNovoObjetivo">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="PacienteId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="objetivoTitulo" class="form-label">Título<span class="ms-required">*</span></label>
+                        <input type="text" id="objetivoTitulo" name="Titulo" class="form-control" placeholder="Ex.: Reduzir crises de ansiedade">
+                    </div>
+                    <div class="mb-3">
+                        <label for="objetivoDescricao" class="form-label">Descrição</label>
+                        <textarea id="objetivoDescricao" name="Descricao" class="form-control" rows="3" placeholder="Detalhe o objetivo, se necessário..."></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Combinados</label>
+                        <div class="ms-combinado-input-group">
+                            <input type="text" id="novoCombinadoInput" class="form-control" placeholder="Ex.: Praticar técnica de respiração 2x ao dia" autocomplete="off">
+                            <button type="button" class="btn btn-outline-secondary text-nowrap" id="btnAdicionarCombinado">
+                                <i class="bi bi-plus-lg"></i> Adicionar
+                            </button>
+                        </div>
+                        <ul class="ms-combinado-lista-form" id="listaCombinadosForm"></ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNovoObjetivo" class="btn btn-ms-orange" id="btnSalvarObjetivo">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarObjetivoSpinner"></span>
+                    <span id="btnSalvarObjetivoTexto">Salvar Objetivo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Nova Anotação Confidencial -->
 <div class="modal fade" id="modalNovaAnotacao" tabindex="-1" aria-labelledby="modalNovaAnotacaoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -327,6 +397,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/plano-tratamento.js" asp-append-version="true"></script>
     <script src="~/js/anotacoes.js" asp-append-version="true"></script>
     <script src="~/js/pacientes-detalhes.js" asp-append-version="true"></script>
 }
