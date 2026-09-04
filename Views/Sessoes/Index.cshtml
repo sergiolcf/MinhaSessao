@@ -1,0 +1,378 @@
+@model MinhaSessao.Models.ViewModels.PainelSessoesProfissionalViewModel
+@{
+    ViewData["Title"] = "Minhas Sessões";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Minhas Sessões</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Gerencie os agendamentos e o histórico de atendimentos dos seus pacientes.</p>
+    </div>
+    @if (Model.Pacientes.Count > 0)
+    {
+        <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#modalNovaSessao">
+            <i class="bi bi-plus-lg"></i> Nova Sessão
+        </button>
+    }
+</div>
+
+<div class="ms-dash-cards mb-4">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-day"></i>
+        <h5>Sessões Hoje</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesHoje</p>
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-event"></i>
+        <h5>Próxima Sessão</h5>
+        @if (Model.ProximaSessao is not null)
+        {
+            <p class="ms-stat-numero mb-0">@Model.ProximaSessao.DataHora.ToString("dd/MM/yyyy") às @Model.ProximaSessao.DataHora.ToString("HH:mm")</p>
+            <p class="mb-0">com @Model.ProximaSessao.PacienteNome</p>
+        }
+        else
+        {
+            <p class="mb-0">Nenhuma sessão agendada no momento.</p>
+        }
+    </div>
+    <div class="ms-dash-card">
+        <i class="bi bi-check2-circle"></i>
+        <h5>Atendimentos no Mês</h5>
+        <p class="ms-stat-numero mb-0">@Model.AtendimentosNoMes</p>
+    </div>
+</div>
+
+@if (Model.Pacientes.Count == 0)
+{
+    <div class="ms-dash-empty-state">
+        <i class="bi bi-journal-medical"></i>
+        <h5>Nenhum paciente vinculado ainda</h5>
+        <p>Vincule ou cadastre um paciente em "Meus Pacientes" para poder agendar sessões.</p>
+    </div>
+}
+else
+{
+    <div class="ms-anotacao-toolbar mb-3">
+        <div class="ms-anotacao-search ms-filtro-paciente-wrapper">
+            <i class="bi bi-funnel"></i>
+            <input type="text" id="filtroPacienteSessoesInput" class="form-control form-control-sm" placeholder="Buscar paciente por nome ou CPF..." autocomplete="off">
+            <button type="button" id="btnLimparFiltroPacienteSessoes" class="btn-close ms-filtro-paciente-limpar d-none" aria-label="Limpar filtro"></button>
+            <div id="sugestoesFiltroPacienteSessoes" class="ms-filtro-paciente-sugestoes d-none"></div>
+        </div>
+    </div>
+}
+
+<ul class="nav nav-tabs ms-dash-tabs" id="sessoesTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="agendadas-tab" data-bs-toggle="tab" data-bs-target="#agendadasSessoes" type="button" role="tab" aria-controls="agendadasSessoes" aria-selected="true">
+            <i class="bi bi-calendar-week"></i> Hoje / Agendadas
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historicoSessoes" type="button" role="tab" aria-controls="historicoSessoes" aria-selected="false">
+            <i class="bi bi-clock-history"></i> Histórico / Concluídas
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content ms-dash-tab-content" id="sessoesTabsContent">
+    <div class="tab-pane fade show active" id="agendadasSessoes" role="tabpanel" aria-labelledby="agendadas-tab">
+        <div class="ms-dash-card ms-dash-table-card" id="cardSessoesAgendadas"
+             data-pagina-atual="@Model.PaginaAtualAgendadas" data-total-paginas="@Model.TotalPaginasAgendadas">
+            <div class="table-responsive ms-dash-table-scroll">
+                <table class="table table-hover ms-dash-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data e Hora</th>
+                            <th>Paciente</th>
+                            <th>Duração</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySessoesAgendadas">
+                        @if (Model.Agendadas.Count == 0)
+                        {
+                            <tr id="agendadasEmptyRow">
+                                <td colspan="5">
+                                    <div class="ms-dash-empty-state">
+                                        <i class="bi bi-calendar-week"></i>
+                                        <h5>Nenhuma sessão agendada</h5>
+                                        <p>Clique em "Nova Sessão" para agendar um atendimento.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var sessao in Model.Agendadas)
+                            {
+                                <partial name="_LinhaSessao" model="sessao" />
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <nav aria-label="Paginação de sessões agendadas" class="mt-3">
+            <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoSessoesAgendadas">
+                @if (Model.TotalPaginasAgendadas > 1)
+                {
+                    for (var pagina = 1; pagina <= Model.TotalPaginasAgendadas; pagina++)
+                    {
+                        <li class="page-item@(pagina == Model.PaginaAtualAgendadas ? " active" : "")">
+                            <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                        </li>
+                    }
+                }
+            </ul>
+        </nav>
+    </div>
+
+    <div class="tab-pane fade" id="historicoSessoes" role="tabpanel" aria-labelledby="historico-tab">
+        <div class="ms-dash-card ms-dash-table-card" id="cardSessoesHistorico"
+             data-pagina-atual="@Model.PaginaAtualHistorico" data-total-paginas="@Model.TotalPaginasHistorico">
+            <div class="table-responsive ms-dash-table-scroll">
+                <table class="table table-hover ms-dash-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data e Hora</th>
+                            <th>Paciente</th>
+                            <th>Duração</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySessoesHistorico">
+                        @if (Model.Historico.Count == 0)
+                        {
+                            <tr id="historicoEmptyRow">
+                                <td colspan="5">
+                                    <div class="ms-dash-empty-state">
+                                        <i class="bi bi-clock-history"></i>
+                                        <h5>Nenhum histórico ainda</h5>
+                                        <p>As sessões realizadas ou canceladas aparecerão aqui.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var sessao in Model.Historico)
+                            {
+                                <partial name="_LinhaSessao" model="sessao" />
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <nav aria-label="Paginação de histórico de sessões" class="mt-3">
+            <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoSessoesHistorico">
+                @if (Model.TotalPaginasHistorico > 1)
+                {
+                    for (var pagina = 1; pagina <= Model.TotalPaginasHistorico; pagina++)
+                    {
+                        <li class="page-item@(pagina == Model.PaginaAtualHistorico ? " active" : "")">
+                            <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                        </li>
+                    }
+                }
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal: Nova Sessão -->
+<div class="modal fade" id="modalNovaSessao" tabindex="-1" aria-labelledby="modalNovaSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovaSessaoLabel">Nova Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                @Html.AntiForgeryToken()
+                <div id="novaSessaoFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro</strong>
+                        <p class="mb-0" id="novaSessaoFeedbackErroMensagem"></p>
+                    </div>
+                </div>
+                <form id="formNovaSessao">
+                    <div class="mb-3">
+                        <label for="NovaSessaoPacienteBusca" class="form-label">Paciente<span class="ms-required">*</span></label>
+                        <div class="ms-lookup-paciente">
+                            <input type="hidden" id="NovaSessaoPacienteId" name="PacienteId" value="">
+                            <div class="ms-lookup-paciente-campo">
+                                <input type="text" id="NovaSessaoPacienteBusca" class="form-control" placeholder="Buscar paciente por nome ou CPF..." autocomplete="off">
+                                <button type="button" id="btnLimparNovaSessaoPaciente" class="btn-close ms-lookup-paciente-limpar d-none" aria-label="Limpar paciente"></button>
+                                <button type="button" id="btnProcurarNovaSessaoPaciente" class="btn btn-outline-secondary ms-lookup-paciente-procurar" title="Procurar paciente">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <div id="sugestoesNovaSessaoPaciente" class="ms-filtro-paciente-sugestoes d-none"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="NovaSessaoData" class="form-label">Data e Hora<span class="ms-required">*</span></label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <input type="date" id="NovaSessaoData" class="form-control">
+                            </div>
+                            <div class="col-5">
+                                <div class="ms-time-picker">
+                                    <input type="text" id="NovaSessaoHoraTexto" class="form-control" placeholder="Selecionar hora" readonly autocomplete="off">
+                                    <input type="hidden" id="NovaSessaoHora" value="">
+                                    <div class="ms-time-picker-painel d-none" id="NovaSessaoHoraPainel">
+                                        <div class="ms-time-picker-colunas">
+                                            <select id="NovaSessaoHoraSelectH" class="form-select form-select-sm"></select>
+                                            <span class="ms-time-picker-separador">:</span>
+                                            <select id="NovaSessaoHoraSelectM" class="form-select form-select-sm"></select>
+                                        </div>
+                                        <button type="button" class="btn btn-ms-orange btn-sm w-100 mt-2" id="btnSelecionarNovaSessaoHora">Selecionar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="NovaSessaoDataHora" name="DataHora">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="NovaSessaoDuracaoMinutos" class="form-label">Duração (min)<span class="ms-required">*</span></label>
+                            <input type="number" id="NovaSessaoDuracaoMinutos" name="DuracaoMinutos" class="form-control" min="1" max="600" value="@Model.DuracaoPadraoSessaoMinutos">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="NovaSessaoStatus" class="form-label">Status Inicial<span class="ms-required">*</span></label>
+                            <select id="NovaSessaoStatus" name="Status" class="form-select">
+                                <option value="Agendada" selected>Agendada</option>
+                                <option value="Realizada">Realizada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNovaSessao" class="btn btn-ms-orange" id="btnSalvarNovaSessao">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarNovaSessaoSpinner"></span>
+                    <span id="btnSalvarNovaSessaoTexto">Agendar Sessão</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Procurar Paciente (lookup, aberto pelo botão de lupa do campo Paciente da Nova Sessão) -->
+<div class="modal fade" id="modalProcurarPacienteSessao" tabindex="-1" aria-labelledby="modalProcurarPacienteSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalProcurarPacienteSessaoLabel">Selecionar Paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="buscaModalProcurarPaciente" class="form-control mb-3" placeholder="Buscar por nome ou CPF...">
+                <div class="ms-lookup-paciente-lista" id="listaModalProcurarPaciente">
+                    @foreach (var paciente in Model.Pacientes)
+                    {
+                        <button type="button" class="ms-lookup-paciente-item" data-paciente-id="@paciente.Id" data-paciente-nome="@paciente.NomeCompleto" data-paciente-cpf-normalizado="@CpfUtil.Normalizar(paciente.CpfFormatado)">
+                            <span class="ms-lookup-paciente-item-nome">@paciente.NomeCompleto</span>
+                            <span class="ms-lookup-paciente-item-cpf">@paciente.CpfFormatado</span>
+                        </button>
+                    }
+                </div>
+                <div id="listaModalProcurarPacienteVazia" class="ms-dash-empty-state d-none">
+                    <i class="bi bi-search"></i>
+                    <h5>Nenhum paciente encontrado</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar Sessão -->
+<div class="modal fade" id="modalEditarSessao" tabindex="-1" aria-labelledby="modalEditarSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarSessaoLabel">Editar Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                @Html.AntiForgeryToken()
+                <div id="editarSessaoFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro</strong>
+                        <p class="mb-0" id="editarSessaoFeedbackErroMensagem"></p>
+                    </div>
+                </div>
+                <form id="formEditarSessao">
+                    <input type="hidden" id="EditarSessaoId" name="Id">
+                    <div class="mb-3">
+                        <label for="EditarSessaoData" class="form-label">Data e Hora<span class="ms-required">*</span></label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <input type="date" id="EditarSessaoData" class="form-control">
+                            </div>
+                            <div class="col-5">
+                                <div class="ms-time-picker">
+                                    <input type="text" id="EditarSessaoHoraTexto" class="form-control" placeholder="Selecionar hora" readonly autocomplete="off">
+                                    <input type="hidden" id="EditarSessaoHora" value="">
+                                    <div class="ms-time-picker-painel d-none" id="EditarSessaoHoraPainel">
+                                        <div class="ms-time-picker-colunas">
+                                            <select id="EditarSessaoHoraSelectH" class="form-select form-select-sm"></select>
+                                            <span class="ms-time-picker-separador">:</span>
+                                            <select id="EditarSessaoHoraSelectM" class="form-select form-select-sm"></select>
+                                        </div>
+                                        <button type="button" class="btn btn-ms-orange btn-sm w-100 mt-2" id="btnSelecionarEditarSessaoHora">Selecionar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="EditarSessaoDataHora" name="DataHora">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="EditarSessaoDuracaoMinutos" class="form-label">Duração (min)<span class="ms-required">*</span></label>
+                            <input type="number" id="EditarSessaoDuracaoMinutos" name="DuracaoMinutos" class="form-control" min="1" max="600">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="EditarSessaoStatus" class="form-label">Status<span class="ms-required">*</span></label>
+                            <select id="EditarSessaoStatus" name="Status" class="form-select">
+                                <option value="Agendada">Agendada</option>
+                                <option value="Realizada">Realizada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formEditarSessao" class="btn btn-ms-orange" id="btnSalvarEditarSessao">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarEditarSessaoSpinner"></span>
+                    <span id="btnSalvarEditarSessaoTexto">Salvar Alterações</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast: feedback de sucesso/erro -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toastSessoes" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastSessoesMensagem"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/sessoes.js" asp-append-version="true"></script>
+}

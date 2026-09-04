@@ -10,6 +10,8 @@ public class Sessao
 
     public DateTime DataHora { get; set; }
 
+    public int DuracaoMinutos { get; set; }
+
     public StatusSessao Status { get; set; } = StatusSessao.Agendada;
 
     // Propriedades de navegação (EF Core)

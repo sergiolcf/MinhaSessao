@@ -26,6 +26,8 @@ public class PacienteDetalhesViewModel
 
     public List<AnotacaoConfidencialItemViewModel> Anotacoes { get; set; } = new();
 
+    public List<SessaoProfissionalListItemViewModel> Sessoes { get; set; } = new();
+
     public int PaginaAtualAnotacoes { get; set; } = 1;
 
     public int TotalPaginasAnotacoes { get; set; } = 1;

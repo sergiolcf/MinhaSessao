@@ -114,6 +114,20 @@ public class PacientesController : Controller
             })
             .ToListAsync();
 
+        var sessoes = await _context.Sessoes
+            .Where(s => s.PacienteId == paciente.Id && s.ProfissionalId == profissionalId)
+            .OrderByDescending(s => s.DataHora)
+            .Select(s => new SessaoProfissionalListItemViewModel
+            {
+                Id = s.Id,
+                PacienteId = s.PacienteId,
+                DataHora = s.DataHora,
+                PacienteNome = paciente.NomeCompleto,
+                DuracaoMinutos = s.DuracaoMinutos,
+                Status = s.Status.ToString()
+            })
+            .ToListAsync();
+
         var model = new PacienteDetalhesViewModel
         {
             Id = paciente.Id,
@@ -129,7 +143,8 @@ public class PacientesController : Controller
             DataCadastro = paciente.DataCadastro,
             Anotacoes = anotacoes,
             PaginaAtualAnotacoes = 1,
-            TotalPaginasAnotacoes = totalPaginasAnotacoes
+            TotalPaginasAnotacoes = totalPaginasAnotacoes,
+            Sessoes = sessoes
         };
 
         return View(model);
