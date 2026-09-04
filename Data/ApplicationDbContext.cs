@@ -23,6 +23,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Combinado> Combinados => Set<Combinado>();
 
+    public DbSet<SessaoObjetivo> SessoesObjetivos => Set<SessaoObjetivo>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -50,5 +52,22 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(c => c.ObjetivoTerapeuticoId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Vínculo N:N entre Sessão e Objetivo Terapêutico: ao apagar a sessão, apaga os vínculos junto;
+        // ao apagar o objetivo, o vínculo é restrito (evita múltiplos caminhos de cascade do EF Core) —
+        // exclusão de objetivo com sessões vinculadas precisa ser tratada explicitamente no controller
+        modelBuilder.Entity<SessaoObjetivo>()
+            .HasOne(so => so.Sessao)
+            .WithMany()
+            .HasForeignKey(so => so.SessaoId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessaoObjetivo>()
+            .HasOne(so => so.ObjetivoTerapeutico)
+            .WithMany()
+            .HasForeignKey(so => so.ObjetivoTerapeuticoId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
