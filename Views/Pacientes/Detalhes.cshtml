@@ -39,7 +39,13 @@
     </div>
 </div>
 
+
 <ul class="nav nav-tabs ms-dash-tabs" id="pacienteTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="plano-tratamento-tab" data-bs-toggle="tab" data-bs-target="#plano-tratamento" type="button" role="tab" aria-controls="plano-tratamento" aria-selected="false">
+            <i class="bi bi-bullseye me-1"></i> Plano de Tratamento
+        </button>
+    </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="prontuario-tab" data-bs-toggle="tab" data-bs-target="#prontuario" type="button" role="tab" aria-controls="prontuario" aria-selected="true">
             <i class="bi bi-shield-lock me-1"></i> Anotações Confidenciais
@@ -58,6 +64,10 @@
 </ul>
 
 <div class="tab-content ms-dash-tab-content" id="pacienteTabsContent">
+    <div class="tab-pane fade" id="plano-tratamento" role="tabpanel" aria-labelledby="plano-tratamento-tab">
+        <h5 class="mb-1">Plano de Tratamento</h5>
+        <p class="ms-dash-table-subtext mb-0">Conteúdo em construção...</p>
+    </div>
     <div class="tab-pane fade show active" id="prontuario" role="tabpanel" aria-labelledby="prontuario-tab">
         <div class="ms-dash-page-header ms-anotacao-tab-header">
             <div>
@@ -167,6 +177,8 @@
                                     "Realizada" => "ms-badge-realizada",
                                     _ => "ms-badge-cancelada"
                                 };
+                                var temEvolucao = !string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas);
+                                var idEvolucao = $"evolucaoSessao_{sessao.Id}";
                                 <tr>
                                     <td>
                                         @sessao.DataHora.ToString("dd/MM/yyyy")
@@ -175,12 +187,35 @@
                                     <td>@sessao.DuracaoMinutos min</td>
                                     <td><span class="badge @classeBadge">@sessao.Status</span></td>
                                     <td class="text-end">
-                                        <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
-                                           class="btn btn-sm ms-dash-btn-ficha">
-                                            <i class="bi bi-box-arrow-up-right"></i> Abrir
-                                        </a>
+                                        <div class="d-inline-flex gap-2">
+                                            @if (temEvolucao)
+                                            {
+                                                <button type="button" class="btn btn-sm ms-dash-btn-ficha" data-bs-toggle="collapse" data-bs-target="#@idEvolucao">
+                                                    <i class="bi bi-journal-text"></i> Evolução
+                                                </button>
+                                            }
+                                            <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
+                                               class="btn btn-sm ms-dash-btn-ficha">
+                                                <i class="bi bi-box-arrow-up-right"></i> Abrir
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
+                                if (temEvolucao)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="p-0 border-0">
+                                            <div class="collapse" id="@idEvolucao">
+                                                <div class="ms-sessao-evolucao">
+                                                    @if (!string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas))
+                                                    {
+                                                        <p class="mb-0"><strong>Anotações Clínicas:</strong> @sessao.AnotacoesClinicas</p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>

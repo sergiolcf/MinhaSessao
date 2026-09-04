@@ -14,6 +14,8 @@ public class Sessao
 
     public StatusSessao Status { get; set; } = StatusSessao.Agendada;
 
+    public string? AnotacoesClinicas { get; set; }
+
     // Propriedades de navegação (EF Core)
     public Paciente? Paciente { get; set; }
 

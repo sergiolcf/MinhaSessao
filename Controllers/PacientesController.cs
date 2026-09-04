@@ -124,7 +124,8 @@ public class PacientesController : Controller
                 DataHora = s.DataHora,
                 PacienteNome = paciente.NomeCompleto,
                 DuracaoMinutos = s.DuracaoMinutos,
-                Status = s.Status.ToString()
+                Status = s.Status.ToString(),
+                AnotacoesClinicas = s.AnotacoesClinicas
             })
             .ToListAsync();
 

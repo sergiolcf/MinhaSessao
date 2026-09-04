@@ -1303,3 +1303,12 @@ body.ms-dashboard-body {
     width: 100%;
   }
 }
+
+/* Evolução da Sessão (aba "Histórico de Sessões" da Ficha do Paciente) */
+.ms-sessao-evolucao {
+  padding: 0.85rem 1rem;
+  margin: 0.25rem 0 0.75rem;
+  background-color: rgba(43, 45, 66, 0.03);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}

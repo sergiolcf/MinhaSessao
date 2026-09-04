@@ -202,9 +202,11 @@ public class SessoesController : Controller
             .Select(s => new
             {
                 s.Id,
+                s.PacienteId,
                 s.DuracaoMinutos,
                 Status = s.Status.ToString(),
-                DataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm")
+                DataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm"),
+                s.AnotacoesClinicas
             })
             .FirstOrDefaultAsync();
 
@@ -217,9 +219,11 @@ public class SessoesController : Controller
         {
             success = true,
             id = sessao.Id,
+            pacienteId = sessao.PacienteId,
             dataHoraIso = sessao.DataHoraIso,
             duracaoMinutos = sessao.DuracaoMinutos,
-            status = sessao.Status
+            status = sessao.Status,
+            anotacoesClinicas = sessao.AnotacoesClinicas
         });
     }
 
@@ -299,6 +303,7 @@ public class SessoesController : Controller
             sessao.DataHora = model.DataHora;
             sessao.DuracaoMinutos = model.DuracaoMinutos;
             sessao.Status = status;
+            sessao.AnotacoesClinicas = model.AnotacoesClinicas;
 
             await _context.SaveChangesAsync();
 

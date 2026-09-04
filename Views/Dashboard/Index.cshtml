@@ -4,30 +4,94 @@
     Layout = "_LayoutDashboard";
 }
 
-<div class="ms-dash-welcome">
-    <h1 class="ms-dash-welcome-title">Bem-vindo(a), @Model.NomeCompleto</h1>
-    <p class="ms-dash-welcome-subtitle">@Model.RegistroCRP</p>
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Bem-vindo(a), @Model.NomeCompleto</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">@Model.RegistroCRP</p>
+    </div>
+    @if (Model.Pacientes.Count > 0)
+    {
+        <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#modalNovaSessao">
+            <i class="bi bi-plus-lg"></i> Agendar Sessão
+        </button>
+    }
 </div>
 
-<div class="ms-dash-cards">
+<div class="ms-dash-cards mb-4">
     <div class="ms-dash-card">
-        <i class="bi bi-calendar-check"></i>
-        <h5>Minha Agenda</h5>
-        <p>Em breve você poderá gerenciar seus horários por aqui.</p>
+        <i class="bi bi-calendar-day"></i>
+        <h5>Sessões Hoje</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesHoje</p>
     </div>
     <div class="ms-dash-card">
         <i class="bi bi-people"></i>
-        <h5>Meus Pacientes</h5>
-        <p>Em breve você poderá visualizar seus pacientes por aqui.</p>
+        <h5>Pacientes Ativos</h5>
+        <p class="ms-stat-numero mb-0">@Model.PacientesAtivos</p>
     </div>
     <div class="ms-dash-card">
-        <i class="bi bi-journal-medical"></i>
-        <h5>Minhas Sessões</h5>
-        <p>Em breve você poderá acompanhar suas sessões por aqui.</p>
+        <i class="bi bi-check2-circle"></i>
+        <h5>Atendimentos no Mês</h5>
+        <p class="ms-stat-numero mb-0">@Model.AtendimentosNoMes</p>
     </div>
     <div class="ms-dash-card">
-        <i class="bi bi-gear"></i>
-        <h5>Configurações</h5>
-        <p>Em breve você poderá ajustar as configurações da sua conta.</p>
+        <i class="bi bi-x-circle"></i>
+        <h5>Sessões Canceladas</h5>
+        <p class="ms-stat-numero mb-0">@Model.SessoesCanceladasMes</p>
     </div>
 </div>
+
+<h5 class="mb-3">Atendimentos de Hoje</h5>
+
+@if (Model.AtendimentosDeHoje.Count == 0)
+{
+    <div class="ms-dash-empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <h5>Nenhuma sessão agendada para hoje.</h5>
+    </div>
+}
+else
+{
+    <div class="ms-dash-card ms-dash-table-card">
+        <div class="table-responsive">
+            <table class="table table-hover ms-dash-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Horário</th>
+                        <th>Paciente</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sessao in Model.AtendimentosDeHoje)
+                    {
+                        var classeBadge = sessao.Status switch
+                        {
+                            "Agendada" => "ms-badge-agendada",
+                            "Realizada" => "ms-badge-realizada",
+                            _ => "ms-badge-cancelada"
+                        };
+                        <tr>
+                            <td>@sessao.DataHora.ToString("HH:mm")</td>
+                            <td>@sessao.PacienteNome</td>
+                            <td><span class="badge @classeBadge">@sessao.Status</span></td>
+                            <td class="text-end">
+                                <a asp-controller="Pacientes" asp-action="Detalhes" asp-route-id="@sessao.PacienteId"
+                                   class="btn btn-sm ms-dash-btn-ficha">
+                                    <i class="bi bi-folder2-open"></i> Prontuário
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<partial name="_ModalNovaSessao" model="new MinhaSessao.Models.ViewModels.NovaSessaoModalViewModel { Pacientes = Model.Pacientes, DuracaoPadraoSessaoMinutos = Model.DuracaoPadraoSessaoMinutos }" />
+
+@section Scripts {
+    <script src="~/js/sessao-utils.js" asp-append-version="true"></script>
+    <script src="~/js/nova-sessao.js" asp-append-version="true"></script>
+}
