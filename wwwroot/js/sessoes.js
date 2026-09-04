@@ -290,6 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const horaInputEditar = document.getElementById("EditarSessaoHora");
         const duracaoInput = document.getElementById("EditarSessaoDuracaoMinutos");
         const statusSelect = document.getElementById("EditarSessaoStatus");
+        const anotacoesClinicasInput = document.getElementById("EditarSessaoAnotacoesClinicas");
         const feedbackErroEl = document.getElementById("editarSessaoFeedbackErro");
         const feedbackErroMensagemEl = document.getElementById("editarSessaoFeedbackErroMensagem");
         const btnSalvar = document.getElementById("btnSalvarEditarSessao");
@@ -315,13 +316,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const horaTextoEditar = document.getElementById("EditarSessaoHoraTexto");
 
-        function preencherModalEdicao(id, dataHoraIso, duracaoMinutos, status) {
+        function preencherModalEdicao(dados) {
             ocultarErro();
             definirCarregando(false);
-            idInput.value = id || "";
-            separarDataHora(dataHoraIso, dataInputEditar, horaInputEditar, dataHoraInput, horaTextoEditar);
-            duracaoInput.value = duracaoMinutos || "";
-            statusSelect.value = status || "Agendada";
+            idInput.value = dados.id || "";
+            separarDataHora(dados.dataHoraIso, dataInputEditar, horaInputEditar, dataHoraInput, horaTextoEditar);
+            duracaoInput.value = dados.duracaoMinutos || "";
+            statusSelect.value = dados.status || "Agendada";
+            if (anotacoesClinicasInput) anotacoesClinicasInput.value = dados.anotacoesClinicas || "";
+        }
+
+        async function abrirModalEdicao(sessaoId) {
+            try {
+                const resposta = await fetch(`/Sessoes/ObterSessao?id=${encodeURIComponent(sessaoId)}`);
+                const resultado = await resposta.json();
+
+                if (!resultado.success) {
+                    exibirToast(resultado.message || "Sessão não encontrada.", false);
+                    return;
+                }
+
+                preencherModalEdicao(resultado);
+                bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).show();
+            } catch {
+                exibirToast("Erro de conexão. Verifique sua internet e tente novamente.", false);
+            }
         }
 
         function atualizarDataHoraEditar() {
@@ -346,8 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const botao = e.target.closest(".btn-editar-sessao");
             if (!botao) return;
 
-            preencherModalEdicao(botao.dataset.sessaoId, botao.dataset.sessaoData, botao.dataset.sessaoDuracao, botao.dataset.sessaoStatus);
-            bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).show();
+            abrirModalEdicao(botao.dataset.sessaoId);
         });
 
         formEditarSessao.addEventListener("submit", async function (e) {
@@ -369,9 +387,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 if (resultado.success) {
-                    bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).hide();
                     exibirToast(resultado.message || "Sessão atualizada com sucesso!", true);
-                    window.location.reload();
+                    modalEditarSessaoEl.addEventListener("hidden.bs.modal", function aoFecharRecarregar() {
+                        modalEditarSessaoEl.removeEventListener("hidden.bs.modal", aoFecharRecarregar);
+                        window.location.reload();
+                    });
+                    bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).hide();
                 } else {
                     exibirErro(resultado.message || "Não foi possível atualizar a sessão.");
                     definirCarregando(false);
@@ -387,15 +408,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const parametrosUrl = new URLSearchParams(window.location.search);
         const abrirSessaoId = parametrosUrl.get("abrirSessaoId");
         if (abrirSessaoId) {
-            fetch(`/Sessoes/ObterSessao?id=${encodeURIComponent(abrirSessaoId)}`)
-                .then(resposta => resposta.json())
-                .then(resultado => {
-                    if (resultado.success) {
-                        preencherModalEdicao(resultado.id, resultado.dataHoraIso, resultado.duracaoMinutos, resultado.status);
-                        bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).show();
-                    }
-                })
-                .catch(() => {});
+            abrirModalEdicao(abrirSessaoId);
         }
     }
 });

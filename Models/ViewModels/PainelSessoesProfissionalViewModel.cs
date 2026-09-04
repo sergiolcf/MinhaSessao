@@ -39,4 +39,7 @@ public class SessaoProfissionalListItemViewModel
 
     // "Agendada", "Realizada" ou "Cancelada"
     public string Status { get; set; } = string.Empty;
+
+    // Preenchido só onde a evolução da sessão é exibida (ex.: aba "Histórico de Sessões" da Ficha do Paciente)
+    public string? AnotacoesClinicas { get; set; }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MinhaSessao.Data;
 using MinhaSessao.Extensions;
+using MinhaSessao.Models.Entities;
 using MinhaSessao.Models.ViewModels;
 using MinhaSessao.Services;
 
@@ -12,10 +13,12 @@ namespace MinhaSessao.Controllers;
 public class DashboardController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly VinculoService _vinculoService;
 
-    public DashboardController(ApplicationDbContext context)
+    public DashboardController(ApplicationDbContext context, VinculoService vinculoService)
     {
         _context = context;
+        _vinculoService = vinculoService;
     }
 
     public async Task<IActionResult> Index()
@@ -28,12 +31,52 @@ public class DashboardController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        var agora = DateTime.UtcNow;
+        var hoje = agora.Date;
+        var consultaBase = _context.Sessoes.Where(s => s.ProfissionalId == profissionalId);
+
+        var sessoesHoje = await consultaBase.CountAsync(s => s.Status == StatusSessao.Agendada && s.DataHora.Date == hoje);
+
+        var atendimentosNoMes = await consultaBase.CountAsync(s => s.Status == StatusSessao.Realizada
+            && s.DataHora.Year == hoje.Year && s.DataHora.Month == hoje.Month);
+
+        var sessoesCanceladasMes = await consultaBase.CountAsync(s => s.Status == StatusSessao.Cancelada
+            && s.DataHora.Year == hoje.Year && s.DataHora.Month == hoje.Month);
+
+        var atendimentosDeHoje = await consultaBase
+            .Where(s => s.DataHora.Date == hoje)
+            .OrderBy(s => s.DataHora)
+            .Select(s => new SessaoProfissionalListItemViewModel
+            {
+                Id = s.Id,
+                PacienteId = s.PacienteId,
+                DataHora = s.DataHora,
+                PacienteNome = s.Paciente!.NomeCompleto,
+                DuracaoMinutos = s.DuracaoMinutos,
+                Status = s.Status.ToString()
+            })
+            .ToListAsync();
+
+        var pacientesAtivos = await _vinculoService.ObterPacientesAtivosAsync(profissionalId);
+
+        // Duração padrão do profissional é 0 apenas para registros criados antes da migration de Configurações — trata como 50
+        var duracaoPadrao = profissional.DuracaoPadraoSessaoMinutos == 0 ? 50 : profissional.DuracaoPadraoSessaoMinutos;
+
         var model = new DashboardViewModel
         {
             ProfissionalId = profissional.Id,
             NomeCompleto = profissional.NomeCompleto,
             RegistroCRP = profissional.RegistroCRP,
-            FotoUrl = profissional.FotoUrl
+            FotoUrl = profissional.FotoUrl,
+            SessoesHoje = sessoesHoje,
+            PacientesAtivos = pacientesAtivos.Count,
+            AtendimentosNoMes = atendimentosNoMes,
+            SessoesCanceladasMes = sessoesCanceladasMes,
+            AtendimentosDeHoje = atendimentosDeHoje,
+            Pacientes = pacientesAtivos
+                .Select(p => new PacienteSelectItemViewModel { Id = p.Id, NomeCompleto = p.NomeCompleto, CpfFormatado = CpfUtil.Formatar(p.Cpf) })
+                .ToList(),
+            DuracaoPadraoSessaoMinutos = duracaoPadrao
         };
 
         ViewBag.ProfissionalId = profissional.Id;

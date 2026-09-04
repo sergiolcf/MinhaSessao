@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MinhaSessao.Data;
 
@@ -10,9 +11,11 @@ using MinhaSessao.Data;
 namespace MinhaSessao.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904034307_AdicionaEvolucaoECombinadosSessao")]
+    partial class AdicionaEvolucaoECombinadosSessao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
@@ -46,6 +49,63 @@ namespace MinhaSessao.Migrations
                     b.HasIndex("ProfissionalId");
 
                     b.ToTable("AnotacoesConfidenciais");
+                });
+
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Combinado", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ObjetivoId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SessaoId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObjetivoId");
+
+                    b.HasIndex("SessaoId");
+
+                    b.ToTable("Combinados");
+                });
+
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Objetivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PacienteId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PacienteId");
+
+                    b.ToTable("Objetivos");
                 });
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.Paciente", b =>
@@ -226,6 +286,32 @@ namespace MinhaSessao.Migrations
                     b.Navigation("Profissional");
                 });
 
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Combinado", b =>
+                {
+                    b.HasOne("MinhaSessao.Models.Entities.Objetivo", "Objetivo")
+                        .WithMany("Combinados")
+                        .HasForeignKey("ObjetivoId");
+
+                    b.HasOne("MinhaSessao.Models.Entities.Sessao", "Sessao")
+                        .WithMany("Combinados")
+                        .HasForeignKey("SessaoId");
+
+                    b.Navigation("Objetivo");
+
+                    b.Navigation("Sessao");
+                });
+
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Objetivo", b =>
+                {
+                    b.HasOne("MinhaSessao.Models.Entities.Paciente", "Paciente")
+                        .WithMany()
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Paciente");
+                });
+
             modelBuilder.Entity("MinhaSessao.Models.Entities.Sessao", b =>
                 {
                     b.HasOne("MinhaSessao.Models.Entities.Paciente", "Paciente")
@@ -262,6 +348,16 @@ namespace MinhaSessao.Migrations
                     b.Navigation("Paciente");
 
                     b.Navigation("Profissional");
+                });
+
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Objetivo", b =>
+                {
+                    b.Navigation("Combinados");
+                });
+
+            modelBuilder.Entity("MinhaSessao.Models.Entities.Sessao", b =>
+                {
+                    b.Navigation("Combinados");
                 });
 #pragma warning restore 612, 618
         }
