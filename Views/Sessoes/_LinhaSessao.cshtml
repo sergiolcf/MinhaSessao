@@ -1,0 +1,33 @@
+@model MinhaSessao.Models.ViewModels.SessaoProfissionalListItemViewModel
+@{
+    var classeBadge = Model.Status switch
+    {
+        "Agendada" => "ms-badge-agendada",
+        "Realizada" => "ms-badge-realizada",
+        _ => "ms-badge-cancelada"
+    };
+}
+<tr>
+    <td>
+        @Model.DataHora.ToString("dd/MM/yyyy")
+        <div class="ms-dash-table-subtext">@Model.DataHora.ToString("HH:mm")</div>
+    </td>
+    <td>@Model.PacienteNome</td>
+    <td>@Model.DuracaoMinutos min</td>
+    <td><span class="badge @classeBadge">@Model.Status</span></td>
+    <td class="text-end">
+        <div class="d-inline-flex gap-2">
+            <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-editar-sessao"
+                    data-sessao-id="@Model.Id"
+                    data-sessao-data="@Model.DataHora.ToString("yyyy-MM-ddTHH:mm")"
+                    data-sessao-duracao="@Model.DuracaoMinutos"
+                    data-sessao-status="@Model.Status">
+                <i class="bi bi-pencil-square"></i> Status/Editar
+            </button>
+            <a asp-controller="Pacientes" asp-action="Detalhes" asp-route-id="@Model.PacienteId"
+               class="btn btn-sm ms-dash-btn-ficha">
+                <i class="bi bi-folder2-open"></i> Prontuário
+            </a>
+        </div>
+    </td>
+</tr>

@@ -717,13 +717,171 @@ body.ms-dashboard-body {
   pointer-events: none;
 }
 
-.ms-anotacao-search input {
+.ms-anotacao-search input,
+.ms-anotacao-search select {
   padding-left: 2rem;
   width: 220px;
 }
 
 .ms-anotacao-ordenacao {
   width: auto;
+}
+
+/* Filtro de paciente por busca (Minhas Sessões do Profissional): campo aberto com autocomplete de até 3 sugestões */
+.ms-filtro-paciente-wrapper {
+  width: 280px;
+}
+
+.ms-filtro-paciente-limpar {
+  position: absolute;
+  right: 0.65rem;
+  font-size: 0.65rem;
+}
+
+.ms-filtro-paciente-wrapper input {
+  width: 100%;
+  padding-right: 1.8rem;
+}
+
+.ms-filtro-paciente-sugestoes {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FFFFFF;
+  border: 1px solid #DEE2E6;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.ms-filtro-paciente-sugestao {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.ms-filtro-paciente-sugestao:hover,
+.ms-filtro-paciente-sugestao:focus {
+  background: #F8F9FA;
+}
+
+.ms-filtro-paciente-sugestao-nome {
+  color: #2B2D42;
+  font-weight: 500;
+}
+
+.ms-filtro-paciente-sugestao-cpf {
+  color: #868E96;
+  font-size: 0.8rem;
+}
+
+/* Lookup de paciente (modal Nova Sessão): campo de busca com sugestões + botão "Procurar" que abre uma lista completa */
+.ms-lookup-paciente {
+  position: relative;
+}
+
+.ms-lookup-paciente-campo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ms-lookup-paciente-campo input {
+  flex: 1 1 auto;
+  padding-right: 1.8rem;
+}
+
+.ms-lookup-paciente-limpar {
+  position: absolute;
+  right: calc(2.5rem + 0.5rem);
+  font-size: 0.65rem;
+}
+
+.ms-lookup-paciente-procurar {
+  flex: 0 0 auto;
+}
+
+.ms-lookup-paciente-lista {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #DEE2E6;
+  border-radius: 0.5rem;
+}
+
+.ms-lookup-paciente-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid #F1F3F5;
+  background: none;
+  cursor: pointer;
+}
+
+.ms-lookup-paciente-item:last-child {
+  border-bottom: none;
+}
+
+.ms-lookup-paciente-item:hover,
+.ms-lookup-paciente-item:focus {
+  background: #F8F9FA;
+}
+
+.ms-lookup-paciente-item-nome {
+  color: #2B2D42;
+  font-weight: 500;
+}
+
+.ms-lookup-paciente-item-cpf {
+  color: #868E96;
+  font-size: 0.8rem;
+}
+
+/* Seletor de hora custom (modais Nova/Editar Sessão): texto somente-leitura + painel próprio com botão "Selecionar" */
+.ms-time-picker {
+  position: relative;
+}
+
+.ms-time-picker input[readonly] {
+  cursor: pointer;
+  background: #FFFFFF;
+}
+
+.ms-time-picker-painel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FFFFFF;
+  border: 1px solid #DEE2E6;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+}
+
+.ms-time-picker-colunas {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ms-time-picker-colunas select {
+  flex: 1 1 0;
+}
+
+.ms-time-picker-separador {
+  font-weight: 600;
+  color: #2B2D42;
 }
 
 /* Modal de nova anotação confidencial */
@@ -834,19 +992,32 @@ body.ms-dashboard-body {
   margin: 0;
 }
 
-/* Paginação das anotações confidenciais, seguindo a paleta do sistema */
-#paginacaoAnotacoes .page-link {
+/* Paginação (anotações confidenciais, sessões, etc.), seguindo a paleta do sistema */
+.ms-pagination .page-link {
   color: var(--ms-text);
 }
 
-#paginacaoAnotacoes .page-link:hover {
+.ms-pagination .page-link:hover {
   color: var(--ms-orange-dark);
 }
 
-#paginacaoAnotacoes .page-item.active .page-link {
+.ms-pagination .page-item.active .page-link {
   background-color: var(--ms-orange);
   border-color: var(--ms-orange);
   color: #fff;
+}
+
+/* Contêiner de tabela com rolagem interna (mostra ~4 linhas por vez; o restante da página de 10 rola) */
+.ms-dash-table-scroll {
+  max-height: 272px;
+  overflow-y: auto;
+}
+
+.ms-dash-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 1;
 }
 
 /* Responsividade básica: em telas pequenas o conteúdo do navbar é simplificado
@@ -887,7 +1058,12 @@ body.ms-dashboard-body {
     flex: 1 1 auto;
   }
 
-  .ms-anotacao-search input {
+  .ms-anotacao-search input,
+  .ms-anotacao-search select {
+    width: 100%;
+  }
+
+  .ms-filtro-paciente-wrapper {
     width: 100%;
   }
 }

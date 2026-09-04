@@ -122,7 +122,7 @@
             </div>
 
             <nav aria-label="Paginação de anotações" class="mt-3">
-                <ul class="pagination pagination-sm justify-content-center" id="paginacaoAnotacoes">
+                <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoAnotacoes">
                     @if (Model.TotalPaginasAnotacoes > 1)
                     {
                         for (var pagina = 1; pagina <= Model.TotalPaginasAnotacoes; pagina++)
@@ -137,11 +137,56 @@
         </div>
     </div>
     <div class="tab-pane fade" id="sessoes" role="tabpanel" aria-labelledby="sessoes-tab">
-        <div class="ms-dash-empty-state">
-            <i class="bi bi-clock-history"></i>
-            <h5>Histórico de Sessões</h5>
-            <p>Em breve você poderá acompanhar aqui as sessões realizadas com @Model.NomeCompleto.</p>
-        </div>
+        @if (Model.Sessoes.Count == 0)
+        {
+            <div class="ms-dash-empty-state">
+                <i class="bi bi-clock-history"></i>
+                <h5>Nenhuma sessão registrada</h5>
+                <p>Quando você agendar uma sessão com @Model.NomeCompleto em "Minhas Sessões", ela aparecerá aqui.</p>
+            </div>
+        }
+        else
+        {
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data e Hora</th>
+                                <th>Duração</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sessao in Model.Sessoes)
+                            {
+                                var classeBadge = sessao.Status switch
+                                {
+                                    "Agendada" => "ms-badge-agendada",
+                                    "Realizada" => "ms-badge-realizada",
+                                    _ => "ms-badge-cancelada"
+                                };
+                                <tr>
+                                    <td>
+                                        @sessao.DataHora.ToString("dd/MM/yyyy")
+                                        <div class="ms-dash-table-subtext">@sessao.DataHora.ToString("HH:mm")</div>
+                                    </td>
+                                    <td>@sessao.DuracaoMinutos min</td>
+                                    <td><span class="badge @classeBadge">@sessao.Status</span></td>
+                                    <td class="text-end">
+                                        <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
+                                           class="btn btn-sm ms-dash-btn-ficha">
+                                            <i class="bi bi-box-arrow-up-right"></i> Abrir
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
     </div>
     <div class="tab-pane fade" id="dados" role="tabpanel" aria-labelledby="dados-tab">
         <div class="ms-dash-card">

@@ -55,6 +55,7 @@
             var isInicioAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Index", StringComparison.OrdinalIgnoreCase);
             var isPacientesAtivo = string.Equals(controladorAtual, "Pacientes", StringComparison.OrdinalIgnoreCase);
+            var isSessoesAtivo = string.Equals(controladorAtual, "Sessoes", StringComparison.OrdinalIgnoreCase);
             var isConfiguracoesAtivo = string.Equals(controladorAtual, "Dashboard", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Configuracoes", StringComparison.OrdinalIgnoreCase);
         }
@@ -81,7 +82,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="ms-dash-menu-link">
+                    <a asp-controller="Sessoes" asp-action="Index"
+                       class="ms-dash-menu-link@(isSessoesAtivo ? " active" : "")">
                         <i class="bi bi-journal-medical"></i>
                         <span class="menu-text">Minhas Sessões</span>
                     </a>
