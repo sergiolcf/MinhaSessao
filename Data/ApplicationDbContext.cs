@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MinhaSessao.Models.Entities;
 
 namespace MinhaSessao.Data;
@@ -69,5 +70,32 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(so => so.ObjetivoTerapeuticoId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
+
+        // O Postgres mapeia DateTime como "timestamp with time zone", que só aceita Kind=Utc.
+        // Valores vindos de formulário (ex.: DataNascimento, DataHora da Sessão) chegam com Kind=Unspecified
+        // e derrubavam o SaveChanges (funcionava no SQLite, que não valida Kind). Forçamos Utc em todo
+        // DateTime/DateTime? do model, em vez de corrigir campo por campo em cada controller.
+        var conversorDateTime = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        var conversorDateTimeNulo = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? (v.Value.Kind == DateTimeKind.Utc ? v.Value : DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(conversorDateTime);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(conversorDateTimeNulo);
+                }
+            }
+        }
     }
 }
