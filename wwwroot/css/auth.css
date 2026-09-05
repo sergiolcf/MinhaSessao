@@ -197,6 +197,29 @@ body.ms-auth-body {
   color: var(--ms-orange);
 }
 
+/* Botão de mostrar/ocultar senha (Cadastro de Profissional/Paciente) — nosso próprio ícone,
+   sempre visível e consistente, no lugar do botão nativo de revelar senha do navegador
+   (aparece de forma inconsistente entre navegadores/campos e não dá pra controlar via CSS/JS) */
+.ms-toggle-senha {
+  border-color: #ced4da;
+  color: #6C757D;
+  background-color: #fff;
+}
+
+.ms-toggle-senha:hover,
+.ms-toggle-senha:focus {
+  color: var(--ms-orange);
+  border-color: #ced4da;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+/* Esconde o botão nativo de revelar senha do Edge para não duplicar com o nosso ícone */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 /* Alerta de erro (mesmo padrão visual usado no dashboard) */
 .ms-alert {
   display: flex;
