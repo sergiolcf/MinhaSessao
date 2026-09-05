@@ -5,7 +5,7 @@ WORKDIR /src
 # Copia os arquivos de projeto e restaura dependências
 COPY ["*.sln", "./"]
 COPY ["*.csproj", "./"]
-RUN dotnet restore
+RUN dotnet restore "MinhaSessao.csproj"
 
 # Copia todo o resto do código e compila
 COPY . .
