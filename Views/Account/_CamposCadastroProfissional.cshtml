@@ -2,18 +2,18 @@
 
 <div class="mb-3">
     <label asp-for="NomeCompleto" class="form-label">Nome Completo</label>
-    <input asp-for="NomeCompleto" class="form-control" placeholder="Seu nome completo" required>
+    <input asp-for="NomeCompleto" class="form-control" placeholder="Seu nome e sobrenome" required>
     <span asp-validation-for="NomeCompleto" class="text-danger small"></span>
 </div>
 <div class="row">
     <div class="col-md-6 mb-3">
         <label asp-for="RegistroCRP" class="form-label">Registro Profissional (CRP)</label>
-        <input asp-for="RegistroCRP" class="form-control" placeholder="CRP 00/000000" required>
+        <input asp-for="RegistroCRP" class="form-control" placeholder="00/000000" inputmode="numeric" maxlength="9" required>
         <span asp-validation-for="RegistroCRP" class="text-danger small"></span>
     </div>
     <div class="col-md-6 mb-3">
         <label asp-for="Telefone" class="form-label">Telefone / WhatsApp</label>
-        <input asp-for="Telefone" type="tel" class="form-control" placeholder="(00) 00000-0000" required>
+        <input asp-for="Telefone" type="tel" class="form-control" placeholder="(00) 00000-0000" inputmode="numeric" maxlength="15" required>
         <span asp-validation-for="Telefone" class="text-danger small"></span>
     </div>
 </div>
@@ -25,18 +25,28 @@
 <div class="row">
     <div class="col-md-6 mb-3">
         <label asp-for="Senha" class="form-label">Senha</label>
-        <input asp-for="Senha" type="password" class="form-control" placeholder="Mínimo de 6 caracteres" required>
+        <div class="input-group">
+            <input asp-for="Senha" type="password" class="form-control" placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número e 1 especial" required>
+            <button class="btn btn-outline-secondary ms-toggle-senha" type="button" aria-label="Mostrar senha">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
         <span asp-validation-for="Senha" class="text-danger small"></span>
     </div>
     <div class="col-md-6 mb-3">
         <label asp-for="ConfirmarSenha" class="form-label">Confirmar Senha</label>
-        <input asp-for="ConfirmarSenha" type="password" class="form-control" placeholder="Repita a senha" required>
+        <div class="input-group">
+            <input asp-for="ConfirmarSenha" type="password" class="form-control" placeholder="Repita a senha" required>
+            <button class="btn btn-outline-secondary ms-toggle-senha" type="button" aria-label="Mostrar senha">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
         <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
     </div>
 </div>
 <div class="mb-3">
     <label asp-for="Apresentacao" class="form-label">Apresentação / Sobre mim</label>
-    <textarea asp-for="Apresentacao" class="form-control" rows="3" maxlength="500" placeholder="Conte um pouco sobre sua abordagem e experiência..."></textarea>
+    <textarea asp-for="Apresentacao" class="form-control" rows="3" maxlength="500" placeholder="Conte um pouco sobre sua abordagem e experiência... (mínimo 30 caracteres)"></textarea>
     <div class="d-flex justify-content-between">
         <span asp-validation-for="Apresentacao" class="text-danger small"></span>
         <span class="text-muted small" id="apresentacaoCounter">0/500</span>
@@ -44,6 +54,7 @@
 </div>
 <div class="mb-3">
     <label asp-for="Foto" class="form-label">Foto de Perfil</label>
-    <input asp-for="Foto" type="file" class="form-control" accept="image/*">
+    <input asp-for="Foto" type="file" class="form-control" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+    <div class="form-text">Imagem .jpg, .jpeg ou .png de até 2MB.</div>
     <span asp-validation-for="Foto" class="text-danger small"></span>
 </div>

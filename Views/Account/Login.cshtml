@@ -1,9 +1,14 @@
 @model MinhaSessao.Models.ViewModels.LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @{
     ViewData["Title"] = "Entrar";
     Layout = "_LayoutAuth";
-    // Desativado a pedido do usuário: não excluir, só não exibir o botão de login de teste
-    var exibirLoginContaTeste = false;
+    // Botão de login de teste só aparece em ambiente de Desenvolvimento (ASPNETCORE_ENVIRONMENT=Development),
+    // nunca em Produção. A aplicação publicada não sabe de qual branch do Git ela veio — quem decide isso é
+    // a variável de ambiente configurada no serviço do Render: deixe ASPNETCORE_ENVIRONMENT=Development só no
+    // serviço que publica a branch Develop; no serviço de Produção (branch main), não defina essa variável
+    // (o padrão já é Production) ou defina-a explicitamente como Production.
+    var exibirLoginContaTeste = Env.IsDevelopment();
 }
 
 <div class="ms-auth-card">
