@@ -9,7 +9,7 @@ RUN dotnet restore "MinhaSessao.csproj"
 
 # Copia todo o resto do código e compila
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish "MinhaSessao.csproj" -c Release -o /app/publish
 
 # Estágio de Execução
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
