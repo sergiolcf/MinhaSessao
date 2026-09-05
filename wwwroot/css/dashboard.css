@@ -27,7 +27,7 @@ body.ms-dashboard-body {
   background-color: var(--ms-text);
   color: #fff;
   padding: 0.6rem 1.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 1030;
@@ -42,12 +42,13 @@ body.ms-dashboard-body {
 
 .ms-sidebar-toggle {
   background: transparent;
-  border: none;
+  /* Borda bem sutil pra destacar o botão do fundo escuro do navbar */
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   font-size: 1.3rem;
   line-height: 1;
   padding: 0.25rem 0.5rem;
-  border-radius: 0.4rem;
+  border-radius: 0.6rem;
   transition: background-color 0.15s ease-in-out;
 }
 
@@ -85,8 +86,8 @@ body.ms-dashboard-body {
 .ms-dash-navbar-center {
   flex: 2 1 0;
   text-align: center;
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 1rem;
   color: rgba(255, 255, 255, 0.85);
 }
 
@@ -117,7 +118,7 @@ body.ms-dashboard-body {
 
 .ms-dash-user-name {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #fff;
   white-space: nowrap;
 }
@@ -134,7 +135,7 @@ body.ms-dashboard-body {
   font-size: 1.2rem;
   line-height: 1;
   padding: 0.35rem 0.55rem;
-  border-radius: 0.4rem;
+  border-radius: 0.6rem;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
@@ -157,6 +158,8 @@ body.ms-dashboard-body {
   background-color: var(--ms-text);
   overflow: hidden;
   transition: all 0.3s ease;
+  /* Sombra sutil na borda direita, pra suavizar a transição com o conteúdo claro ao lado */
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Sidebar retrátil: colapsa para uma trilha de ícones (~70px) em qualquer tamanho de tela */
@@ -175,12 +178,14 @@ body.ms-dashboard-body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.5rem;
+  /* Cantos arredondados só do lado direito (formato de "aba"), encostando nas bordas da sidebar */
+  border-radius: 0 0.6rem 0.6rem 0;
+  border-left: 4px solid transparent;
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
   white-space: nowrap;
-  border-left: 3px solid transparent;
   transition: all 0.3s ease;
 }
 
@@ -269,11 +274,13 @@ body.ms-dashboard-body {
   border-radius: 0.75rem;
   box-shadow: 0 0.25rem 0.75rem rgba(43, 45, 66, 0.08);
   padding: 1.5rem;
+  position: relative;
 }
 
 .ms-dash-card i {
   font-size: 1.75rem;
-  color: var(--ms-orange);
+  /* Verde-sálvia suave: mais vivo que o grafite, sem competir com o laranja do cantinho decorativo */
+  color: #6B9080;
   margin-bottom: 0.5rem;
   display: inline-block;
 }
@@ -351,11 +358,13 @@ body.ms-dashboard-body {
   padding: 3rem 1.5rem;
   text-align: center;
   color: #6C757D;
+  position: relative;
 }
 
 .ms-dash-empty-state i {
   font-size: 2.5rem;
-  color: var(--ms-orange);
+  /* Verde-sálvia suave: mais vivo que o grafite, sem competir com o laranja do cantinho decorativo */
+  color: #6B9080;
   margin-bottom: 0.75rem;
   display: inline-block;
 }
@@ -368,6 +377,23 @@ body.ms-dashboard-body {
 
 .ms-dash-empty-state p {
   margin: 0;
+}
+
+/* Cantinho decorativo laranja no canto superior esquerdo — assinatura visual sutil dos cards
+   do Dashboard. Não aplicado em .ms-dash-table-card (usa overflow: hidden de propósito, pra
+   cortar a tabela — o traço ficaria escondido ou cortado ali) */
+.ms-dash-card:not(.ms-dash-table-card)::before,
+.ms-dash-empty-state::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-top: 2px solid var(--ms-orange);
+  border-left: 2px solid var(--ms-orange);
+  border-top-left-radius: 8px;
+  pointer-events: none;
 }
 
 /* Busca da aba "Todos os Profissionais" (Painel do Paciente) */
