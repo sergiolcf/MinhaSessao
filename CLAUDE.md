@@ -3,7 +3,7 @@
 ## Visão Geral
 Sistema de gestão de sessões de psicologia para Psicólogos e Pacientes.
 Solução: SLCF_MinhaSessao.sln
-Tech Stack: .NET 8 MVC, Entity Framework Core, SQLite, Bootstrap 5.
+Tech Stack: .NET 8 MVC, Entity Framework Core, PostgreSQL (Neon.tech), Bootstrap 5.
 
 ## Paleta de Cores & Layout
 - Fundo Principal: Cinza Claro (#F8F9FA)
@@ -37,7 +37,8 @@ Esta seção descreve o estado atual do projeto por módulo/domínio (não por c
 - `Models/ViewModels/*` — models de formulário/exibição, um por finalidade (criação, edição, listagem, detalhes).
 - `Services/*` — lógica de domínio reutilizável (ex.: `AutenticacaoService`).
 - `Extensions/*` — extension methods auxiliares (ex.: `ClaimsPrincipalExtensions`).
-- Persistência via EF Core + SQLite: `Data/ApplicationDbContext.cs`, connection string em `appsettings.json` (`ConnectionStrings:DefaultConnection`), banco local `minhasessao.db` (gitignored).
+- Persistência via EF Core + PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`, hospedado no Neon.tech), `Data/ApplicationDbContext.cs`. A connection string (`ConnectionStrings:DefaultConnection`) **nunca** fica em texto puro no repositório: `appsettings.json` mantém a chave vazia (`""`) só para documentar o nome esperado; o valor real vem de `dotnet user-secrets` em desenvolvimento local (`dotnet user-secrets set "ConnectionStrings:DefaultConnection" "..."`, guardado fora do repo) e da variável de ambiente `ConnectionStrings__DefaultConnection` no Render em produção (o `__` mapeia para `:` na configuração do ASP.NET Core).
+- `Program.cs` roda `context.Database.Migrate()` logo após `builder.Build()` (dentro de um `try/catch` que só loga o erro, sem derrubar a aplicação) — aplica automaticamente as migrations pendentes e cria o schema no Postgres se ainda não existir, tanto local quanto no Render, sem precisar rodar `dotnet ef database update` manualmente a cada deploy.
 
 ### Autenticação (Cookie + Senha, Profissional e Paciente)
 - Autenticação real por Cookie (`Program.cs`: `AddAuthentication().AddCookie()`, `LoginPath = /Account/Login`, expira em 7 dias com sliding expiration).
