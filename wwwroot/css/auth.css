@@ -54,11 +54,27 @@ body.ms-auth-body {
 
 .ms-auth-card {
   background-color: #fff;
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   box-shadow: 0 0.5rem 1.5rem rgba(43, 45, 66, 0.1);
   padding: 2.5rem;
   width: 100%;
   max-width: 420px;
+}
+
+/* Campos de formulário com cantos mais arredondados, no mesmo espírito do card */
+.ms-auth-card .form-control {
+  border-radius: 0.65rem;
+}
+
+/* Cor do checkbox "Lembrar de mim" seguindo a cor da marca */
+.form-check-input {
+  accent-color: var(--ms-orange);
+}
+
+/* Botão "Entrar com Conta de Teste" também em formato pílula, escopado ao card de auth
+   para não afetar outros lugares do site que usem o botão outline padrão do Bootstrap */
+.ms-auth-card .btn-outline-secondary {
+  border-radius: 50px;
 }
 
 /* Variante mais larga para o Cadastro (mais campos que o Login) */
@@ -131,10 +147,11 @@ body.ms-auth-body {
   background-color: var(--ms-orange);
   border-color: var(--ms-orange);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   padding: 0.6rem 1.25rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  border-radius: 50px;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .btn-ms-orange:hover,
@@ -142,6 +159,8 @@ body.ms-auth-body {
   background-color: var(--ms-orange-dark);
   border-color: var(--ms-orange-dark);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 53, 0.3);
 }
 
 .ms-auth-divider {
