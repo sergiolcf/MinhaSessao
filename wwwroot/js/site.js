@@ -4,28 +4,42 @@ function atualizarRelogio() {
     const hora = agora.getHours();
 
     let icone;
+    let corIcone;
     let texto;
     if (hora >= 6 && hora < 12) {
-        icone = "☀️";
+        icone = "bi-sun-fill";
+        corIcone = "#F5A623";
         texto = "Bom dia";
     } else if (hora >= 12 && hora < 18) {
-        icone = "🌤️";
+        icone = "bi-cloud-sun-fill";
+        corIcone = "#5B9BD5";
         texto = "Boa tarde";
     } else {
-        icone = "🌙";
+        icone = "bi-moon-stars-fill";
+        corIcone = "#6C63A6";
         texto = "Boa noite";
     }
-    const saudacao = icone + " " + texto;
+    // Só o ícone ganha cor própria; o texto continua herdando o cinza suave de .ms-greeting
+    const saudacao = '<span style="color:' + corIcone + '"><i class="bi ' + icone + '"></i></span> ' + texto;
 
     const horaFormatada = agora.toLocaleTimeString("pt-BR", {
         hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+        minute: "2-digit"
     });
 
+    // O pt-BR retorna a data toda em minúsculas ("quinta-feira, 3 de setembro"); capitaliza só a primeira letra
+    const dataFormatada = agora.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+    });
+    const dataCapitalizada = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
     const greetingEl = document.getElementById("ms-greeting");
+    const dateEl = document.getElementById("ms-date");
     const clockEl = document.getElementById("ms-clock");
-    if (greetingEl) greetingEl.textContent = saudacao;
+    if (greetingEl) greetingEl.innerHTML = saudacao;
+    if (dateEl) dateEl.textContent = dataCapitalizada;
     if (clockEl) clockEl.textContent = horaFormatada;
 }
 
