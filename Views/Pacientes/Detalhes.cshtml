@@ -4,7 +4,7 @@
     Layout = "_LayoutDashboard";
 }
 
-<a asp-action="Index" class="btn btn-light border shadow-sm btn-sm ms-dash-back-link mb-3">
+<a asp-action="Index" class="ms-dash-back-link mb-3 d-inline-flex align-items-center">
     <i class="bi bi-arrow-left me-1"></i> Voltar para Pacientes
 </a>
 
@@ -27,13 +27,13 @@
         </div>
     </div>
     <div class="ms-dash-detail-shortcuts">
-        <a href="tel:@Model.Telefone" class="btn btn-sm ms-dash-btn-icon" title="Ligar para o paciente">
+        <a href="tel:@Model.Telefone" class="ms-dash-row-link" title="Ligar para o paciente">
             <i class="bi bi-telephone"></i>
         </a>
-        <a href="mailto:@Model.Email" class="btn btn-sm ms-dash-btn-icon" title="Enviar e-mail">
+        <a href="mailto:@Model.Email" class="ms-dash-row-link" title="Enviar e-mail">
             <i class="bi bi-envelope"></i>
         </a>
-        <button type="button" class="btn btn-sm ms-dash-btn-icon" title="Em breve" disabled>
+        <button type="button" class="ms-dash-row-link" title="Em breve" disabled>
             <i class="bi bi-calendar-plus"></i>
         </button>
     </div>
@@ -195,6 +195,8 @@
                                     _ => "ms-badge-cancelada"
                                 };
                                 var temEvolucao = !string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas);
+                                var temObjetivosTrabalhados = sessao.ObjetivosTrabalhados.Any();
+                                var temDetalhe = temEvolucao || temObjetivosTrabalhados;
                                 var idEvolucao = $"evolucaoSessao_{sessao.Id}";
                                 <tr>
                                     <td>
@@ -204,26 +206,44 @@
                                     <td>@sessao.DuracaoMinutos min</td>
                                     <td><span class="badge @classeBadge">@sessao.Status</span></td>
                                     <td class="text-end">
-                                        <div class="d-inline-flex gap-2">
-                                            @if (temEvolucao)
+                                        <div class="d-inline-flex gap-1">
+                                            @if (temDetalhe)
                                             {
-                                                <button type="button" class="btn btn-sm ms-dash-btn-ficha" data-bs-toggle="collapse" data-bs-target="#@idEvolucao">
-                                                    <i class="bi bi-journal-text"></i> Evolução
+                                                <button type="button" class="ms-dash-row-link" data-bs-toggle="collapse" data-bs-target="#@idEvolucao" title="Ver detalhes">
+                                                    <i class="bi bi-journal-text"></i>
                                                 </button>
                                             }
                                             <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
-                                               class="btn btn-sm ms-dash-btn-ficha">
-                                                <i class="bi bi-box-arrow-up-right"></i> Abrir
+                                               class="ms-dash-row-link" title="Abrir sessão">
+                                                <i class="bi bi-box-arrow-up-right"></i>
                                             </a>
                                         </div>
                                     </td>
                                 </tr>
-                                if (temEvolucao)
+                                if (temDetalhe)
                                 {
                                     <tr>
                                         <td colspan="4" class="p-0 border-0">
                                             <div class="collapse" id="@idEvolucao">
                                                 <div class="ms-sessao-evolucao">
+                                                    @if (temObjetivosTrabalhados)
+                                                    {
+                                                        <div class="mb-2">
+                                                            <strong>Objetivos Trabalhados:</strong>
+                                                            <div class="ms-objetivo-chips-wrapper mt-1">
+                                                                @foreach (var objetivo in sessao.ObjetivosTrabalhados)
+                                                                {
+                                                                    <span class="ms-objetivo-chip">
+                                                                        @objetivo.Titulo
+                                                                        @if (!string.IsNullOrWhiteSpace(objetivo.Observacao))
+                                                                        {
+                                                                            <i class="bi bi-info-circle" title="@objetivo.Observacao"></i>
+                                                                        }
+                                                                    </span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
                                                     @if (!string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas))
                                                     {
                                                         <p class="mb-0"><strong>Anotações Clínicas:</strong> @sessao.AnotacoesClinicas</p>
@@ -254,8 +274,16 @@
                     <span class="ms-dash-info-value">@Model.Telefone</span>
                 </div>
                 <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Contato de Emergência</span>
+                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.ContatoEmergencia) ? "Não informado" : Model.ContatoEmergencia)</span>
+                </div>
+                <div class="ms-dash-info-item">
                     <span class="ms-dash-info-label">E-mail</span>
                     <span class="ms-dash-info-value">@Model.Email</span>
+                </div>
+                <div class="ms-dash-info-item">
+                    <span class="ms-dash-info-label">Cadastrado em</span>
+                    <span class="ms-dash-info-value">@Model.DataCadastro.ToString("dd/MM/yyyy")</span>
                 </div>
                 <div class="ms-dash-info-item">
                     <span class="ms-dash-info-label">Data de Nascimento</span>
@@ -272,14 +300,6 @@
                 <div class="ms-dash-info-item">
                     <span class="ms-dash-info-label">Profissão</span>
                     <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.Profissao) ? "Não informado" : Model.Profissao)</span>
-                </div>
-                <div class="ms-dash-info-item">
-                    <span class="ms-dash-info-label">Contato de Emergência</span>
-                    <span class="ms-dash-info-value">@(string.IsNullOrWhiteSpace(Model.ContatoEmergencia) ? "Não informado" : Model.ContatoEmergencia)</span>
-                </div>
-                <div class="ms-dash-info-item">
-                    <span class="ms-dash-info-label">Cadastrado em</span>
-                    <span class="ms-dash-info-value">@Model.DataCadastro.ToString("dd/MM/yyyy")</span>
                 </div>
             </div>
         </div>
@@ -391,6 +411,51 @@
                     <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarAnotacaoSpinner"></span>
                     <span id="btnSalvarAnotacaoTexto">Salvar Anotação</span>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Visualizar Sessão (somente leitura, aberto ao clicar na data de um item do Histórico de Sessões do Plano de Tratamento) -->
+<div class="modal fade" id="modalVisualizarSessao" tabindex="-1" aria-labelledby="modalVisualizarSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVisualizarSessaoLabel">Detalhes da Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                @* Grid próprio (row/col do Bootstrap), já que .ms-dash-info-grid foi ajustada pra caber
+                   8 campos em 4 colunas na aba "Dados Cadastrais" e não serve pra só 3 campos lado a lado *@
+                <div class="row mb-3">
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Código</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoCodigo"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Data e Hora</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoData"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Duração</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoDuracao"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Status</span>
+                        <span class="ms-dash-info-value"><span class="badge" id="modalVisualizarSessaoStatus"></span></span>
+                    </div>
+                </div>
+                <div class="mb-3" id="modalVisualizarSessaoObjetivosWrapper">
+                    <span class="ms-dash-info-label d-block mb-1">Objetivos Trabalhados</span>
+                    <div class="ms-objetivo-chips-wrapper" id="modalVisualizarSessaoObjetivos"></div>
+                </div>
+                <div>
+                    <span class="ms-dash-info-label d-block mb-1">Anotações Clínicas</span>
+                    <p class="mb-0" id="modalVisualizarSessaoAnotacoes"></p>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>

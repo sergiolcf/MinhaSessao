@@ -16,3 +16,6 @@ obj/
 
 # Uploads gerados em runtime
 wwwroot/uploads/
+
+# Contém a connection string real do Neon (dev) em texto puro — nunca commitar
+appsettings.Development.json

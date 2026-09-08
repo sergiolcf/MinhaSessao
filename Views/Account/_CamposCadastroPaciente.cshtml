@@ -2,7 +2,7 @@
 
 <div class="mb-3">
     <label asp-for="NomeCompleto" class="form-label">Nome Completo</label>
-    <input asp-for="NomeCompleto" class="form-control" placeholder="Seu nome completo" required>
+    <input asp-for="NomeCompleto" class="form-control" placeholder="Seu nome e sobrenome" required>
     <span asp-validation-for="NomeCompleto" class="text-danger small"></span>
 </div>
 <div class="mb-3">
@@ -12,7 +12,7 @@
 </div>
 <div class="mb-3">
     <label asp-for="Telefone" class="form-label">Telefone</label>
-    <input asp-for="Telefone" class="form-control" placeholder="(00) 00000-0000" required>
+    <input asp-for="Telefone" class="form-control" placeholder="(00) 00000-0000" inputmode="numeric" maxlength="15" required>
     <span asp-validation-for="Telefone" class="text-danger small"></span>
 </div>
 <div class="mb-3">
@@ -22,16 +22,28 @@
 </div>
 <div class="mb-3">
     <label asp-for="Cpf" class="form-label">CPF</label>
-    <input asp-for="Cpf" class="form-control" placeholder="000.000.000-00" required>
+    <input asp-for="Cpf" class="form-control" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" required>
     <span asp-validation-for="Cpf" class="text-danger small"></span>
 </div>
-<div class="mb-3">
-    <label asp-for="Senha" class="form-label">Senha</label>
-    <input asp-for="Senha" class="form-control" placeholder="Mínimo de 6 caracteres" required>
-    <span asp-validation-for="Senha" class="text-danger small"></span>
-</div>
-<div class="mb-3">
-    <label asp-for="ConfirmarSenha" class="form-label">Confirmar Senha</label>
-    <input asp-for="ConfirmarSenha" class="form-control" placeholder="Repita a senha" required>
-    <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="Senha" class="form-label">Senha</label>
+        <div class="input-group">
+            <input asp-for="Senha" type="password" class="form-control" placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número e 1 especial" required>
+            <button class="btn btn-outline-secondary ms-toggle-senha" type="button" aria-label="Mostrar senha">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Senha" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="ConfirmarSenha" class="form-label">Confirmar Senha</label>
+        <div class="input-group">
+            <input asp-for="ConfirmarSenha" type="password" class="form-control" placeholder="Repita a senha" required>
+            <button class="btn btn-outline-secondary ms-toggle-senha" type="button" aria-label="Mostrar senha">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
+    </div>
 </div>

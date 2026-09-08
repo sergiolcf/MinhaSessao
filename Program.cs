@@ -25,7 +25,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Aplica as migrations e cria o banco SQLite automaticamente se não existir
+// Aplica as migrations pendentes e cria o schema no Postgres (Neon.tech) automaticamente se não existir
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -37,7 +37,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocorreu um erro ao aplicar as migrations do SQLite.");
+        logger.LogError(ex, "Ocorreu um erro ao aplicar as migrations do Postgres.");
     }
 }
 

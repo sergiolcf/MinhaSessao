@@ -45,23 +45,32 @@ document.addEventListener("DOMContentLoaded", function () {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>
-                ${escaparHtml(sessao.data)}
-                <div class="ms-dash-table-subtext">${escaparHtml(sessao.hora)}</div>
+                <span class="ms-dash-paciente-link">
+                    <span class="ms-avatar-iniciais">${escaparHtml(sessao.iniciais)}</span>
+                    <span>${escaparHtml(sessao.pacienteNome)}</span>
+                </span>
             </td>
-            <td>${escaparHtml(sessao.pacienteNome)}</td>
+            <td>
+                ${escaparHtml(sessao.data)}
+                <div class="ms-dash-table-hora"><i class="bi bi-clock"></i> ${escaparHtml(sessao.hora)}</div>
+            </td>
             <td>${sessao.duracaoMinutos} min</td>
+            <td>
+                <span class="ms-badge-codigo">${escaparHtml(sessao.codigo)}</span>
+            </td>
             <td><span class="badge ${classeBadge(sessao.status)}">${escaparHtml(sessao.status)}</span></td>
             <td class="text-end">
-                <div class="d-inline-flex gap-2">
-                    <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-editar-sessao"
+                <div class="d-inline-flex gap-1">
+                    <button type="button" class="ms-dash-row-link btn-editar-sessao"
                             data-sessao-id="${sessao.id}"
                             data-sessao-data="${sessao.dataHoraIso}"
                             data-sessao-duracao="${sessao.duracaoMinutos}"
-                            data-sessao-status="${sessao.status}">
-                        <i class="bi bi-pencil-square"></i> Status/Editar
+                            data-sessao-status="${sessao.status}"
+                            title="Status/Editar">
+                        <i class="bi bi-pencil-square"></i>
                     </button>
-                    <a href="/Pacientes/Detalhes/${sessao.pacienteId}" class="btn btn-sm ms-dash-btn-ficha">
-                        <i class="bi bi-folder2-open"></i> Prontuário
+                    <a href="/Pacientes/Detalhes/${sessao.pacienteId}" class="ms-dash-row-link" title="Prontuário">
+                        <i class="bi bi-folder2-open"></i>
                     </a>
                 </div>
             </td>
@@ -81,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td colspan="5">
+                <td colspan="6">
                     <div class="ms-dash-empty-state">
                         <i class="bi ${icone}"></i>
                         <h5>${titulo}</h5>

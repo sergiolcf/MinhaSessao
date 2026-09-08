@@ -168,7 +168,7 @@ public class AccountController : Controller
             {
                 Id = Guid.NewGuid(),
                 NomeCompleto = model.NomeCompleto,
-                Telefone = model.Telefone,
+                Telefone = new string(model.Telefone.Where(char.IsDigit).ToArray()),
                 Email = emailNormalizado,
                 DataNascimento = model.DataNascimento,
                 Cpf = CpfUtil.Normalizar(model.Cpf)

@@ -13,20 +13,39 @@ html, body {
 }
 
 body {
-  background-color: var(--ms-bg);
+  /* Fundo sólido movido para o body::before (junto com o gradiente "aurora"), pra não competir
+     com o z-index: -1 do pseudo-elemento */
+  background-color: transparent;
   color: var(--ms-text);
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
+}
+
+/* Efeito "aurora": duas manchas de luz bem discretas nos cantos, com as cores da marca,
+   numa camada fixa atrás de todo o conteúdo */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ms-bg);
+  background-image:
+    radial-gradient(600px circle at 8% 12%, rgba(255, 107, 53, 0.07), transparent 60%),
+    radial-gradient(550px circle at 92% 85%, rgba(43, 45, 66, 0.05), transparent 60%);
 }
 
 /* Header */
 .ms-header {
   background-color: #FFFFFF;
-  border-bottom: 1px solid #E9ECEF;
+  border-bottom: 2px solid transparent;
+  /* Linha fina em gradiente no lugar da borda sólida — o laranja aparece só como um toque discreto perto da logo */
+  border-image: linear-gradient(90deg, var(--ms-orange) 0%, #E9ECEF 40%, #E9ECEF 100%) 1;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  padding: 0.75rem 2rem;
+  padding: 1rem 2rem;
 }
 
 .ms-header-inner {
@@ -80,7 +99,13 @@ body {
 }
 
 .ms-greeting {
-  font-weight: 600;
+  font-weight: 400;
+  color: #6C757D;
+}
+
+.ms-date {
+  font-weight: 400;
+  color: #6C757D;
 }
 
 .ms-clock-sep {
@@ -97,10 +122,11 @@ body {
   background-color: var(--ms-orange);
   border-color: var(--ms-orange);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   padding: 0.5rem 1.25rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  border-radius: 50px;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .btn-ms-orange:hover,
@@ -108,6 +134,8 @@ body {
   background-color: var(--ms-orange-dark);
   border-color: var(--ms-orange-dark);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 53, 0.3);
 }
 
 /* Centro da página */
@@ -116,16 +144,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 3rem 1.5rem;
 }
 
 .ms-quote-card {
   background-color: #FFFFFF;
-  border-radius: 1rem;
-  box-shadow: 0 0.5rem 1.5rem rgba(43, 45, 66, 0.08);
+  border-radius: 1.75rem;
+  border-left: 3px solid var(--ms-orange);
+  box-shadow: 0 1rem 3rem rgba(43, 45, 66, 0.1);
   padding: 2.5rem 3rem;
   max-width: 640px;
   text-align: center;
+}
+
+.ms-quote-label {
+  display: block;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ms-orange);
+  margin-bottom: 0.75rem;
 }
 
 .ms-quote-text {

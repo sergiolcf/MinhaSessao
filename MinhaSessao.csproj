@@ -15,4 +15,12 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
   </ItemGroup>
 
+  <!-- MinhaSessao.Tests fica aninhado dentro desta pasta; sem isso o glob padrão do SDK Web
+       tentaria compilar os arquivos do projeto de testes dentro do próprio MinhaSessao.csproj -->
+  <ItemGroup>
+    <Compile Remove="MinhaSessao.Tests/**/*.cs" />
+    <Content Remove="MinhaSessao.Tests/**/*" />
+    <None Remove="MinhaSessao.Tests/**/*" />
+  </ItemGroup>
+
 </Project>

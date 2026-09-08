@@ -31,9 +31,15 @@ public class SessaoProfissionalListItemViewModel
 
     public Guid PacienteId { get; set; }
 
+    // Código de identificação da sessão (ex.: MS_1_SF), gerado na criação
+    public string Codigo { get; set; } = string.Empty;
+
     public DateTime DataHora { get; set; }
 
     public string PacienteNome { get; set; } = string.Empty;
+
+    // Iniciais exibidas no avatar da célula Paciente (mesmo padrão de "Meus Pacientes")
+    public string Iniciais => PacienteIniciais.Calcular(PacienteNome);
 
     public int DuracaoMinutos { get; set; }
 
@@ -42,4 +48,8 @@ public class SessaoProfissionalListItemViewModel
 
     // Preenchido só onde a evolução da sessão é exibida (ex.: aba "Histórico de Sessões" da Ficha do Paciente)
     public string? AnotacoesClinicas { get; set; }
+
+    // Objetivos Terapêuticos trabalhados nesta sessão (via SessaoObjetivo), preenchido só onde exibido
+    // (ex.: aba "Histórico de Sessões" da Ficha do Paciente)
+    public List<ObjetivoTrabalhadoViewModel> ObjetivosTrabalhados { get; set; } = new();
 }

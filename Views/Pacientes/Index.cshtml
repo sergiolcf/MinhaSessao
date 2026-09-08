@@ -14,7 +14,7 @@
     </button>
 </div>
 
-@if (Model.Pacientes.Count == 0)
+@if (Model.Pacientes.Count == 0 && Model.TotalPaginas <= 1)
 {
     <div class="ms-dash-empty-state">
         <i class="bi bi-people"></i>
@@ -24,8 +24,16 @@
 }
 else
 {
-    <div class="ms-dash-card ms-dash-table-card">
-        <div class="table-responsive">
+    <div class="ms-anotacao-toolbar mb-3">
+        <div class="ms-anotacao-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="filtroPacienteBusca" class="form-control form-control-sm" placeholder="Buscar paciente por nome ou CPF..." autocomplete="off">
+        </div>
+    </div>
+
+    <div class="ms-dash-card ms-dash-table-card" id="cardPacientes"
+         data-pagina-atual="@Model.PaginaAtual" data-total-paginas="@Model.TotalPaginas">
+        <div class="table-responsive ms-dash-table-scroll-pacientes">
             <table class="table table-hover ms-dash-table align-middle mb-0">
                 <thead>
                     <tr>
@@ -36,45 +44,28 @@ else
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tbodyPacientes">
                     @foreach (var paciente in Model.Pacientes)
                     {
-                        <tr>
-                            <td>
-                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" class="ms-dash-paciente-link">
-                                    <span class="ms-avatar-iniciais">@paciente.Iniciais</span>
-                                    <span>@paciente.NomeCompleto</span>
-                                </a>
-                            </td>
-                            <td>
-                                <div class="ms-dash-contact-line"><i class="bi bi-whatsapp"></i> @paciente.Telefone</div>
-                                <div class="ms-dash-contact-line ms-dash-table-subtext"><i class="bi bi-envelope"></i> @paciente.Email</div>
-                            </td>
-                            <td>
-                                @paciente.DataNascimento.ToString("dd/MM/yyyy")
-                                <div class="ms-dash-table-subtext">@paciente.Idade anos</div>
-                            </td>
-                            <td>
-                                @if (paciente.Ativo)
-                                {
-                                    <span class="badge ms-badge-ativo">Ativo</span>
-                                }
-                                else
-                                {
-                                    <span class="badge ms-badge-inativo">Inativo</span>
-                                }
-                            </td>
-                            <td class="text-end">
-                                <a asp-action="Detalhes" asp-route-id="@paciente.Id" class="btn btn-sm ms-dash-btn-ficha d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-folder2-open"></i> Ver Ficha
-                                </a>
-                            </td>
-                        </tr>
+                        <partial name="_LinhaPaciente" model="paciente" />
                     }
                 </tbody>
             </table>
         </div>
     </div>
+    <nav aria-label="Paginação de pacientes" class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoPacientes">
+            @if (Model.TotalPaginas > 1)
+            {
+                for (var pagina = 1; pagina <= Model.TotalPaginas; pagina++)
+                {
+                    <li class="page-item@(pagina == Model.PaginaAtual ? " active" : "")">
+                        <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                    </li>
+                }
+            }
+        </ul>
+    </nav>
 }
 
 <!-- Modal: Novo Paciente (fluxo em 2 passos: verificar e-mail antes de cadastrar) -->
