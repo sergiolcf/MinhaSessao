@@ -9,24 +9,33 @@
 }
 <tr>
     <td>
-        @Model.DataHora.ToString("dd/MM/yyyy")
-        <div class="ms-dash-table-subtext">@Model.DataHora.ToString("HH:mm")</div>
+        <span class="ms-dash-paciente-link">
+            <span class="ms-avatar-iniciais">@Model.Iniciais</span>
+            <span>@Model.PacienteNome</span>
+        </span>
     </td>
-    <td>@Model.PacienteNome</td>
+    <td>
+        @Model.DataHora.ToString("dd/MM/yyyy")
+        <div class="ms-dash-table-hora"><i class="bi bi-clock"></i> @Model.DataHora.ToString("HH:mm")</div>
+    </td>
     <td>@Model.DuracaoMinutos min</td>
+    <td>
+        <span class="ms-badge-codigo">@Model.Codigo</span>
+    </td>
     <td><span class="badge @classeBadge">@Model.Status</span></td>
     <td class="text-end">
-        <div class="d-inline-flex gap-2">
-            <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-editar-sessao"
+        <div class="d-inline-flex gap-1">
+            <button type="button" class="ms-dash-row-link btn-editar-sessao"
                     data-sessao-id="@Model.Id"
                     data-sessao-data="@Model.DataHora.ToString("yyyy-MM-ddTHH:mm")"
                     data-sessao-duracao="@Model.DuracaoMinutos"
-                    data-sessao-status="@Model.Status">
-                <i class="bi bi-pencil-square"></i> Status/Editar
+                    data-sessao-status="@Model.Status"
+                    title="Status/Editar">
+                <i class="bi bi-pencil-square"></i>
             </button>
             <a asp-controller="Pacientes" asp-action="Detalhes" asp-route-id="@Model.PacienteId"
-               class="btn btn-sm ms-dash-btn-ficha">
-                <i class="bi bi-folder2-open"></i> Prontuário
+               class="ms-dash-row-link" title="Prontuário">
+                <i class="bi bi-folder2-open"></i>
             </a>
         </div>
     </td>

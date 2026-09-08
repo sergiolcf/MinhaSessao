@@ -1,0 +1,32 @@
+@model MinhaSessao.Models.ViewModels.PacienteListItemViewModel
+<tr data-paciente-id="@Model.Id" data-paciente-url="@Url.Action("Detalhes", "Pacientes", new { id = Model.Id })">
+    <td>
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="ms-dash-paciente-link">
+            <span class="ms-avatar-iniciais">@Model.Iniciais</span>
+            <span>@Model.NomeCompleto</span>
+        </a>
+    </td>
+    <td>
+        <div class="ms-dash-contact-line"><i class="bi bi-whatsapp"></i> @Model.Telefone</div>
+        <div class="ms-dash-contact-line ms-dash-table-subtext"><i class="bi bi-envelope"></i> @Model.Email</div>
+    </td>
+    <td>
+        @Model.DataNascimento.ToString("dd/MM/yyyy")
+        <div class="ms-dash-table-subtext">@Model.Idade anos</div>
+    </td>
+    <td>
+        @if (Model.Ativo)
+        {
+            <span class="badge ms-badge-ativo">Ativo</span>
+        }
+        else
+        {
+            <span class="badge ms-badge-inativo">Inativo</span>
+        }
+    </td>
+    <td class="text-end">
+        <a asp-action="Detalhes" asp-route-id="@Model.Id" class="ms-dash-row-link" title="Ver ficha">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </td>
+</tr>

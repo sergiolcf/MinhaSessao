@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +36,50 @@ public class SessoesController : Controller
             .FirstOrDefault() ?? "Verifique os campos destacados.";
     }
 
+    // Primeira letra do primeiro nome + primeira letra do último nome (ignora nomes do meio),
+    // sem acento — usado para montar o Codigo da sessão (ex.: "Sérgio Luís Ferreira" -> "SF")
+    private static string GerarIniciaisProfissional(string nomeCompleto)
+    {
+        var partes = RemoverAcentos(nomeCompleto).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (partes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        return $"{partes[0][0]}{partes[^1][0]}".ToUpperInvariant();
+    }
+
+    private static string RemoverAcentos(string texto)
+    {
+        var normalizado = texto.Normalize(NormalizationForm.FormD);
+        var semAcentos = normalizado.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+        return new string(semAcentos.ToArray()).Normalize(NormalizationForm.FormC);
+    }
+
+    // Próximo número sequencial do Codigo (formato "MS_{numero}_{iniciais}") PARA ESTE profissional:
+    // maior número já usado por ele + 1, nunca reaproveitando "buracos" deixados por sessões excluídas
+    private async Task<int> ObterProximoNumeroSessaoAsync(Guid profissionalId)
+    {
+        var codigosExistentes = await _context.Sessoes
+            .Where(s => s.ProfissionalId == profissionalId)
+            .Select(s => s.Codigo)
+            .ToListAsync();
+
+        var maiorNumero = 0;
+
+        foreach (var codigo in codigosExistentes)
+        {
+            var partes = codigo.Split('_');
+            if (partes.Length == 3 && int.TryParse(partes[1], out var numero) && numero > maiorNumero)
+            {
+                maiorNumero = numero;
+            }
+        }
+
+        return maiorNumero + 1;
+    }
+
     // Busca uma página (10 por vez) de sessões agendadas (mais próxima primeiro) ou de histórico
     // (mais recente primeiro), com filtro opcional por paciente — reaproveitado pelo Index (página 1) e por BuscarSessoes (AJAX)
     private async Task<(List<SessaoProfissionalListItemViewModel> Sessoes, int TotalPaginas)> ObterPaginaSessoesAsync(
@@ -65,6 +111,7 @@ public class SessoesController : Controller
             {
                 Id = s.Id,
                 PacienteId = s.PacienteId,
+                Codigo = s.Codigo,
                 DataHora = s.DataHora,
                 PacienteNome = s.Paciente!.NomeCompleto,
                 DuracaoMinutos = s.DuracaoMinutos,
@@ -154,6 +201,8 @@ public class SessoesController : Controller
             id = s.Id,
             pacienteId = s.PacienteId,
             pacienteNome = s.PacienteNome,
+            iniciais = PacienteIniciais.Calcular(s.PacienteNome),
+            codigo = s.Codigo,
             data = s.DataHora.ToString("dd/MM/yyyy"),
             hora = s.DataHora.ToString("HH:mm"),
             dataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm"),
@@ -203,6 +252,7 @@ public class SessoesController : Controller
             {
                 s.Id,
                 s.PacienteId,
+                s.Codigo,
                 s.DuracaoMinutos,
                 Status = s.Status.ToString(),
                 DataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm"),
@@ -221,9 +271,17 @@ public class SessoesController : Controller
             .Select(o => new { id = o.Id, titulo = o.Titulo })
             .ToListAsync();
 
+        // Título incluído aqui (além do já usado pelo modal de edição) pra alimentar o popup
+        // somente leitura do histórico de sessões do Plano de Tratamento, que exibe o objetivo
+        // pelo título sem precisar cruzar com a lista de objetivosAtivos
         var objetivosVinculados = await _context.SessoesObjetivos
             .Where(so => so.SessaoId == sessao.Id)
-            .Select(so => new { objetivoTerapeuticoId = so.ObjetivoTerapeuticoId, observacao = so.Observacao })
+            .Select(so => new
+            {
+                objetivoTerapeuticoId = so.ObjetivoTerapeuticoId,
+                titulo = so.ObjetivoTerapeutico!.Titulo,
+                observacao = so.Observacao
+            })
             .ToListAsync();
 
         return Json(new
@@ -231,6 +289,7 @@ public class SessoesController : Controller
             success = true,
             id = sessao.Id,
             pacienteId = sessao.PacienteId,
+            codigo = sessao.Codigo,
             dataHoraIso = sessao.DataHoraIso,
             duracaoMinutos = sessao.DuracaoMinutos,
             status = sessao.Status,
@@ -265,6 +324,17 @@ public class SessoesController : Controller
 
         try
         {
+            var profissional = await _context.Profissionais.FirstOrDefaultAsync(p => p.Id == profissionalId);
+
+            if (profissional is null)
+            {
+                return Json(new { success = false, message = "Profissional não encontrado." });
+            }
+
+            // Gerado e gravado aqui, na criação — nunca recalculado depois (ver GerarIniciaisProfissional/ObterProximoNumeroSessaoAsync)
+            var proximoNumero = await ObterProximoNumeroSessaoAsync(profissionalId);
+            var iniciais = GerarIniciaisProfissional(profissional.NomeCompleto);
+
             var sessao = new Sessao
             {
                 Id = Guid.NewGuid(),
@@ -272,7 +342,8 @@ public class SessoesController : Controller
                 ProfissionalId = profissionalId,
                 DataHora = model.DataHora,
                 DuracaoMinutos = model.DuracaoMinutos,
-                Status = status
+                Status = status,
+                Codigo = $"MS_{proximoNumero}_{iniciais}"
             };
 
             _context.Sessoes.Add(sessao);

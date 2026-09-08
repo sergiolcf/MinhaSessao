@@ -71,6 +71,12 @@ public class ApplicationDbContext : DbContext
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Código de identificação da sessão (ex.: MS_1_SF) — tamanho razoável, obrigatório
+        modelBuilder.Entity<Sessao>()
+            .Property(s => s.Codigo)
+            .HasMaxLength(30)
+            .IsRequired();
+
         // O Postgres mapeia DateTime como "timestamp with time zone", que só aceita Kind=Utc.
         // Valores vindos de formulário (ex.: DataNascimento, DataHora da Sessão) chegam com Kind=Unspecified
         // e derrubavam o SaveChanges (funcionava no SQLite, que não valida Kind). Forçamos Utc em todo

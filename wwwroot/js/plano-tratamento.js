@@ -17,6 +17,16 @@
         const btnSalvarSpinner = document.getElementById("btnSalvarObjetivoSpinner");
         const btnSalvarTexto = document.getElementById("btnSalvarObjetivoTexto");
 
+        // Modal "Visualizar Sessão" (somente leitura), aberto ao clicar na data de um item do Histórico de Sessões
+        const modalVisualizarSessaoEl = document.getElementById("modalVisualizarSessao");
+        const modalVisualizarSessaoCodigoEl = document.getElementById("modalVisualizarSessaoCodigo");
+        const modalVisualizarSessaoDataEl = document.getElementById("modalVisualizarSessaoData");
+        const modalVisualizarSessaoDuracaoEl = document.getElementById("modalVisualizarSessaoDuracao");
+        const modalVisualizarSessaoStatusEl = document.getElementById("modalVisualizarSessaoStatus");
+        const modalVisualizarSessaoObjetivosWrapperEl = document.getElementById("modalVisualizarSessaoObjetivosWrapper");
+        const modalVisualizarSessaoObjetivosEl = document.getElementById("modalVisualizarSessaoObjetivos");
+        const modalVisualizarSessaoAnotacoesEl = document.getElementById("modalVisualizarSessaoAnotacoes");
+
         if (!objetivosContainer || !listaObjetivos || !form) return;
 
         const pacienteId = objetivosContainer.dataset.pacienteId;
@@ -360,7 +370,7 @@
                     .map(function (sessao) {
                         return `
                             <li class="ms-objetivo-historico-item">
-                                <span class="ms-objetivo-historico-data">${escaparHtml(sessao.dataHora)}</span>
+                                <button type="button" class="ms-objetivo-historico-data-link" data-sessao-id="${sessao.sessaoId}">${escaparHtml(sessao.codigo)} &mdash; ${escaparHtml(sessao.dataHora)}</button>
                                 ${sessao.observacao ? `<span class="ms-objetivo-historico-observacao">${escaparHtml(sessao.observacao)}</span>` : ""}
                             </li>
                         `;
@@ -382,6 +392,70 @@
                 }
             } catch (erro) {
                 // Mantém o estado atual em caso de falha de conexão
+            }
+        }
+
+        const classesBadgeStatusSessao = {
+            Agendada: "ms-badge-agendada",
+            Realizada: "ms-badge-realizada",
+            Cancelada: "ms-badge-cancelada"
+        };
+
+        // Busca os dados da sessão (mesmo endpoint usado pelo modal de edição em Minhas Sessões) e
+        // exibe num popup somente leitura, sem nenhum campo editável nem botão de salvar
+        async function abrirModalVisualizarSessao(sessaoId) {
+            if (!modalVisualizarSessaoEl) return;
+
+            try {
+                const resposta = await fetch(`/Sessoes/ObterSessao?id=${encodeURIComponent(sessaoId)}`);
+                const dados = await resposta.json();
+
+                if (!resposta.ok || !dados.success) {
+                    window.alert(dados.message || "Não foi possível carregar os detalhes da sessão.");
+                    return;
+                }
+
+                if (modalVisualizarSessaoCodigoEl) {
+                    modalVisualizarSessaoCodigoEl.textContent = dados.codigo || "-";
+                }
+
+                const [dataParte, horaParte] = (dados.dataHoraIso || "").split("T");
+                const [ano, mes, dia] = (dataParte || "").split("-");
+                if (modalVisualizarSessaoDataEl) {
+                    modalVisualizarSessaoDataEl.textContent = dia && mes && ano ? `${dia}/${mes}/${ano} às ${horaParte}` : "-";
+                }
+                if (modalVisualizarSessaoDuracaoEl) {
+                    modalVisualizarSessaoDuracaoEl.textContent = `${dados.duracaoMinutos} min`;
+                }
+                if (modalVisualizarSessaoStatusEl) {
+                    modalVisualizarSessaoStatusEl.className = `badge ${classesBadgeStatusSessao[dados.status] || "ms-badge-cancelada"}`;
+                    modalVisualizarSessaoStatusEl.textContent = dados.status || "-";
+                }
+
+                const objetivosVinculados = dados.objetivosVinculados || [];
+                if (modalVisualizarSessaoObjetivosWrapperEl) {
+                    modalVisualizarSessaoObjetivosWrapperEl.classList.toggle("d-none", objetivosVinculados.length === 0);
+                }
+                if (modalVisualizarSessaoObjetivosEl) {
+                    modalVisualizarSessaoObjetivosEl.innerHTML = objetivosVinculados
+                        .map(function (objetivo) {
+                            const icone = objetivo.observacao
+                                ? `<i class="bi bi-info-circle" title="${escaparHtml(objetivo.observacao)}"></i>`
+                                : "";
+                            return `<span class="ms-objetivo-chip">${escaparHtml(objetivo.titulo)}${icone}</span>`;
+                        })
+                        .join("");
+                }
+
+                if (modalVisualizarSessaoAnotacoesEl) {
+                    modalVisualizarSessaoAnotacoesEl.textContent = dados.anotacoesClinicas && dados.anotacoesClinicas.trim() !== ""
+                        ? dados.anotacoesClinicas
+                        : "Nenhuma anotação registrada.";
+                }
+
+                bootstrap.Modal.getOrCreateInstance(modalVisualizarSessaoEl).show();
+            } catch (erro) {
+                window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
             }
         }
 
@@ -445,6 +519,12 @@
                 const collapseEl = botaoCarregarMais.closest(".ms-objetivo-historico-collapse");
                 const proximaPagina = parseInt(collapseEl.dataset.paginaAtual, 10) + 1;
                 carregarHistoricoSessoes(collapseEl, proximaPagina);
+                return;
+            }
+
+            const botaoData = e.target.closest(".ms-objetivo-historico-data-link");
+            if (botaoData) {
+                abrirModalVisualizarSessao(botaoData.dataset.sessaoId);
             }
         });
 
