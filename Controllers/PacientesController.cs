@@ -13,6 +13,7 @@ namespace MinhaSessao.Controllers;
 public class PacientesController : Controller
 {
     private const int AnotacoesPorPagina = 10;
+    private const int PacientesPorPagina = 10;
 
     private readonly ApplicationDbContext _context;
     private readonly ILogger<PacientesController> _logger;
@@ -39,18 +40,36 @@ public class PacientesController : Controller
             .FirstOrDefaultAsync(p => p.Cpf == cpfNormalizado);
     }
 
-    public async Task<IActionResult> Index()
+    // Pagina (10 por vez) a lista de pacientes ativos do profissional, com filtro opcional por nome
+    // ou CPF normalizado — reaproveitado pelo Index (página 1, sem filtro) e por BuscarPacientes (AJAX).
+    // A base (_vinculoService.ObterPacientesAtivosAsync) já traz tudo pra memória, então filtro/ordenação/
+    // paginação aqui são LINQ-to-Objects, não uma nova consulta ao banco.
+    private async Task<(List<PacienteListItemViewModel> Pacientes, int TotalPaginas)> ObterPaginaPacientesAsync(
+        Guid profissionalId, int pagina, string? termoBusca)
     {
-        var profissionalId = User.ObterProfissionalId();
-        var profissional = await _context.Profissionais.FirstOrDefaultAsync(p => p.Id == profissionalId);
+        var pacientesAtivos = await _vinculoService.ObterPacientesAtivosAsync(profissionalId);
 
-        if (profissional is null)
+        IEnumerable<Paciente> pacientesFiltrados = pacientesAtivos;
+
+        if (!string.IsNullOrWhiteSpace(termoBusca))
         {
-            return RedirectToAction("Login", "Account");
+            var termoNome = termoBusca.Trim().ToLower();
+            var termoCpf = CpfUtil.Normalizar(termoBusca);
+
+            pacientesFiltrados = pacientesAtivos.Where(p =>
+                p.NomeCompleto.ToLower().Contains(termoNome)
+                || (termoCpf != "" && p.Cpf != null && p.Cpf.Contains(termoCpf)));
         }
 
-        var pacientesAtivos = await _vinculoService.ObterPacientesAtivosAsync(profissional.Id);
-        var pacientes = pacientesAtivos
+        var pacientesOrdenados = pacientesFiltrados.OrderBy(p => p.NomeCompleto).ToList();
+
+        var total = pacientesOrdenados.Count;
+        var totalPaginas = total == 0 ? 1 : (int)Math.Ceiling(total / (double)PacientesPorPagina);
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+
+        var pacientes = pacientesOrdenados
+            .Skip((pagina - 1) * PacientesPorPagina)
+            .Take(PacientesPorPagina)
             .Select(p => new PacienteListItemViewModel
             {
                 Id = p.Id,
@@ -62,6 +81,21 @@ public class PacientesController : Controller
             })
             .ToList();
 
+        return (pacientes, totalPaginas);
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var profissionalId = User.ObterProfissionalId();
+        var profissional = await _context.Profissionais.FirstOrDefaultAsync(p => p.Id == profissionalId);
+
+        if (profissional is null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var (pacientes, totalPaginas) = await ObterPaginaPacientesAsync(profissional.Id, 1, null);
+
         ViewBag.ProfissionalId = profissional.Id;
         ViewBag.ProfissionalNome = profissional.NomeCompleto;
         ViewBag.ProfissionalFotoUrl = profissional.FotoUrl;
@@ -69,10 +103,36 @@ public class PacientesController : Controller
 
         var model = new PacientesIndexViewModel
         {
-            Pacientes = pacientes
+            Pacientes = pacientes,
+            PaginaAtual = 1,
+            TotalPaginas = totalPaginas
         };
 
         return View(model);
+    }
+
+    // Endpoint AJAX: paginação e busca (por nome ou CPF) da tabela "Meus Pacientes"
+    [HttpGet]
+    public async Task<IActionResult> BuscarPacientes(int pagina = 1, string? termo = null)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var (pacientes, totalPaginas) = await ObterPaginaPacientesAsync(profissionalId, pagina, termo);
+
+        var itens = pacientes.Select(p => new
+        {
+            id = p.Id,
+            nomeCompleto = p.NomeCompleto,
+            iniciais = p.Iniciais,
+            telefone = p.Telefone,
+            email = p.Email,
+            dataNascimento = p.DataNascimento.ToString("dd/MM/yyyy"),
+            idade = p.Idade,
+            ativo = p.Ativo,
+            url = Url.Action(nameof(Detalhes), new { id = p.Id })
+        });
+
+        return Json(new { success = true, pacientes = itens, paginaAtual = Math.Clamp(pagina, 1, totalPaginas), totalPaginas });
     }
 
     public async Task<IActionResult> Detalhes(Guid id)
@@ -128,6 +188,32 @@ public class PacientesController : Controller
                 AnotacoesClinicas = s.AnotacoesClinicas
             })
             .ToListAsync();
+
+        // Busca os Objetivos Terapêuticos trabalhados em todas as sessões do paciente numa única
+        // consulta (evita N+1 de uma query por sessão) e depois agrupa em memória por SessaoId
+        var objetivosTrabalhados = await _context.SessoesObjetivos
+            .Where(so => so.Sessao!.PacienteId == paciente.Id && so.Sessao.ProfissionalId == profissionalId)
+            .Select(so => new
+            {
+                so.SessaoId,
+                Titulo = so.ObjetivoTerapeutico!.Titulo,
+                so.Observacao
+            })
+            .ToListAsync();
+
+        var objetivosPorSessaoId = objetivosTrabalhados
+            .GroupBy(o => o.SessaoId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(o => new ObjetivoTrabalhadoViewModel { Titulo = o.Titulo, Observacao = o.Observacao }).ToList());
+
+        foreach (var sessao in sessoes)
+        {
+            if (objetivosPorSessaoId.TryGetValue(sessao.Id, out var objetivosDaSessao))
+            {
+                sessao.ObjetivosTrabalhados = objetivosDaSessao;
+            }
+        }
 
         var model = new PacienteDetalhesViewModel
         {
@@ -577,7 +663,9 @@ public class PacientesController : Controller
             .Take(tamanhoPagina)
             .Select(so => new
             {
-                dataHora = so.Sessao!.DataHora.ToString("dd/MM/yyyy"),
+                sessaoId = so.SessaoId,
+                codigo = so.Sessao!.Codigo,
+                dataHora = so.Sessao.DataHora.ToString("dd/MM/yyyy"),
                 observacao = so.Observacao
             })
             .ToListAsync();

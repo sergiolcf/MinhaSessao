@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
 :root {
   --ms-text: #2B2D42;
   --ms-orange: #FF6B35;
@@ -13,7 +15,7 @@ html, body {
 
 body.ms-dashboard-body {
   background-color: var(--ms-bg);
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -406,6 +408,10 @@ body.ms-dashboard-body {
   cursor: pointer;
 }
 
+.ms-dash-table tbody tr[data-paciente-id] {
+  cursor: pointer;
+}
+
 /* Tabela de pacientes */
 .ms-dash-table-card {
   padding: 0;
@@ -418,11 +424,16 @@ body.ms-dashboard-body {
 
 .ms-dash-table thead th {
   background-color: var(--ms-bg);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  /* Contraste melhor contra o fundo var(--ms-bg) do que o cinza usado antes */
   color: var(--ms-text);
   font-weight: 700;
-  font-size: 0.85rem;
   border-bottom: 1px solid rgba(43, 45, 66, 0.1);
   padding: 0.9rem 1.5rem;
+  /* Centraliza verticalmente o texto do cabeçalho dentro da célula */
+  vertical-align: middle;
 }
 
 .ms-dash-table tbody td {
@@ -439,6 +450,35 @@ body.ms-dashboard-body {
 .ms-dash-table-subtext {
   color: #6C757D;
   font-size: 0.8rem;
+}
+
+/* Hora abaixo da data na coluna "Data e Hora" — mais escura que .ms-dash-table-subtext
+   (que fica quase invisível ali) mas ainda secundária em relação à data, com ícone de relógio */
+.ms-dash-table-hora {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #495057;
+  font-size: 0.8rem;
+}
+
+.ms-dash-table-hora i {
+  font-size: 0.75rem;
+}
+
+/* Código de identificação da sessão (coluna "Código") — tratado como tag/badge neutro,
+   em fonte monoespaçada, na mesma estrutura dos badges de status (.ms-badge-*) mas sem
+   competir visualmente com as cores deles */
+.ms-badge-codigo {
+  display: inline-block;
+  background-color: rgba(43, 45, 66, 0.06);
+  color: var(--ms-text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
 }
 
 .ms-badge-ativo {
@@ -631,18 +671,43 @@ body.ms-dashboard-body {
   color: #ffffff !important;
 }
 
+/* Link/botão de ícone discreto "Ver ficha" (ex.: Meus Pacientes, Minhas Sessões) */
+.ms-dash-row-link {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6C757D;
+  background-color: transparent;
+  border: none;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ms-dash-row-link:hover,
+.ms-dash-row-link:focus {
+  background-color: var(--ms-bg);
+  color: var(--ms-orange);
+}
+
 /* Link "Voltar" da ficha do paciente */
 .ms-dash-back-link {
   color: var(--ms-text);
   font-weight: 600;
+  font-size: 0.9rem;
   text-decoration: none;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  /* Restringe a área clicável/hover ao tamanho do texto+ícone, não à linha inteira */
+  width: fit-content;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .ms-dash-back-link:hover,
 .ms-dash-back-link:focus {
-  background-color: rgba(255, 107, 53, 0.08);
-  border-color: var(--ms-orange) !important;
+  background-color: var(--ms-bg);
   color: var(--ms-orange-dark);
 }
 
@@ -715,11 +780,26 @@ body.ms-dashboard-body {
   margin-bottom: 1.25rem;
 }
 
-/* Grid de informações (Dados Cadastrais) */
+/* Grid de informações (Dados Cadastrais) — pares fixos em 2 colunas */
 .ms-dash-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
   gap: 1.25rem;
+}
+
+@media (max-width: 576px) {
+  .ms-dash-info-grid {
+    grid-template-columns: 1fr;
+    grid-auto-flow: row;
+  }
+}
+
+/* min-width: 0 permite que o item encolha dentro da coluna do grid; sem isso, um valor longo
+   (ex.: e-mail) empurra a célula além da largura disponível e vaza por cima da coluna vizinha */
+.ms-dash-info-item {
+  min-width: 0;
 }
 
 .ms-dash-info-label {
@@ -736,6 +816,27 @@ body.ms-dashboard-body {
   display: block;
   color: var(--ms-text);
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+/* Escopado a .ms-dash-card-header (só o botão "Editar") pra não afetar outros
+   .btn-outline-secondary do sistema (ex.: "Gerar nova senha", "Cancelar" de modais) */
+.ms-dash-card-header .btn-outline-secondary {
+  border-radius: 50px;
+  border-color: var(--ms-orange);
+  color: var(--ms-orange-dark);
+}
+
+.ms-dash-card-header .btn-outline-secondary:hover,
+.ms-dash-card-header .btn-outline-secondary:focus {
+  background-color: var(--ms-orange);
+  border-color: var(--ms-orange);
+  color: #fff;
+}
+
+/* "Gerar nova senha" fica no neutro padrão do Bootstrap, só ganhando o arredondamento em pílula */
+#btnGerarNovaSenhaPaciente {
+  border-radius: 50px;
 }
 
 /* Cabeçalho da aba de Anotações Confidenciais (botão Nova Anotação) */
@@ -1366,8 +1467,17 @@ body.ms-dashboard-body {
   overflow-y: auto;
 }
 
+/* Variante de "Meus Pacientes": a coluna Contato empilha duas linhas (WhatsApp + e-mail), então a
+   altura real da linha varia com o conteúdo — um max-height fixo em CSS não bate certo. O max-height
+   é calculado dinamicamente em JS (ajustarAlturaTabelaPacientes, em wwwroot/js/pacientes.js) e aplicado
+   como estilo inline; aqui só definimos o comportamento de scroll em si */
+.ms-dash-table-scroll-pacientes {
+  overflow-y: auto;
+}
+
 .ms-dash-table-scroll thead th,
-.ms-dash-table-scroll-5 thead th {
+.ms-dash-table-scroll-5 thead th,
+.ms-dash-table-scroll-pacientes thead th {
   position: sticky;
   top: 0;
   background-color: #fff;
@@ -1429,6 +1539,25 @@ body.ms-dashboard-body {
   background-color: rgba(43, 45, 66, 0.03);
   border-radius: 0.5rem;
   font-size: 0.9rem;
+}
+
+/* Chips de "Objetivos Trabalhados" dentro da Evolução da Sessão */
+.ms-objetivo-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ms-objetivo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(107, 144, 128, 0.12);
+  color: #6B9080;
+  border-radius: 50px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 /* Plano de Tratamento (aba da Ficha do Paciente) */
@@ -1545,9 +1674,23 @@ body.ms-dashboard-body {
   margin-bottom: 0;
 }
 
-.ms-objetivo-historico-data {
+/* Data de cada item do histórico agora é clicável (abre o popup somente leitura da sessão) —
+   reset de estilo padrão de <button> + cor de link discreto, sublinhado só no hover */
+.ms-objetivo-historico-data-link {
+  background: none;
+  border: none;
+  padding: 0;
   font-weight: 600;
-  color: var(--ms-text);
+  font-size: inherit;
+  color: #6B9080;
+  text-decoration: none;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.ms-objetivo-historico-data-link:hover,
+.ms-objetivo-historico-data-link:focus {
+  text-decoration: underline;
 }
 
 .ms-objetivo-historico-observacao {

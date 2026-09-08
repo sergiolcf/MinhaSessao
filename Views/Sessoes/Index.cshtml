@@ -84,9 +84,10 @@ else
                 <table class="table table-hover ms-dash-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Data e Hora</th>
                             <th>Paciente</th>
+                            <th>Data e Hora</th>
                             <th>Duração</th>
+                            <th>Código</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -95,7 +96,7 @@ else
                         @if (Model.Agendadas.Count == 0)
                         {
                             <tr id="agendadasEmptyRow">
-                                <td colspan="5">
+                                <td colspan="6">
                                     <div class="ms-dash-empty-state">
                                         <i class="bi bi-calendar-week"></i>
                                         <h5>Nenhuma sessão agendada</h5>
@@ -137,9 +138,10 @@ else
                 <table class="table table-hover ms-dash-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Data e Hora</th>
                             <th>Paciente</th>
+                            <th>Data e Hora</th>
                             <th>Duração</th>
+                            <th>Código</th>
                             <th>Status</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -148,7 +150,7 @@ else
                         @if (Model.Historico.Count == 0)
                         {
                             <tr id="historicoEmptyRow">
-                                <td colspan="5">
+                                <td colspan="6">
                                     <div class="ms-dash-empty-state">
                                         <i class="bi bi-clock-history"></i>
                                         <h5>Nenhum histórico ainda</h5>

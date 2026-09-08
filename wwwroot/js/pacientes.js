@@ -1,4 +1,186 @@
+// Escapa texto para uso seguro em conteúdo HTML (mesma implementação usada em sessoes.js/plano-tratamento.js)
+function escaparHtml(texto) {
+    return (texto || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+    // Linha da tabela inteira leva pra ficha do paciente, exceto cliques em links/botões (ex.: "Ver ficha")
+    const tbodyPacientes = document.getElementById("tbodyPacientes");
+    if (tbodyPacientes) {
+        tbodyPacientes.addEventListener("click", function (e) {
+            if (e.target.closest("a") || e.target.closest("button")) return;
+
+            const linha = e.target.closest("tr[data-paciente-id]");
+            if (!linha) return;
+
+            window.location.href = linha.dataset.pacienteUrl;
+        });
+    }
+
+    // ----- Paginação (10 por página) + busca por nome/CPF de "Meus Pacientes" -----
+    const cardPacientes = document.getElementById("cardPacientes");
+    const paginacaoPacientes = document.getElementById("paginacaoPacientes");
+    const filtroPacienteBuscaInput = document.getElementById("filtroPacienteBusca");
+
+    if (tbodyPacientes && cardPacientes) {
+        let ms_paginaPacientes = parseInt(cardPacientes.dataset.paginaAtual || "1", 10);
+        let ms_totalPaginasPacientes = parseInt(cardPacientes.dataset.totalPaginas || "1", 10);
+        // Último max-height calculado com sucesso — reaproveitado quando não há linha de dados pra medir
+        // (ex.: resultado de busca vazio), pra não aplicar um valor errado nessa hora
+        let ms_alturaTabelaPacientesCalculada = null;
+
+        // Calcula o max-height do scroll (cabeçalho + 4 linhas) medindo a altura real já renderizada,
+        // já que a coluna Contato empilha duas linhas (WhatsApp + e-mail) e isso varia com o conteúdo
+        function ajustarAlturaTabelaPacientes() {
+            const scrollEl = document.querySelector(".ms-dash-table-scroll-pacientes");
+            if (!scrollEl) return;
+
+            const thead = scrollEl.querySelector("thead");
+            const primeiraLinha = scrollEl.querySelector("tbody tr[data-paciente-id]");
+
+            if (!thead || !primeiraLinha) {
+                if (ms_alturaTabelaPacientesCalculada) {
+                    scrollEl.style.maxHeight = `${ms_alturaTabelaPacientesCalculada}px`;
+                }
+                return;
+            }
+
+            const alturaThead = thead.getBoundingClientRect().height;
+            const alturaLinha = primeiraLinha.getBoundingClientRect().height;
+
+            ms_alturaTabelaPacientesCalculada = alturaThead + alturaLinha * 4;
+            scrollEl.style.maxHeight = `${ms_alturaTabelaPacientesCalculada}px`;
+        }
+
+        ajustarAlturaTabelaPacientes();
+
+        // Recalcula ao redimensionar a janela (com debounce simples, sem exagerar)
+        let ms_resizeTabelaPacientesDebounce = null;
+        window.addEventListener("resize", function () {
+            clearTimeout(ms_resizeTabelaPacientesDebounce);
+            ms_resizeTabelaPacientesDebounce = setTimeout(ajustarAlturaTabelaPacientes, 200);
+        });
+
+        function construirLinhaPaciente(paciente) {
+            const tr = document.createElement("tr");
+            tr.dataset.pacienteId = paciente.id;
+            tr.dataset.pacienteUrl = paciente.url;
+            tr.innerHTML = `
+                <td>
+                    <a href="${paciente.url}" class="ms-dash-paciente-link">
+                        <span class="ms-avatar-iniciais">${escaparHtml(paciente.iniciais)}</span>
+                        <span>${escaparHtml(paciente.nomeCompleto)}</span>
+                    </a>
+                </td>
+                <td>
+                    <div class="ms-dash-contact-line"><i class="bi bi-whatsapp"></i> ${escaparHtml(paciente.telefone)}</div>
+                    <div class="ms-dash-contact-line ms-dash-table-subtext"><i class="bi bi-envelope"></i> ${escaparHtml(paciente.email)}</div>
+                </td>
+                <td>
+                    ${escaparHtml(paciente.dataNascimento)}
+                    <div class="ms-dash-table-subtext">${paciente.idade} anos</div>
+                </td>
+                <td>
+                    ${paciente.ativo
+                        ? `<span class="badge ms-badge-ativo">Ativo</span>`
+                        : `<span class="badge ms-badge-inativo">Inativo</span>`}
+                </td>
+                <td class="text-end">
+                    <a href="${paciente.url}" class="ms-dash-row-link" title="Ver ficha">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </td>
+            `;
+            return tr;
+        }
+
+        function renderizarPacientes(pacientes, termoBusca) {
+            tbodyPacientes.innerHTML = "";
+
+            if (!pacientes || pacientes.length === 0) {
+                const texto = termoBusca
+                    ? `Nenhum paciente encontrado para "${escaparHtml(termoBusca)}".`
+                    : "Nenhum paciente cadastrado ainda.";
+                tbodyPacientes.innerHTML = `<tr><td colspan="5" class="text-center ms-dash-table-subtext py-4">${texto}</td></tr>`;
+                return;
+            }
+
+            pacientes.forEach(function (paciente) {
+                tbodyPacientes.appendChild(construirLinhaPaciente(paciente));
+            });
+        }
+
+        function renderizarPaginacaoPacientes(paginaAtual, totalPaginas) {
+            if (!paginacaoPacientes) return;
+            paginacaoPacientes.innerHTML = "";
+
+            if (totalPaginas <= 1) return;
+
+            for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+                const li = document.createElement("li");
+                li.className = "page-item" + (pagina === paginaAtual ? " active" : "");
+
+                const botao = document.createElement("button");
+                botao.type = "button";
+                botao.className = "page-link";
+                botao.dataset.pagina = String(pagina);
+                botao.textContent = String(pagina);
+
+                li.appendChild(botao);
+                paginacaoPacientes.appendChild(li);
+            }
+        }
+
+        async function carregarPacientes(pagina) {
+            const termo = filtroPacienteBuscaInput ? filtroPacienteBuscaInput.value.trim() : "";
+
+            try {
+                const parametros = new URLSearchParams({ pagina: String(pagina) });
+                if (termo) parametros.set("termo", termo);
+
+                const resposta = await fetch(`/Pacientes/BuscarPacientes?${parametros.toString()}`);
+                const resultado = await resposta.json();
+
+                if (!resposta.ok || !resultado.success) return;
+
+                renderizarPacientes(resultado.pacientes, termo);
+                renderizarPaginacaoPacientes(resultado.paginaAtual, resultado.totalPaginas);
+                ajustarAlturaTabelaPacientes();
+                ms_paginaPacientes = resultado.paginaAtual;
+                ms_totalPaginasPacientes = resultado.totalPaginas;
+            } catch (erro) {
+                // Mantém a lista atual em caso de falha de conexão
+            }
+        }
+
+        if (paginacaoPacientes) {
+            paginacaoPacientes.addEventListener("click", function (e) {
+                const botao = e.target.closest(".page-link");
+                if (!botao) return;
+                const pagina = parseInt(botao.dataset.pagina, 10);
+                if (pagina === ms_paginaPacientes) return;
+                carregarPacientes(pagina);
+            });
+        }
+
+        if (filtroPacienteBuscaInput) {
+            let filtroPacienteBuscaDebounce = null;
+
+            filtroPacienteBuscaInput.addEventListener("input", function () {
+                clearTimeout(filtroPacienteBuscaDebounce);
+                // Toda nova busca reinicia na página 1 (o termo muda o total de resultados)
+                filtroPacienteBuscaDebounce = setTimeout(function () {
+                    carregarPacientes(1);
+                }, 400);
+            });
+        }
+    }
+
     const modalCadastroEl = document.getElementById("modalCadastroPaciente");
     if (!modalCadastroEl) return;
 
