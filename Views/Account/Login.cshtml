@@ -1,14 +1,17 @@
 @model MinhaSessao.Models.ViewModels.LoginViewModel
-@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Entrar";
     Layout = "_LayoutAuth";
-    // Botão de login de teste só aparece em ambiente de Desenvolvimento (ASPNETCORE_ENVIRONMENT=Development),
-    // nunca em Produção. A aplicação publicada não sabe de qual branch do Git ela veio — quem decide isso é
-    // a variável de ambiente configurada no serviço do Render: deixe ASPNETCORE_ENVIRONMENT=Development só no
-    // serviço que publica a branch Develop; no serviço de Produção (branch main), não defina essa variável
-    // (o padrão já é Production) ou defina-a explicitamente como Production.
-    var exibirLoginContaTeste = Env.IsDevelopment();
+    // Botão de login de teste é controlado por uma flag própria (ExibirLoginContaTeste), não por
+    // ASPNETCORE_ENVIRONMENT — usar IsDevelopment() aqui juntava dois conceitos diferentes (é isso
+    // que a aplicação enxerga como "ambiente de desenvolvimento" vs. "deve mostrar este atalho") e
+    // qualquer serviço hospedado (Render) com ASPNETCORE_ENVIRONMENT=Development por qualquer motivo
+    // (ex.: Homolog, pra ver detalhes de erro) acabava expondo esse botão sem querer. A flag default
+    // é false em appsettings.json (vale pra qualquer ambiente hospedado que não a sobrescreva
+    // explicitamente); localmente ela vem true via Properties/launchSettings.json, que só existe na
+    // máquina do desenvolvedor e nunca é lido por um serviço publicado no Render.
+    var exibirLoginContaTeste = Configuration.GetValue<bool>("ExibirLoginContaTeste");
 }
 
 <div class="ms-auth-card">
