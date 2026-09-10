@@ -299,6 +299,44 @@ body.ms-dashboard-body {
   margin: 0;
 }
 
+/* Variante mais baixa dos cards de estatística (ex.: topo de Minhas Sessões) — reduz o padding sem
+   criar uma classe totalmente nova, pra não afetar os cards usados em outras telas */
+.ms-dash-card-compacto {
+  padding: 1rem 1.25rem;
+}
+
+.ms-dash-card-compacto i {
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+/* Card de estatística clicável (ex.: "Próxima Sessão" abrindo a confirmação de início de sessão) */
+.ms-dash-card-clicavel {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ms-dash-card-clicavel:hover {
+  box-shadow: 0 0.35rem 1rem rgba(43, 45, 66, 0.14);
+  transform: translateY(-2px);
+}
+
+.ms-dash-card-chevron {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: #ADB5BD;
+  font-size: 1rem;
+}
+
+/* Ícone de destaque do modal de confirmação "Deseja iniciar esta sessão?" */
+.ms-modal-confirmacao-icone {
+  display: block;
+  font-size: 2.5rem;
+  color: #0D6EFD;
+  margin-bottom: 0.75rem;
+}
+
 /* Lista de combinados ativos no card "Meus Combinados" (Início do Painel do Paciente) */
 .ms-painel-combinados-lista {
   list-style: none;
@@ -341,6 +379,21 @@ body.ms-dashboard-body {
 .ms-required {
   color: var(--ms-orange);
   margin-left: 0.15rem;
+}
+
+/* Bloco de campos secundários dentro de um formulário (ex.: Duração/Status da modal Nova Sessão) —
+   mesmo destaque de fundo dos cards (var(--ms-bg)), mas com labels menores/apagados para reduzir
+   o peso visual em relação aos campos principais do formulário. */
+.ms-form-secao-discreta {
+  background-color: var(--ms-bg);
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem 0.1rem;
+}
+
+.ms-form-secao-discreta .form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(43, 45, 66, 0.6);
 }
 
 /* Cabeçalho das páginas internas (ex.: Meus Pacientes) */
@@ -509,6 +562,12 @@ body.ms-dashboard-body {
 .ms-badge-cancelada {
   background-color: rgba(220, 53, 69, 0.12);
   color: #DC3545;
+  font-weight: 600;
+}
+
+.ms-badge-em-andamento {
+  background-color: rgba(13, 110, 253, 0.12);
+  color: #0D6EFD;
   font-weight: 600;
 }
 

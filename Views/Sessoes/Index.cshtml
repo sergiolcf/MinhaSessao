@@ -18,25 +18,27 @@
 </div>
 
 <div class="ms-dash-cards mb-4">
-    <div class="ms-dash-card">
+    <div class="ms-dash-card ms-dash-card-compacto">
         <i class="bi bi-calendar-day"></i>
         <h5>Sessões Hoje</h5>
         <p class="ms-stat-numero mb-0">@Model.SessoesHoje</p>
     </div>
-    <div class="ms-dash-card">
+    <div class="ms-dash-card ms-dash-card-compacto@(Model.ProximaSessao is not null ? " ms-dash-card-clicavel" : "")"
+         id="cardProximaSessao" data-sessao-id="@(Model.ProximaSessao?.Id.ToString() ?? "")">
         <i class="bi bi-calendar-event"></i>
         <h5>Próxima Sessão</h5>
         @if (Model.ProximaSessao is not null)
         {
             <p class="ms-stat-numero mb-0">@Model.ProximaSessao.DataHora.ToString("dd/MM/yyyy") às @Model.ProximaSessao.DataHora.ToString("HH:mm")</p>
             <p class="mb-0">com @Model.ProximaSessao.PacienteNome</p>
+            <i class="bi bi-chevron-right ms-dash-card-chevron" title="Clique para iniciar"></i>
         }
         else
         {
             <p class="mb-0">Nenhuma sessão agendada no momento.</p>
         }
     </div>
-    <div class="ms-dash-card">
+    <div class="ms-dash-card ms-dash-card-compacto">
         <i class="bi bi-check2-circle"></i>
         <h5>Atendimentos no Mês</h5>
         <p class="ms-stat-numero mb-0">@Model.AtendimentosNoMes</p>
@@ -67,6 +69,11 @@ else
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="agendadas-tab" data-bs-toggle="tab" data-bs-target="#agendadasSessoes" type="button" role="tab" aria-controls="agendadasSessoes" aria-selected="true">
             <i class="bi bi-calendar-week"></i> Hoje / Agendadas
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="em-andamento-tab" data-bs-toggle="tab" data-bs-target="#emAndamentoSessoes" type="button" role="tab" aria-controls="emAndamentoSessoes" aria-selected="false">
+            <i class="bi bi-broadcast"></i> Em Andamento
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -123,6 +130,60 @@ else
                     for (var pagina = 1; pagina <= Model.TotalPaginasAgendadas; pagina++)
                     {
                         <li class="page-item@(pagina == Model.PaginaAtualAgendadas ? " active" : "")">
+                            <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                        </li>
+                    }
+                }
+            </ul>
+        </nav>
+    </div>
+
+    <div class="tab-pane fade" id="emAndamentoSessoes" role="tabpanel" aria-labelledby="em-andamento-tab">
+        <div class="ms-dash-card ms-dash-table-card" id="cardSessoesEmAndamento"
+             data-pagina-atual="@Model.PaginaAtualEmAndamento" data-total-paginas="@Model.TotalPaginasEmAndamento">
+            <div class="table-responsive ms-dash-table-scroll">
+                <table class="table table-hover ms-dash-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Data e Hora</th>
+                            <th>Duração</th>
+                            <th>Código</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySessoesEmAndamento">
+                        @if (Model.EmAndamento.Count == 0)
+                        {
+                            <tr id="emAndamentoEmptyRow">
+                                <td colspan="6">
+                                    <div class="ms-dash-empty-state">
+                                        <i class="bi bi-broadcast"></i>
+                                        <h5>Nenhuma sessão em andamento no momento</h5>
+                                        <p>Inicie uma sessão pelo card "Próxima Sessão" para acompanhá-la aqui.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var sessao in Model.EmAndamento)
+                            {
+                                <partial name="_LinhaSessao" model="sessao" />
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <nav aria-label="Paginação de sessões em andamento" class="mt-3">
+            <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoSessoesEmAndamento">
+                @if (Model.TotalPaginasEmAndamento > 1)
+                {
+                    for (var pagina = 1; pagina <= Model.TotalPaginasEmAndamento; pagina++)
+                    {
+                        <li class="page-item@(pagina == Model.PaginaAtualEmAndamento ? " active" : "")">
                             <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
                         </li>
                     }
@@ -239,6 +300,7 @@ else
                             <label for="EditarSessaoStatus" class="form-label">Status<span class="ms-required">*</span></label>
                             <select id="EditarSessaoStatus" name="Status" class="form-select">
                                 <option value="Agendada">Agendada</option>
+                                <option value="EmAndamento">Em Andamento</option>
                                 <option value="Realizada">Realizada</option>
                                 <option value="Cancelada">Cancelada</option>
                             </select>
@@ -260,6 +322,30 @@ else
                 <button type="submit" form="formEditarSessao" class="btn btn-ms-orange" id="btnSalvarEditarSessao">
                     <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarEditarSessaoSpinner"></span>
                     <span id="btnSalvarEditarSessaoTexto">Salvar Alterações</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Início de Sessão (a partir do card "Próxima Sessão") -->
+<div class="modal fade" id="modalConfirmarIniciarSessao" tabindex="-1" aria-labelledby="modalConfirmarIniciarSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarIniciarSessaoLabel">Iniciar Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="bi bi-play-circle ms-modal-confirmacao-icone"></i>
+                <p class="mb-0">Deseja iniciar esta sessão?</p>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-outline-secondary" id="btnEditarProximaSessao">Editar</button>
+                <button type="button" class="btn btn-ms-orange" id="btnIniciarProximaSessao">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnIniciarProximaSessaoSpinner"></span>
+                    <span id="btnIniciarProximaSessaoTexto">Iniciar</span>
                 </button>
             </div>
         </div>

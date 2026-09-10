@@ -4,8 +4,11 @@
     {
         "Agendada" => "ms-badge-agendada",
         "Realizada" => "ms-badge-realizada",
+        "EmAndamento" => "ms-badge-em-andamento",
         _ => "ms-badge-cancelada"
     };
+    // Enum.ToString() não tem espaço ("EmAndamento") — só esse valor precisa de um texto de exibição próprio
+    var textoStatus = Model.Status == "EmAndamento" ? "Em Andamento" : Model.Status;
 }
 <tr>
     <td>
@@ -22,7 +25,7 @@
     <td>
         <span class="ms-badge-codigo">@Model.Codigo</span>
     </td>
-    <td><span class="badge @classeBadge">@Model.Status</span></td>
+    <td><span class="badge @classeBadge">@textoStatus</span></td>
     <td class="text-end">
         <div class="d-inline-flex gap-1">
             <button type="button" class="ms-dash-row-link btn-editar-sessao"

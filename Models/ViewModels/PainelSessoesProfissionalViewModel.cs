@@ -20,6 +20,12 @@ public class PainelSessoesProfissionalViewModel
 
     public int TotalPaginasHistorico { get; set; } = 1;
 
+    public List<SessaoProfissionalListItemViewModel> EmAndamento { get; set; } = new();
+
+    public int PaginaAtualEmAndamento { get; set; } = 1;
+
+    public int TotalPaginasEmAndamento { get; set; } = 1;
+
     public List<PacienteSelectItemViewModel> Pacientes { get; set; } = new();
 
     public int DuracaoPadraoSessaoMinutos { get; set; }

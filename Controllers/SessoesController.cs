@@ -80,16 +80,20 @@ public class SessoesController : Controller
         return maiorNumero + 1;
     }
 
-    // Busca uma página (10 por vez) de sessões agendadas (mais próxima primeiro) ou de histórico
-    // (mais recente primeiro), com filtro opcional por paciente — reaproveitado pelo Index (página 1) e por BuscarSessoes (AJAX)
+    // Busca uma página (10 por vez) de sessões agendadas (mais próxima primeiro), em andamento ou de
+    // histórico (mais recente primeiro), com filtro opcional por paciente — reaproveitado pelo Index (página 1) e por BuscarSessoes (AJAX)
     private async Task<(List<SessaoProfissionalListItemViewModel> Sessoes, int TotalPaginas)> ObterPaginaSessoesAsync(
         Guid profissionalId, string aba, int pagina, Guid? pacienteId)
     {
         var consulta = _context.Sessoes.Where(s => s.ProfissionalId == profissionalId);
 
-        consulta = aba == "historico"
-            ? consulta.Where(s => s.Status != StatusSessao.Agendada)
-            : consulta.Where(s => s.Status == StatusSessao.Agendada);
+        // Histórico é só Realizada/Cancelada (EmAndamento tem aba própria, não deve aparecer aqui)
+        consulta = aba switch
+        {
+            "historico" => consulta.Where(s => s.Status == StatusSessao.Realizada || s.Status == StatusSessao.Cancelada),
+            "em_andamento" => consulta.Where(s => s.Status == StatusSessao.EmAndamento),
+            _ => consulta.Where(s => s.Status == StatusSessao.Agendada)
+        };
 
         if (pacienteId.HasValue)
         {
@@ -162,6 +166,7 @@ public class SessoesController : Controller
 
         var (agendadas, totalPaginasAgendadas) = await ObterPaginaSessoesAsync(profissionalId, "agendadas", 1, null);
         var (historico, totalPaginasHistorico) = await ObterPaginaSessoesAsync(profissionalId, "historico", 1, null);
+        var (emAndamento, totalPaginasEmAndamento) = await ObterPaginaSessoesAsync(profissionalId, "em_andamento", 1, null);
 
         var pacientesAtivos = await _vinculoService.ObterPacientesAtivosAsync(profissionalId);
 
@@ -179,6 +184,9 @@ public class SessoesController : Controller
             Historico = historico,
             PaginaAtualHistorico = 1,
             TotalPaginasHistorico = totalPaginasHistorico,
+            EmAndamento = emAndamento,
+            PaginaAtualEmAndamento = 1,
+            TotalPaginasEmAndamento = totalPaginasEmAndamento,
             Pacientes = pacientesAtivos
                 .Select(p => new PacienteSelectItemViewModel { Id = p.Id, NomeCompleto = p.NomeCompleto, CpfFormatado = CpfUtil.Formatar(p.Cpf) })
                 .ToList(),
@@ -192,7 +200,12 @@ public class SessoesController : Controller
     public async Task<IActionResult> BuscarSessoes(string aba, int pagina = 1, Guid? pacienteId = null)
     {
         var profissionalId = User.ObterProfissionalId();
-        var abaNormalizada = aba == "historico" ? "historico" : "agendadas";
+        var abaNormalizada = aba switch
+        {
+            "historico" => "historico",
+            "em_andamento" => "em_andamento",
+            _ => "agendadas"
+        };
 
         var (sessoes, totalPaginas) = await ObterPaginaSessoesAsync(profissionalId, abaNormalizada, pagina, pacienteId);
 
@@ -431,6 +444,45 @@ public class SessoesController : Controller
         {
             _logger.LogError(ex, "Erro ao atualizar sessão.");
             return Json(new { success = false, message = "Ocorreu um erro ao atualizar a sessão. Tente novamente." });
+        }
+    }
+
+    // Chamado a partir do card "Próxima Sessão" (Minhas Sessões) — por enquanto só troca o status,
+    // sem abrir nenhuma tela de atendimento (fica para um card futuro)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> IniciarSessao(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var sessao = await _context.Sessoes.FirstOrDefaultAsync(s => s.Id == id && s.ProfissionalId == profissionalId);
+
+        if (sessao is null)
+        {
+            return Json(new { success = false, message = "Sessão não encontrada." });
+        }
+
+        try
+        {
+            // Só pode haver 1 sessão Em Andamento por profissional — se alguma ficou "presa" nesse
+            // status (ex.: tela fechada sem concluir o atendimento anterior), ela volta pra Agendada
+            var outraEmAndamento = await _context.Sessoes.FirstOrDefaultAsync(
+                s => s.ProfissionalId == profissionalId && s.Status == StatusSessao.EmAndamento && s.Id != id);
+
+            if (outraEmAndamento is not null)
+            {
+                outraEmAndamento.Status = StatusSessao.Agendada;
+            }
+
+            sessao.Status = StatusSessao.EmAndamento;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao iniciar sessão.");
+            return Json(new { success = false, message = "Ocorreu um erro ao iniciar a sessão. Tente novamente." });
         }
     }
 }
