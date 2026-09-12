@@ -1799,3 +1799,133 @@ body.ms-dashboard-body {
   line-height: 1;
   padding: 0;
 }
+
+/* Anotações Clínicas da Sessão (Views/Sessoes/Sessao.cshtml) — painel de composição (esquerda)
+   + lista de anotações já salvas (direita), no mesmo espírito das Anotações Confidenciais */
+.ms-anotacao-sessao-grid {
+  display: grid;
+  /* 65% pra composição (coluna maior) / 35% pra lista de anotações já salvas */
+  grid-template-columns: 65fr 35fr;
+  gap: 1rem;
+  /* stretch (em vez de start) faz a coluna da lista acompanhar a mesma altura da composição */
+  align-items: stretch;
+}
+
+.ms-anotacao-sessao-compose {
+  background-color: #fff;
+  border: 1px solid rgba(43, 45, 66, 0.08);
+  border-left: 3px solid var(--ms-orange);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  min-height: min(55vh, 500px);
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-anotacao-sessao-vazio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  color: #8A8A86;
+  font-size: 0.85rem;
+}
+
+.ms-anotacao-sessao-vazio i {
+  font-size: 1.6rem;
+}
+
+.ms-anotacao-sessao-compose-titulo {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ms-text);
+  margin-bottom: 0.5rem;
+}
+
+.ms-anotacao-sessao-lista {
+  background-color: #fff;
+  border: 1px solid rgba(43, 45, 66, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  /* Acompanha a altura esticada pelo align-items: stretch do grid pai; o scroll interno
+     (.ms-anotacao-sessao-lista-scroll) é quem rola quando a lista de anotações não couber */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-anotacao-sessao-lista-titulo {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ms-text);
+  margin-bottom: 0.6rem;
+}
+
+.ms-anotacao-sessao-lista-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.ms-anotacao-sessao-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid rgba(43, 45, 66, 0.06);
+}
+
+.ms-anotacao-sessao-item:last-child {
+  border-bottom: none;
+}
+
+.ms-anotacao-sessao-item-info {
+  min-width: 0;
+}
+
+.ms-anotacao-sessao-item-titulo {
+  font-weight: 500;
+  color: var(--ms-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-anotacao-sessao-item-data {
+  font-size: 0.75rem;
+  color: #8A8A86;
+}
+
+.ms-anotacao-sessao-aviso {
+  background-color: rgba(220, 53, 69, 0.06);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  color: #DC3545;
+  margin-bottom: 0.75rem;
+}
+
+.ms-anotacao-sessao-aviso-acoes {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .ms-anotacao-sessao-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botão "+ Criar anotação" fixo no cabeçalho do card de Anotações Clínicas — versão compacta do
+   btn-ms-orange padrão (menor que até o btn-sm do Bootstrap), mais discreta num cabeçalho de card */
+.btn-ms-orange-compacto {
+  padding: 0.32rem 0.95rem;
+  font-size: 0.8rem;
+}

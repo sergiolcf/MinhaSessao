@@ -194,7 +194,7 @@
                                     "Realizada" => "ms-badge-realizada",
                                     _ => "ms-badge-cancelada"
                                 };
-                                var temEvolucao = !string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas);
+                                var temEvolucao = sessao.Anotacoes.Any();
                                 var temObjetivosTrabalhados = sessao.ObjetivosTrabalhados.Any();
                                 var temDetalhe = temEvolucao || temObjetivosTrabalhados;
                                 var idEvolucao = $"evolucaoSessao_{sessao.Id}";
@@ -213,7 +213,7 @@
                                                     <i class="bi bi-journal-text"></i>
                                                 </button>
                                             }
-                                            <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
+                                            <a asp-controller="Sessoes" asp-action="Sessao" asp-route-id="@sessao.Id"
                                                class="ms-dash-row-link" title="Abrir sessão">
                                                 <i class="bi bi-box-arrow-up-right"></i>
                                             </a>
@@ -244,9 +244,20 @@
                                                             </div>
                                                         </div>
                                                     }
-                                                    @if (!string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas))
+                                                    @if (sessao.Anotacoes.Any())
                                                     {
-                                                        <p class="mb-0"><strong>Anotações Clínicas:</strong> @sessao.AnotacoesClinicas</p>
+                                                        <div>
+                                                            <strong>Anotações Clínicas:</strong>
+                                                            <div class="mt-1 d-flex flex-column gap-2">
+                                                                @foreach (var anotacao in sessao.Anotacoes)
+                                                                {
+                                                                    <div>
+                                                                        <div class="fw-semibold">@anotacao.Titulo</div>
+                                                                        <p class="mb-0">@anotacao.Conteudo</p>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
                                                     }
                                                 </div>
                                             </div>
@@ -451,7 +462,7 @@
                 </div>
                 <div>
                     <span class="ms-dash-info-label d-block mb-1">Anotações Clínicas</span>
-                    <p class="mb-0" id="modalVisualizarSessaoAnotacoes"></p>
+                    <div id="modalVisualizarSessaoAnotacoes" class="d-flex flex-column gap-2"></div>
                 </div>
             </div>
             <div class="modal-footer justify-content-end">

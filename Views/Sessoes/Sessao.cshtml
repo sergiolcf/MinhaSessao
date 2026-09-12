@@ -1,0 +1,75 @@
+@model MinhaSessao.Models.ViewModels.SessaoDetalheViewModel
+@{
+    ViewData["Title"] = $"Sessão {Model.Codigo}";
+    Layout = "_LayoutDashboard";
+
+    var classeBadge = Model.Status switch
+    {
+        "Agendada" => "ms-badge-agendada",
+        "Realizada" => "ms-badge-realizada",
+        "EmAndamento" => "ms-badge-em-andamento",
+        _ => "ms-badge-cancelada"
+    };
+    // Enum.ToString() não tem espaço ("EmAndamento") — só esse valor precisa de um texto de exibição próprio
+    var textoStatus = Model.Status == "EmAndamento" ? "Em Andamento" : Model.Status;
+}
+
+<a asp-action="Index" class="ms-dash-back-link mb-3 d-inline-flex align-items-center">
+    <i class="bi bi-arrow-left me-1"></i> Voltar para Minhas Sessões
+</a>
+
+<div class="ms-dash-detail-header">
+    <div class="ms-dash-detail-identity">
+        <span class="ms-avatar-iniciais ms-avatar-iniciais-lg">@Model.PacienteIniciais</span>
+        <div>
+            <h1 class="ms-dash-detail-title">
+                @Model.PacienteNome
+                <span class="badge @classeBadge">@textoStatus</span>
+            </h1>
+            <p class="ms-dash-welcome-subtitle mb-0">
+                <span class="ms-badge-codigo">@Model.Codigo</span>
+                &middot; @Model.DataHora.ToString("dd/MM/yyyy") às @Model.DataHora.ToString("HH:mm")
+                &middot; @Model.DuracaoMinutos min
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="ms-dash-card mt-3">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h5 class="mb-1"><i class="bi bi-journal-text me-2"></i>Anotações Clínicas / Evolução</h5>
+            <p class="ms-dash-table-subtext mb-3">Visível apenas para você. Cada anotação registra também os Objetivos Trabalhados naquele momento.</p>
+        </div>
+        <button type="button" class="btn btn-ms-orange btn-ms-orange-compacto" id="btnCriarAnotacaoSessaoFixo">Criar anotação</button>
+    </div>
+
+    <div id="tokenAnotacaoSessao" class="d-none">@Html.AntiForgeryToken()</div>
+    <input type="hidden" id="AnotacaoSessaoSessaoId" value="@Model.Id">
+
+    @* Universo de objetivos em andamento do paciente, disponível pra marcar em qualquer anotação
+       desta sessão — consumido por wwwroot/js/sessao-detalhe.js (JSON.parse do texto do script) *@
+    <script type="application/json" id="objetivosAtivosData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ObjetivosAtivos, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
+
+    <div class="ms-anotacao-sessao-grid">
+        <div class="ms-anotacao-sessao-compose" id="anotacaoSessaoCompose"></div>
+        <div class="ms-anotacao-sessao-lista">
+            <div class="ms-anotacao-sessao-lista-titulo">Anotações desta sessão</div>
+            <div class="ms-anotacao-sessao-lista-scroll" id="anotacaoSessaoLista"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast: feedback de sucesso/erro das ações desta tela -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toastSessaoDetalhe" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastSessaoDetalheMensagem"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/sessao-detalhe.js" asp-append-version="true"></script>
+}

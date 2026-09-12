@@ -59,6 +59,46 @@ public class SessoesController : Controller
 
     // Próximo número sequencial do Codigo (formato "MS_{numero}_{iniciais}") PARA ESTE profissional:
     // maior número já usado por ele + 1, nunca reaproveitando "buracos" deixados por sessões excluídas
+    // Sincroniza os vínculos SessaoObjetivo de uma anotação com a lista enviada do front-end: remove
+    // os que saíram, atualiza a Observacao dos que continuam, cria os novos — mesmo diff usado antes
+    // na sessão inteira, agora escopado por AnotacaoSessaoId. Não chama SaveChangesAsync sozinho.
+    private async Task SincronizarObjetivosAnotacaoAsync(Guid anotacaoSessaoId, List<SessaoObjetivoViewModel>? objetivos)
+    {
+        var objetivosEnviados = objetivos?
+            .Where(o => o.ObjetivoTerapeuticoId != Guid.Empty)
+            .ToList() ?? new List<SessaoObjetivoViewModel>();
+
+        var vinculosExistentes = await _context.SessoesObjetivos
+            .Where(so => so.AnotacaoSessaoId == anotacaoSessaoId)
+            .ToListAsync();
+
+        var idsEnviados = objetivosEnviados.Select(o => o.ObjetivoTerapeuticoId).ToHashSet();
+        var vinculosParaRemover = vinculosExistentes
+            .Where(so => !idsEnviados.Contains(so.ObjetivoTerapeuticoId))
+            .ToList();
+
+        _context.SessoesObjetivos.RemoveRange(vinculosParaRemover);
+
+        foreach (var objetivo in objetivosEnviados)
+        {
+            var vinculo = vinculosExistentes.FirstOrDefault(so => so.ObjetivoTerapeuticoId == objetivo.ObjetivoTerapeuticoId);
+
+            if (vinculo is not null)
+            {
+                vinculo.Observacao = objetivo.Observacao;
+            }
+            else
+            {
+                _context.SessoesObjetivos.Add(new SessaoObjetivo
+                {
+                    AnotacaoSessaoId = anotacaoSessaoId,
+                    ObjetivoTerapeuticoId = objetivo.ObjetivoTerapeuticoId,
+                    Observacao = objetivo.Observacao
+                });
+            }
+        }
+    }
+
     private async Task<int> ObterProximoNumeroSessaoAsync(Guid profissionalId)
     {
         var codigosExistentes = await _context.Sessoes
@@ -268,8 +308,7 @@ public class SessoesController : Controller
                 s.Codigo,
                 s.DuracaoMinutos,
                 Status = s.Status.ToString(),
-                DataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm"),
-                s.AnotacoesClinicas
+                DataHoraIso = s.DataHora.ToString("yyyy-MM-ddTHH:mm")
             })
             .FirstOrDefaultAsync();
 
@@ -278,23 +317,25 @@ public class SessoesController : Controller
             return Json(new { success = false, message = "Sessão não encontrada." });
         }
 
-        var objetivosAtivos = await _context.ObjetivosTerapeuticos
-            .Where(o => o.PacienteId == sessao.PacienteId && o.Status == StatusObjetivo.EmAndamento)
-            .OrderBy(o => o.Titulo)
-            .Select(o => new { id = o.Id, titulo = o.Titulo })
-            .ToListAsync();
-
-        // Título incluído aqui (além do já usado pelo modal de edição) pra alimentar o popup
-        // somente leitura do histórico de sessões do Plano de Tratamento, que exibe o objetivo
-        // pelo título sem precisar cruzar com a lista de objetivosAtivos
+        // anotacoes/objetivosVinculados (com título) alimentam só o popup somente leitura
+        // "Visualizar Sessão" (plano-tratamento.js) — o modal "Editar Sessão" não usa mais esses
+        // campos (conteúdo clínico agora é editado só pela tela dedicada Views/Sessoes/Sessao.cshtml).
+        // objetivosVinculados agrega todos os objetivos marcados em QUALQUER anotação desta sessão
+        // (cada objetivo trabalhado pertence a uma anotação específica, não mais à sessão direto)
         var objetivosVinculados = await _context.SessoesObjetivos
-            .Where(so => so.SessaoId == sessao.Id)
+            .Where(so => so.AnotacaoSessao!.SessaoId == sessao.Id)
             .Select(so => new
             {
                 objetivoTerapeuticoId = so.ObjetivoTerapeuticoId,
                 titulo = so.ObjetivoTerapeutico!.Titulo,
                 observacao = so.Observacao
             })
+            .ToListAsync();
+
+        var anotacoes = await _context.AnotacoesSessao
+            .Where(a => a.SessaoId == sessao.Id)
+            .OrderByDescending(a => a.DataRegistro)
+            .Select(a => new { titulo = a.Titulo, conteudo = a.Conteudo, dataRegistro = a.DataRegistro.ToString("dd/MM/yyyy HH:mm") })
             .ToListAsync();
 
         return Json(new
@@ -306,10 +347,63 @@ public class SessoesController : Controller
             dataHoraIso = sessao.DataHoraIso,
             duracaoMinutos = sessao.DuracaoMinutos,
             status = sessao.Status,
-            anotacoesClinicas = sessao.AnotacoesClinicas,
-            objetivosAtivos,
+            anotacoes,
             objetivosVinculados
         });
+    }
+
+    // Tela dedicada ao conteúdo clínico da sessão (Objetivos Trabalhados + Anotações Clínicas),
+    // separada do modal "Editar Sessão" (que continua sendo quem edita Data/Duração/Status)
+    [HttpGet]
+    public async Task<IActionResult> Sessao(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var sessao = await _context.Sessoes
+            .Where(s => s.Id == id && s.ProfissionalId == profissionalId)
+            .Select(s => new
+            {
+                s.Id,
+                s.PacienteId,
+                s.Codigo,
+                s.DataHora,
+                s.DuracaoMinutos,
+                Status = s.Status.ToString(),
+                PacienteNome = s.Paciente!.NomeCompleto
+            })
+            .FirstOrDefaultAsync();
+
+        if (sessao is null)
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Universo de objetivos disponíveis pra marcar em qualquer anotação desta sessão — quais já
+        // estão marcados é decidido por anotação (ver ListarAnotacoesSessao), não mais na sessão toda
+        var objetivosAtivos = await _context.ObjetivosTerapeuticos
+            .Where(o => o.PacienteId == sessao.PacienteId && o.Status == StatusObjetivo.EmAndamento)
+            .OrderBy(o => o.Titulo)
+            .Select(o => new ObjetivoAtivoSessaoViewModel
+            {
+                Id = o.Id,
+                Titulo = o.Titulo
+            })
+            .ToListAsync();
+
+        var model = new SessaoDetalheViewModel
+        {
+            Id = sessao.Id,
+            Codigo = sessao.Codigo,
+            DataHora = sessao.DataHora,
+            DuracaoMinutos = sessao.DuracaoMinutos,
+            Status = sessao.Status,
+            PacienteId = sessao.PacienteId,
+            PacienteNome = sessao.PacienteNome,
+            PacienteIniciais = PacienteIniciais.Calcular(sessao.PacienteNome),
+            ObjetivosAtivos = objetivosAtivos
+        };
+
+        return View(model);
     }
 
     [HttpPost]
@@ -400,41 +494,6 @@ public class SessoesController : Controller
             sessao.DataHora = model.DataHora;
             sessao.DuracaoMinutos = model.DuracaoMinutos;
             sessao.Status = status;
-            sessao.AnotacoesClinicas = model.AnotacoesClinicas;
-
-            var objetivosEnviados = model.Objetivos?
-                .Where(o => o.ObjetivoTerapeuticoId != Guid.Empty)
-                .ToList() ?? new List<SessaoObjetivoViewModel>();
-
-            var vinculosExistentes = await _context.SessoesObjetivos
-                .Where(so => so.SessaoId == sessao.Id)
-                .ToListAsync();
-
-            var idsEnviados = objetivosEnviados.Select(o => o.ObjetivoTerapeuticoId).ToHashSet();
-            var vinculosParaRemover = vinculosExistentes
-                .Where(so => !idsEnviados.Contains(so.ObjetivoTerapeuticoId))
-                .ToList();
-
-            _context.SessoesObjetivos.RemoveRange(vinculosParaRemover);
-
-            foreach (var objetivo in objetivosEnviados)
-            {
-                var vinculo = vinculosExistentes.FirstOrDefault(so => so.ObjetivoTerapeuticoId == objetivo.ObjetivoTerapeuticoId);
-
-                if (vinculo is not null)
-                {
-                    vinculo.Observacao = objetivo.Observacao;
-                }
-                else
-                {
-                    _context.SessoesObjetivos.Add(new SessaoObjetivo
-                    {
-                        SessaoId = sessao.Id,
-                        ObjetivoTerapeuticoId = objetivo.ObjetivoTerapeuticoId,
-                        Observacao = objetivo.Observacao
-                    });
-                }
-            }
 
             await _context.SaveChangesAsync();
 
@@ -444,6 +503,166 @@ public class SessoesController : Controller
         {
             _logger.LogError(ex, "Erro ao atualizar sessão.");
             return Json(new { success = false, message = "Ocorreu um erro ao atualizar a sessão. Tente novamente." });
+        }
+    }
+
+    // ----- Anotações Clínicas da Sessão (CRUD próprio, mesmo espírito de AnotacaoConfidencial) -----
+    // Cada anotação guarda seus próprios Objetivos Trabalhados (SessaoObjetivo agora vincula à
+    // Anotação, não mais à Sessão inteira) — um único Salvar grava título + conteúdo + objetivos.
+
+    [HttpGet]
+    public async Task<IActionResult> ListarAnotacoesSessao(Guid sessaoId)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var sessaoValida = await _context.Sessoes.AnyAsync(s => s.Id == sessaoId && s.ProfissionalId == profissionalId);
+
+        if (!sessaoValida)
+        {
+            return Json(new { success = false, message = "Sessão não encontrada." });
+        }
+
+        var anotacoes = await _context.AnotacoesSessao
+            .Where(a => a.SessaoId == sessaoId)
+            .OrderByDescending(a => a.DataRegistro)
+            .Select(a => new
+            {
+                id = a.Id,
+                titulo = a.Titulo,
+                conteudo = a.Conteudo,
+                dataRegistro = a.DataRegistro.ToString("dd/MM/yyyy HH:mm"),
+                objetivos = a.SessaoObjetivos.Select(so => new { objetivoTerapeuticoId = so.ObjetivoTerapeuticoId, titulo = so.ObjetivoTerapeutico!.Titulo })
+            })
+            .ToListAsync();
+
+        return Json(new { success = true, anotacoes });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SalvarAnotacaoSessao(AnotacaoSessaoViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return Json(new { success = false, message = ObterPrimeiroErroModelState() });
+        }
+
+        var profissionalId = User.ObterProfissionalId();
+
+        var sessaoValida = await _context.Sessoes.AnyAsync(s => s.Id == model.SessaoId && s.ProfissionalId == profissionalId);
+
+        if (!sessaoValida)
+        {
+            return Json(new { success = false, message = "Sessão não encontrada." });
+        }
+
+        try
+        {
+            var anotacao = new AnotacaoSessao
+            {
+                Id = Guid.NewGuid(),
+                SessaoId = model.SessaoId,
+                Titulo = model.Titulo,
+                Conteudo = model.Conteudo,
+                DataRegistro = DateTime.UtcNow
+            };
+
+            _context.AnotacoesSessao.Add(anotacao);
+            await SincronizarObjetivosAnotacaoAsync(anotacao.Id, model.Objetivos);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Anotação salva com sucesso!",
+                anotacao = new
+                {
+                    id = anotacao.Id,
+                    titulo = anotacao.Titulo,
+                    conteudo = anotacao.Conteudo,
+                    dataRegistro = anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao salvar anotação da sessão.");
+            return Json(new { success = false, message = "Ocorreu um erro ao salvar a anotação. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AtualizarAnotacaoSessao(AnotacaoSessaoEditarViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return Json(new { success = false, message = ObterPrimeiroErroModelState() });
+        }
+
+        var profissionalId = User.ObterProfissionalId();
+
+        var anotacao = await _context.AnotacoesSessao
+            .FirstOrDefaultAsync(a => a.Id == model.Id && a.Sessao!.ProfissionalId == profissionalId);
+
+        if (anotacao is null)
+        {
+            return Json(new { success = false, message = "Anotação não encontrada." });
+        }
+
+        try
+        {
+            anotacao.Titulo = model.Titulo;
+            anotacao.Conteudo = model.Conteudo;
+
+            await SincronizarObjetivosAnotacaoAsync(anotacao.Id, model.Objetivos);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Anotação atualizada com sucesso!",
+                anotacao = new
+                {
+                    id = anotacao.Id,
+                    titulo = anotacao.Titulo,
+                    conteudo = anotacao.Conteudo,
+                    dataRegistro = anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar anotação da sessão.");
+            return Json(new { success = false, message = "Ocorreu um erro ao atualizar a anotação. Tente novamente." });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExcluirAnotacaoSessao(Guid id)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var anotacao = await _context.AnotacoesSessao
+            .FirstOrDefaultAsync(a => a.Id == id && a.Sessao!.ProfissionalId == profissionalId);
+
+        if (anotacao is null)
+        {
+            return Json(new { success = false, message = "Anotação não encontrada." });
+        }
+
+        try
+        {
+            _context.AnotacoesSessao.Remove(anotacao);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Anotação removida com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao excluir anotação da sessão.");
+            return Json(new { success = false, message = "Ocorreu um erro ao remover a anotação. Tente novamente." });
         }
     }
 

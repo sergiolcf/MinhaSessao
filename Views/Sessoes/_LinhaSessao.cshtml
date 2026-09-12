@@ -36,6 +36,10 @@
                     title="Status/Editar">
                 <i class="bi bi-pencil-square"></i>
             </button>
+            <a asp-controller="Sessoes" asp-action="Sessao" asp-route-id="@Model.Id"
+               class="ms-dash-row-link" title="Anotações Clínicas / Objetivos">
+                <i class="bi bi-journal-medical"></i>
+            </a>
             <a asp-controller="Pacientes" asp-action="Detalhes" asp-route-id="@Model.PacienteId"
                class="ms-dash-row-link" title="Prontuário">
                 <i class="bi bi-folder2-open"></i>

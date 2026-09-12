@@ -448,9 +448,12 @@
                 }
 
                 if (modalVisualizarSessaoAnotacoesEl) {
-                    modalVisualizarSessaoAnotacoesEl.textContent = dados.anotacoesClinicas && dados.anotacoesClinicas.trim() !== ""
-                        ? dados.anotacoesClinicas
-                        : "Nenhuma anotação registrada.";
+                    var anotacoes = dados.anotacoes || [];
+                    modalVisualizarSessaoAnotacoesEl.innerHTML = anotacoes.length === 0
+                        ? '<p class="mb-0">Nenhuma anotação registrada.</p>'
+                        : anotacoes.map(function (anotacao) {
+                            return '<div><div class="fw-semibold">' + escaparHtml(anotacao.titulo) + '</div><p class="mb-0">' + escaparHtml(anotacao.conteudo) + '</p></div>';
+                        }).join("");
                 }
 
                 bootstrap.Modal.getOrCreateInstance(modalVisualizarSessaoEl).show();
