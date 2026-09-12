@@ -4,5 +4,6 @@ public enum StatusSessao
 {
     Agendada = 0,
     Realizada = 1,
-    Cancelada = 2
+    Cancelada = 2,
+    EmAndamento = 3
 }

@@ -184,18 +184,18 @@ public class PacientesController : Controller
                 DataHora = s.DataHora,
                 PacienteNome = paciente.NomeCompleto,
                 DuracaoMinutos = s.DuracaoMinutos,
-                Status = s.Status.ToString(),
-                AnotacoesClinicas = s.AnotacoesClinicas
+                Status = s.Status.ToString()
             })
             .ToListAsync();
 
         // Busca os Objetivos Terapêuticos trabalhados em todas as sessões do paciente numa única
-        // consulta (evita N+1 de uma query por sessão) e depois agrupa em memória por SessaoId
+        // consulta (evita N+1 de uma query por sessão) e depois agrupa em memória por SessaoId —
+        // cada objetivo pertence a uma Anotação específica, então passa por AnotacaoSessao.SessaoId
         var objetivosTrabalhados = await _context.SessoesObjetivos
-            .Where(so => so.Sessao!.PacienteId == paciente.Id && so.Sessao.ProfissionalId == profissionalId)
+            .Where(so => so.AnotacaoSessao!.Sessao!.PacienteId == paciente.Id && so.AnotacaoSessao.Sessao.ProfissionalId == profissionalId)
             .Select(so => new
             {
-                so.SessaoId,
+                SessaoId = so.AnotacaoSessao!.SessaoId,
                 Titulo = so.ObjetivoTerapeutico!.Titulo,
                 so.Observacao
             })
@@ -207,11 +207,30 @@ public class PacientesController : Controller
                 g => g.Key,
                 g => g.Select(o => new ObjetivoTrabalhadoViewModel { Titulo = o.Titulo, Observacao = o.Observacao }).ToList());
 
+        // Mesma lógica de evitar N+1: busca as Anotações Clínicas de todas as sessões do paciente
+        // numa única consulta e depois agrupa em memória por SessaoId
+        var anotacoesDasSessoes = await _context.AnotacoesSessao
+            .Where(a => a.Sessao!.PacienteId == paciente.Id && a.Sessao.ProfissionalId == profissionalId)
+            .OrderByDescending(a => a.DataRegistro)
+            .Select(a => new { a.SessaoId, a.Id, a.Titulo, a.Conteudo, a.DataRegistro })
+            .ToListAsync();
+
+        var anotacoesPorSessaoId = anotacoesDasSessoes
+            .GroupBy(a => a.SessaoId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(a => new AnotacaoSessaoItemViewModel { Id = a.Id, Titulo = a.Titulo, Conteudo = a.Conteudo, DataRegistro = a.DataRegistro }).ToList());
+
         foreach (var sessao in sessoes)
         {
             if (objetivosPorSessaoId.TryGetValue(sessao.Id, out var objetivosDaSessao))
             {
                 sessao.ObjetivosTrabalhados = objetivosDaSessao;
+            }
+
+            if (anotacoesPorSessaoId.TryGetValue(sessao.Id, out var anotacoesDaSessao))
+            {
+                sessao.Anotacoes = anotacoesDaSessao;
             }
         }
 
@@ -651,9 +670,12 @@ public class PacientesController : Controller
 
         if (pagina < 1) pagina = 1;
 
+        // Cada linha aqui é uma anotação que marcou este objetivo (não mais 1 linha por sessão) —
+        // agora que Objetivos Trabalhados é por Anotação, a mesma sessão pode aparecer mais de uma
+        // vez se objetivo foi marcado em mais de uma anotação dela
         var query = _context.SessoesObjetivos
             .Where(so => so.ObjetivoTerapeuticoId == objetivoId)
-            .OrderByDescending(so => so.Sessao!.DataHora);
+            .OrderByDescending(so => so.AnotacaoSessao!.Sessao!.DataHora);
 
         var totalSessoes = await query.CountAsync();
         var totalPaginas = totalSessoes == 0 ? 1 : (int)Math.Ceiling(totalSessoes / (double)tamanhoPagina);
@@ -663,9 +685,9 @@ public class PacientesController : Controller
             .Take(tamanhoPagina)
             .Select(so => new
             {
-                sessaoId = so.SessaoId,
-                codigo = so.Sessao!.Codigo,
-                dataHora = so.Sessao.DataHora.ToString("dd/MM/yyyy"),
+                sessaoId = so.AnotacaoSessao!.SessaoId,
+                codigo = so.AnotacaoSessao.Sessao!.Codigo,
+                dataHora = so.AnotacaoSessao.Sessao.DataHora.ToString("dd/MM/yyyy"),
                 observacao = so.Observacao
             })
             .ToListAsync();

@@ -20,6 +20,12 @@ public class PainelSessoesProfissionalViewModel
 
     public int TotalPaginasHistorico { get; set; } = 1;
 
+    public List<SessaoProfissionalListItemViewModel> EmAndamento { get; set; } = new();
+
+    public int PaginaAtualEmAndamento { get; set; } = 1;
+
+    public int TotalPaginasEmAndamento { get; set; } = 1;
+
     public List<PacienteSelectItemViewModel> Pacientes { get; set; } = new();
 
     public int DuracaoPadraoSessaoMinutos { get; set; }
@@ -46,8 +52,9 @@ public class SessaoProfissionalListItemViewModel
     // "Agendada", "Realizada" ou "Cancelada"
     public string Status { get; set; } = string.Empty;
 
-    // Preenchido só onde a evolução da sessão é exibida (ex.: aba "Histórico de Sessões" da Ficha do Paciente)
-    public string? AnotacoesClinicas { get; set; }
+    // Anotações Clínicas registradas nesta sessão, preenchido só onde a evolução é exibida
+    // (ex.: aba "Histórico de Sessões" da Ficha do Paciente)
+    public List<AnotacaoSessaoItemViewModel> Anotacoes { get; set; } = new();
 
     // Objetivos Terapêuticos trabalhados nesta sessão (via SessaoObjetivo), preenchido só onde exibido
     // (ex.: aba "Histórico de Sessões" da Ficha do Paciente)

@@ -4,6 +4,9 @@ let ms_totalPaginasAgendadas = 1;
 let ms_paginaHistorico = 1;
 let ms_totalPaginasHistorico = 1;
 let ms_historicoCarregado = false;
+let ms_paginaEmAndamento = 1;
+let ms_totalPaginasEmAndamento = 1;
+let ms_emAndamentoCarregado = false;
 
 document.addEventListener("DOMContentLoaded", function () {
     const toastEl = document.getElementById("toastSessoes");
@@ -20,8 +23,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const tbodyAgendadas = document.getElementById("tbodySessoesAgendadas");
     const tbodyHistorico = document.getElementById("tbodySessoesHistorico");
+    const tbodyEmAndamento = document.getElementById("tbodySessoesEmAndamento");
     const paginacaoAgendadas = document.getElementById("paginacaoSessoesAgendadas");
     const paginacaoHistorico = document.getElementById("paginacaoSessoesHistorico");
+    const paginacaoEmAndamento = document.getElementById("paginacaoSessoesEmAndamento");
     const filtroPacienteInput = document.getElementById("filtroPacienteSessoesInput");
     const filtroPacienteSugestoesEl = document.getElementById("sugestoesFiltroPacienteSessoes");
     const btnLimparFiltroPaciente = document.getElementById("btnLimparFiltroPacienteSessoes");
@@ -34,8 +39,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function classeBadge(status) {
         if (status === "Agendada") return "ms-badge-agendada";
+        if (status === "EmAndamento") return "ms-badge-em-andamento";
         if (status === "Realizada") return "ms-badge-realizada";
         return "ms-badge-cancelada";
+    }
+
+    // Enum.ToString() não tem espaço ("EmAndamento") — só esse valor precisa de um texto de exibição próprio
+    function textoStatus(status) {
+        return status === "EmAndamento" ? "Em Andamento" : status;
     }
 
     // combinarDataHora/separarDataHora/preencherOpcoesHoraMinuto/configurarSeletorHora/escaparHtml
@@ -58,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>
                 <span class="ms-badge-codigo">${escaparHtml(sessao.codigo)}</span>
             </td>
-            <td><span class="badge ${classeBadge(sessao.status)}">${escaparHtml(sessao.status)}</span></td>
+            <td><span class="badge ${classeBadge(sessao.status)}">${escaparHtml(textoStatus(sessao.status))}</span></td>
             <td class="text-end">
                 <div class="d-inline-flex gap-1">
                     <button type="button" class="ms-dash-row-link btn-editar-sessao"
@@ -69,6 +80,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             title="Status/Editar">
                         <i class="bi bi-pencil-square"></i>
                     </button>
+                    <a href="/Sessoes/Sessao/${sessao.id}" class="ms-dash-row-link" title="Anotações Clínicas / Objetivos">
+                        <i class="bi bi-journal-medical"></i>
+                    </a>
                     <a href="/Pacientes/Detalhes/${sessao.pacienteId}" class="ms-dash-row-link" title="Prontuário">
                         <i class="bi bi-folder2-open"></i>
                     </a>
@@ -82,11 +96,15 @@ document.addEventListener("DOMContentLoaded", function () {
         tbody.innerHTML = "";
 
         if (!sessoes || sessoes.length === 0) {
-            const icone = aba === "historico" ? "bi-clock-history" : "bi-calendar-week";
-            const titulo = aba === "historico" ? "Nenhum histórico ainda" : "Nenhuma sessão agendada";
+            const icone = aba === "historico" ? "bi-clock-history" : (aba === "em_andamento" ? "bi-broadcast" : "bi-calendar-week");
+            const titulo = aba === "historico" ? "Nenhum histórico ainda" : (aba === "em_andamento" ? "Nenhuma sessão em andamento no momento" : "Nenhuma sessão agendada");
             const texto = ms_filtroPacienteSessoes
                 ? "Nenhuma sessão encontrada para o paciente selecionado."
-                : (aba === "historico" ? "As sessões realizadas ou canceladas aparecerão aqui." : "Clique em \"Nova Sessão\" para agendar um atendimento.");
+                : (aba === "historico"
+                    ? "As sessões realizadas ou canceladas aparecerão aqui."
+                    : (aba === "em_andamento"
+                        ? "Inicie uma sessão pelo card \"Próxima Sessão\" para acompanhá-la aqui."
+                        : "Clique em \"Nova Sessão\" para agendar um atendimento."));
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -128,9 +146,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function tbodyDaAba(aba) {
+        if (aba === "historico") return tbodyHistorico;
+        if (aba === "em_andamento") return tbodyEmAndamento;
+        return tbodyAgendadas;
+    }
+
+    function paginacaoDaAba(aba) {
+        if (aba === "historico") return paginacaoHistorico;
+        if (aba === "em_andamento") return paginacaoEmAndamento;
+        return paginacaoAgendadas;
+    }
+
     async function carregarSessoes(aba, pagina) {
-        const tbody = aba === "historico" ? tbodyHistorico : tbodyAgendadas;
-        const paginacaoEl = aba === "historico" ? paginacaoHistorico : paginacaoAgendadas;
+        const tbody = tbodyDaAba(aba);
+        const paginacaoEl = paginacaoDaAba(aba);
 
         try {
             const parametros = new URLSearchParams({ aba, pagina: String(pagina) });
@@ -148,6 +178,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 ms_paginaHistorico = resultado.paginaAtual;
                 ms_totalPaginasHistorico = resultado.totalPaginas;
                 ms_historicoCarregado = true;
+            } else if (aba === "em_andamento") {
+                ms_paginaEmAndamento = resultado.paginaAtual;
+                ms_totalPaginasEmAndamento = resultado.totalPaginas;
+                ms_emAndamentoCarregado = true;
             } else {
                 ms_paginaAgendadas = resultado.paginaAtual;
                 ms_totalPaginasAgendadas = resultado.totalPaginas;
@@ -170,6 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ocultarSugestoesFiltroPaciente();
         carregarSessoes("agendadas", 1);
         carregarSessoes("historico", 1);
+        carregarSessoes("em_andamento", 1);
     }
 
     function limparFiltroPaciente() {
@@ -179,6 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ocultarSugestoesFiltroPaciente();
         carregarSessoes("agendadas", 1);
         carregarSessoes("historico", 1);
+        carregarSessoes("em_andamento", 1);
     }
 
     async function atualizarSugestoesFiltroPaciente(termo) {
@@ -225,6 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (btnLimparFiltroPaciente) btnLimparFiltroPaciente.classList.add("d-none");
                 carregarSessoes("agendadas", 1);
                 carregarSessoes("historico", 1);
+                carregarSessoes("em_andamento", 1);
             }
 
             const termo = filtroPacienteInput.value.trim();
@@ -278,12 +315,31 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Carrega o histórico só na primeira vez que a aba é aberta (a de agendadas já vem renderizada pelo servidor)
+    if (paginacaoEmAndamento) {
+        paginacaoEmAndamento.addEventListener("click", function (e) {
+            const botao = e.target.closest(".page-link");
+            if (!botao) return;
+            const pagina = parseInt(botao.dataset.pagina, 10);
+            if (pagina === ms_paginaEmAndamento) return;
+            carregarSessoes("em_andamento", pagina);
+        });
+    }
+
+    // Carrega o histórico/em andamento só na primeira vez que a aba é aberta (a de agendadas já vem renderizada pelo servidor)
     const historicoTabBtn = document.getElementById("historico-tab");
     if (historicoTabBtn) {
         historicoTabBtn.addEventListener("shown.bs.tab", function () {
             if (!ms_historicoCarregado) {
                 carregarSessoes("historico", 1);
+            }
+        });
+    }
+
+    const emAndamentoTabBtn = document.getElementById("em-andamento-tab");
+    if (emAndamentoTabBtn) {
+        emAndamentoTabBtn.addEventListener("shown.bs.tab", function () {
+            if (!ms_emAndamentoCarregado) {
+                carregarSessoes("em_andamento", 1);
             }
         });
     }
@@ -299,7 +355,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const horaInputEditar = document.getElementById("EditarSessaoHora");
         const duracaoInput = document.getElementById("EditarSessaoDuracaoMinutos");
         const statusSelect = document.getElementById("EditarSessaoStatus");
-        const anotacoesClinicasInput = document.getElementById("EditarSessaoAnotacoesClinicas");
         const feedbackErroEl = document.getElementById("editarSessaoFeedbackErro");
         const feedbackErroMensagemEl = document.getElementById("editarSessaoFeedbackErroMensagem");
         const btnSalvar = document.getElementById("btnSalvarEditarSessao");
@@ -324,49 +379,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const horaTextoEditar = document.getElementById("EditarSessaoHoraTexto");
-        const objetivosContainer = document.getElementById("EditarSessaoObjetivosContainer");
-
-        // Renderiza a lista de objetivos em andamento do paciente, marcando/preenchendo os que já estão
-        // vinculados a esta sessão (checkbox + campo de observação escondido até o objetivo ser marcado)
-        function renderizarObjetivosSessao(objetivosAtivos, objetivosVinculados) {
-            if (!objetivosContainer) return;
-
-            objetivosContainer.innerHTML = "";
-
-            if (!objetivosAtivos || objetivosAtivos.length === 0) {
-                objetivosContainer.innerHTML = `<p class="ms-dash-table-subtext mb-0">Nenhum objetivo em andamento para este paciente.</p>`;
-                return;
-            }
-
-            const vinculados = {};
-            (objetivosVinculados || []).forEach(function (v) {
-                vinculados[v.objetivoTerapeuticoId] = v.observacao || "";
-            });
-
-            objetivosAtivos.forEach(function (objetivo) {
-                const marcado = Object.prototype.hasOwnProperty.call(vinculados, objetivo.id);
-                const observacao = vinculados[objetivo.id] || "";
-
-                const wrapper = document.createElement("div");
-                wrapper.className = "form-check mb-2";
-                wrapper.innerHTML = `
-                    <input class="form-check-input ms-objetivo-sessao-checkbox" type="checkbox" value="${objetivo.id}" id="objetivoSessaoChk_${objetivo.id}" ${marcado ? "checked" : ""}>
-                    <label class="form-check-label" for="objetivoSessaoChk_${objetivo.id}">${escaparHtml(objetivo.titulo)}</label>
-                    <div class="mt-1 ms-objetivo-sessao-observacao-wrapper ${marcado ? "" : "d-none"}">
-                        <input type="text" class="form-control form-control-sm ms-objetivo-sessao-observacao" placeholder="Observação (opcional)" value="${escaparHtml(observacao)}">
-                    </div>
-                `;
-                objetivosContainer.appendChild(wrapper);
-            });
-        }
-
-        if (objetivosContainer) {
-            objetivosContainer.addEventListener("change", function (e) {
-                if (!e.target.classList.contains("ms-objetivo-sessao-checkbox")) return;
-                const wrapper = e.target.closest(".form-check").querySelector(".ms-objetivo-sessao-observacao-wrapper");
-                if (wrapper) wrapper.classList.toggle("d-none", !e.target.checked);
-            });
-        }
 
         function preencherModalEdicao(dados) {
             ocultarErro();
@@ -375,8 +387,6 @@ document.addEventListener("DOMContentLoaded", function () {
             separarDataHora(dados.dataHoraIso, dataInputEditar, horaInputEditar, dataHoraInput, horaTextoEditar);
             duracaoInput.value = dados.duracaoMinutos || "";
             statusSelect.value = dados.status || "Agendada";
-            if (anotacoesClinicasInput) anotacoesClinicasInput.value = dados.anotacoesClinicas || "";
-            renderizarObjetivosSessao(dados.objetivosAtivos, dados.objetivosVinculados);
         }
 
         async function abrirModalEdicao(sessaoId) {
@@ -430,15 +440,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const formData = new FormData(formEditarSessao);
             if (tokenInputEditar) formData.append("__RequestVerificationToken", tokenInputEditar.value);
 
-            if (objetivosContainer) {
-                const checkboxesMarcados = objetivosContainer.querySelectorAll(".ms-objetivo-sessao-checkbox:checked");
-                checkboxesMarcados.forEach(function (checkbox, indice) {
-                    const observacaoInput = checkbox.closest(".form-check").querySelector(".ms-objetivo-sessao-observacao");
-                    formData.append(`Objetivos[${indice}].ObjetivoTerapeuticoId`, checkbox.value);
-                    formData.append(`Objetivos[${indice}].Observacao`, observacaoInput ? observacaoInput.value : "");
-                });
-            }
-
             try {
                 const resposta = await fetch("/Sessoes/Atualizar", { method: "POST", body: formData });
                 let resultado;
@@ -452,10 +453,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     exibirToast(resultado.message || "Sessão atualizada com sucesso!", true);
                     modalEditarSessaoEl.addEventListener("hidden.bs.modal", function aoFecharRecarregar() {
                         modalEditarSessaoEl.removeEventListener("hidden.bs.modal", aoFecharRecarregar);
-                        // Remove o parâmetro abrirSessaoId antes de recarregar, senão o modal reabriria sozinho
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete("abrirSessaoId");
-                        window.location.href = url.toString();
+                        window.location.reload();
                     });
                     bootstrap.Modal.getOrCreateInstance(modalEditarSessaoEl).hide();
                 } else {
@@ -468,12 +466,84 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Se a página foi aberta a partir do botão "Abrir" na Ficha do Paciente (?abrirSessaoId=...),
-        // busca os dados da sessão específica e já abre a modal de edição preenchida
-        const parametrosUrl = new URLSearchParams(window.location.search);
-        const abrirSessaoId = parametrosUrl.get("abrirSessaoId");
-        if (abrirSessaoId) {
-            abrirModalEdicao(abrirSessaoId);
+        // ----- Card "Próxima Sessão": confirmação de início de atendimento -----
+        const cardProximaSessao = document.getElementById("cardProximaSessao");
+        const modalConfirmarIniciarSessaoEl = document.getElementById("modalConfirmarIniciarSessao");
+        const btnIniciarProximaSessao = document.getElementById("btnIniciarProximaSessao");
+        const btnIniciarProximaSessaoSpinner = document.getElementById("btnIniciarProximaSessaoSpinner");
+        const btnIniciarProximaSessaoTexto = document.getElementById("btnIniciarProximaSessaoTexto");
+        const btnEditarProximaSessao = document.getElementById("btnEditarProximaSessao");
+
+        // Só liga a interação quando o card realmente tem uma sessão (data-sessao-id vem vazio quando não há)
+        if (cardProximaSessao && modalConfirmarIniciarSessaoEl && cardProximaSessao.dataset.sessaoId) {
+            const modalConfirmarIniciarSessao = bootstrap.Modal.getOrCreateInstance(modalConfirmarIniciarSessaoEl);
+
+            function definirCarregandoIniciar(carregando) {
+                if (!btnIniciarProximaSessao) return;
+                btnIniciarProximaSessao.disabled = carregando;
+                if (btnIniciarProximaSessaoSpinner) btnIniciarProximaSessaoSpinner.classList.toggle("d-none", !carregando);
+                if (btnIniciarProximaSessaoTexto) btnIniciarProximaSessaoTexto.textContent = carregando ? "Iniciando..." : "Iniciar";
+            }
+
+            cardProximaSessao.addEventListener("click", function () {
+                modalConfirmarIniciarSessao.show();
+            });
+
+            if (btnEditarProximaSessao) {
+                btnEditarProximaSessao.addEventListener("click", function () {
+                    const sessaoId = cardProximaSessao.dataset.sessaoId;
+                    modalConfirmarIniciarSessaoEl.addEventListener("hidden.bs.modal", function aoFecharAbrirEdicao() {
+                        modalConfirmarIniciarSessaoEl.removeEventListener("hidden.bs.modal", aoFecharAbrirEdicao);
+                        abrirModalEdicao(sessaoId);
+                    });
+                    modalConfirmarIniciarSessao.hide();
+                });
+            }
+
+            if (btnIniciarProximaSessao) {
+                btnIniciarProximaSessao.addEventListener("click", async function () {
+                    const sessaoId = cardProximaSessao.dataset.sessaoId;
+                    definirCarregandoIniciar(true);
+
+                    const formData = new FormData();
+                    formData.append("id", sessaoId);
+                    if (tokenInputEditar) formData.append("__RequestVerificationToken", tokenInputEditar.value);
+
+                    try {
+                        const resposta = await fetch("/Sessoes/IniciarSessao", { method: "POST", body: formData });
+                        let resultado;
+                        try {
+                            resultado = await resposta.json();
+                        } catch {
+                            resultado = { success: false, message: "Ocorreu um erro inesperado no servidor. Tente novamente." };
+                        }
+
+                        if (resultado.success) {
+                            // Recarrega a página já na aba "Em Andamento" — os cards de estatística e a
+                            // "Próxima Sessão" dependem de uma consulta nova ao servidor pra recalcular
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("abaAtiva", "em_andamento");
+                            window.location.href = url.toString();
+                        } else {
+                            definirCarregandoIniciar(false);
+                            modalConfirmarIniciarSessao.hide();
+                            exibirToast(resultado.message || "Não foi possível iniciar a sessão.", false);
+                        }
+                    } catch {
+                        definirCarregandoIniciar(false);
+                        exibirToast("Erro de conexão. Verifique sua internet e tente novamente.", false);
+                    }
+                });
+            }
+        }
+
+        // Se a URL pede pra abrir direto na aba "Em Andamento" (ex.: logo após iniciar uma sessão), ativa a aba
+        const abaAtivaParam = parametrosUrl.get("abaAtiva");
+        if (abaAtivaParam === "em_andamento" && emAndamentoTabBtn) {
+            bootstrap.Tab.getOrCreateInstance(emAndamentoTabBtn).show();
+            const url = new URL(window.location.href);
+            url.searchParams.delete("abaAtiva");
+            window.history.replaceState({}, "", url.toString());
         }
     }
 });
