@@ -48,6 +48,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let draftTitulo = "";
     let draftConteudo = "";
     let draftObjetivosIds = [];
+    // Estado "visualização": guarda o id da anotação mostrada em modo somente leitura no painel da
+    // esquerda (ver renderVisualizacao) — separado de "composing"/"editId" porque não é um rascunho
+    // editável, é só o conteúdo já salvo sendo exibido. Por isso temRascunho() (abaixo) ignora esse
+    // estado: trocar de anotação visualizada, ou começar uma nova, não precisa de aviso de descarte.
+    let visualizandoId = null;
 
     function temRascunho() {
         return composing && (draftTitulo.trim() !== "" || draftConteudo.trim() !== "");
@@ -62,12 +67,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderIdle() {
+        visualizandoId = null;
         composeEl.innerHTML = `
             <div class="ms-anotacao-sessao-vazio">
                 <i class="bi bi-journal-plus"></i>
                 <div>Nenhuma anotação sendo criada no momento</div>
             </div>
         `;
+        atualizarEstadoBotaoFixo();
+    }
+
+    // Mostra o conteúdo já registrado de uma anotação em modo somente leitura, sem cair direto no
+    // formulário de edição — usado quando a tela chega via "?anotacaoId=..." (clique numa anotação na
+    // aba "Anotações Clínicas" da Ficha do Paciente), pra abrir o conteúdo de cara sem exigir um
+    // clique extra, mas também sem risco de o profissional editar o texto sem querer. O botão
+    // "Editar" reaproveita o fluxo real de edição (abrirEdicao).
+    function renderVisualizacao(anotacao) {
+        visualizandoId = anotacao.id;
+
+        const chipsObjetivos = (anotacao.objetivos || []).map(function (objetivo) {
+            return `<span class="ms-objetivo-chip">${escaparHtml(objetivo.titulo)}</span>`;
+        }).join("");
+
+        // Escapa antes de trocar as quebras de linha por <br>, senão um "\n" dentro de um trecho
+        // malicioso do conteúdo poderia reabrir uma brecha de HTML injection
+        const conteudoHtml = escaparHtml(anotacao.conteudo).replace(/\n/g, "<br>");
+
+        composeEl.innerHTML = `
+            <div class="ms-anotacao-sessao-compose-titulo">${escaparHtml(anotacao.titulo)}</div>
+            ${chipsObjetivos ? `<div class="ms-objetivo-chips-wrapper mb-2">${chipsObjetivos}</div>` : ""}
+            <div class="mb-2 flex-grow-1" style="white-space: pre-wrap;">${conteudoHtml}</div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-ms-orange btn-sm" id="btnEditarAnotacaoSessaoVisualizada">Editar</button>
+            </div>
+        `;
+
+        document.getElementById("btnEditarAnotacaoSessaoVisualizada").addEventListener("click", function () {
+            abrirEdicao(anotacao.id);
+        });
+
         atualizarEstadoBotaoFixo();
     }
 
@@ -104,6 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function renderCompose(avisoHtml) {
+        visualizandoId = null;
         composeEl.innerHTML = (avisoHtml || "") + `
             <div class="ms-anotacao-sessao-compose-titulo">${editId ? "Editando anotação" : "Nova anotação"}</div>
             <input type="text" class="form-control form-control-sm mb-2" id="anotacaoSessaoTituloInput" placeholder="Título" maxlength="150">
@@ -190,6 +229,21 @@ document.addEventListener("DOMContentLoaded", function () {
         draftConteudo = anotacao.conteudo;
         draftObjetivosIds = (anotacao.objetivos || []).map(function (o) { return o.objetivoTerapeuticoId; });
         renderCompose();
+    }
+
+    // Botão "Visualizar" de cada item da lista — reaproveita renderVisualizacao (mesma usada ao
+    // chegar via "?anotacaoId=..."). Visualizar não é destrutivo, mas ainda assim pede confirmação
+    // se houver um rascunho não salvo em andamento, pra não perder o que a pessoa estava digitando
+    function abrirVisualizacao(id, forcar) {
+        if (!forcar && temRascunho()) {
+            pedirDescarte(function () { abrirVisualizacao(id, true); });
+            return;
+        }
+
+        const anotacao = anotacoes.find(function (a) { return a.id === id; });
+        if (!anotacao) return;
+
+        renderVisualizacao(anotacao);
     }
 
     async function salvarAnotacao(tituloInput, conteudoInput) {
@@ -280,6 +334,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     draftConteudo = "";
                     draftObjetivosIds = [];
                     renderIdle();
+                } else if (visualizandoId === id) {
+                    // A anotação que estava sendo visualizada foi excluída — volta pro estado ocioso
+                    renderIdle();
                 }
                 await carregarAnotacoes();
             }
@@ -296,12 +353,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         listaEl.innerHTML = anotacoes.map(function (anotacao) {
             return `
-                <div class="ms-anotacao-sessao-item">
+                <div class="ms-anotacao-sessao-item" data-anotacao-id="${anotacao.id}">
                     <div class="ms-anotacao-sessao-item-info">
                         <div class="ms-anotacao-sessao-item-titulo">${escaparHtml(anotacao.titulo)}</div>
                         <div class="ms-anotacao-sessao-item-data">${escaparHtml(anotacao.dataRegistro)}</div>
                     </div>
                     <div class="d-flex gap-1">
+                        <button type="button" class="ms-dash-row-link" data-visualizar-anotacao="${anotacao.id}" title="Visualizar">
+                            <i class="bi bi-eye"></i>
+                        </button>
                         <button type="button" class="ms-dash-row-link" data-editar-anotacao="${anotacao.id}" title="Editar">
                             <i class="bi bi-pencil-square"></i>
                         </button>
@@ -314,7 +374,38 @@ document.addEventListener("DOMContentLoaded", function () {
         }).join("");
     }
 
+    // Se a URL trouxer "?anotacaoId=...", vindo do clique numa anotação na aba "Anotações Clínicas"
+    // da Ficha do Paciente, abre direto o conteúdo dela no painel da esquerda (renderVisualizacao) e
+    // reforça visualmente qual é ela na lista da direita (scroll + destaque temporário) — tudo isso
+    // só na primeira vez que a lista é carregada (carregarAnotacoes também é reusado após salvar/excluir)
+    const anotacaoIdParaDestacar = new URLSearchParams(window.location.search).get("anotacaoId");
+    let ms_anotacaoJaDestacada = false;
+
+    function abrirAnotacaoDaUrlSeNecessario() {
+        if (!anotacaoIdParaDestacar || ms_anotacaoJaDestacada) return;
+
+        const item = listaEl.querySelector(`[data-anotacao-id="${anotacaoIdParaDestacar}"]`);
+        const anotacao = anotacoes.find(function (a) { return a.id === anotacaoIdParaDestacar; });
+        if (!item || !anotacao) return;
+
+        ms_anotacaoJaDestacada = true;
+
+        item.scrollIntoView({ behavior: "smooth", block: "center" });
+        item.classList.add("ms-anotacao-destacada");
+        setTimeout(function () {
+            item.classList.remove("ms-anotacao-destacada");
+        }, 2500);
+
+        renderVisualizacao(anotacao);
+    }
+
     listaEl.addEventListener("click", function (e) {
+        const botaoVisualizar = e.target.closest("[data-visualizar-anotacao]");
+        if (botaoVisualizar) {
+            abrirVisualizacao(botaoVisualizar.getAttribute("data-visualizar-anotacao"));
+            return;
+        }
+
         const botaoEditar = e.target.closest("[data-editar-anotacao]");
         if (botaoEditar) {
             abrirEdicao(botaoEditar.getAttribute("data-editar-anotacao"));
@@ -339,6 +430,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             anotacoes = resultado.anotacoes || [];
             renderizarLista();
+            abrirAnotacaoDaUrlSeNecessario();
         } catch {
             exibirToast("Erro de conexão. Verifique sua internet e tente novamente.", false);
         }
