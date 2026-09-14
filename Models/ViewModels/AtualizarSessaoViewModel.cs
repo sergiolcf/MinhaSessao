@@ -15,8 +15,4 @@ public class AtualizarSessaoViewModel
 
     [Required(ErrorMessage = "Selecione o status da sessão.")]
     public string Status { get; set; } = string.Empty;
-
-    public string? AnotacoesClinicas { get; set; }
-
-    public List<SessaoObjetivoViewModel>? Objetivos { get; set; }
 }

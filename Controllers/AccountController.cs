@@ -15,12 +15,14 @@ public class AccountController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
     private readonly ILogger<AccountController> _logger;
+    private readonly VinculoService _vinculoService;
 
-    public AccountController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, ILogger<AccountController> logger)
+    public AccountController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, ILogger<AccountController> logger, VinculoService vinculoService)
     {
         _context = context;
         _webHostEnvironment = webHostEnvironment;
         _logger = logger;
+        _vinculoService = vinculoService;
     }
 
     [HttpGet]
@@ -219,6 +221,54 @@ public class AccountController : Controller
         await AutenticacaoService.AutenticarProfissionalAsync(HttpContext, profissional);
 
         return RedirectToAction("Index", "Dashboard");
+    }
+
+    // Ação rápida de desenvolvimento: loga automaticamente como o paciente de teste "Sergio Teste",
+    // criando o cadastro (com dados fictícios) e o vínculo com o primeiro profissional cadastrado
+    // se ainda não existirem — mesmo espírito de LoginSimuladoTeste, agora pro perfil Paciente
+    [HttpGet]
+    [HttpPost]
+    public async Task<IActionResult> LoginSimuladoPacienteTeste()
+    {
+        var profissional = await _context.Profissionais.FirstOrDefaultAsync();
+
+        if (profissional is null)
+        {
+            ModelState.AddModelError(string.Empty, "Nenhum profissional cadastrado para o login de teste.");
+            return View("Login", new LoginViewModel());
+        }
+
+        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.NomeCompleto == "Sergio Teste");
+
+        if (paciente is null)
+        {
+            paciente = new Paciente
+            {
+                Id = Guid.NewGuid(),
+                NomeCompleto = "Sergio Teste",
+                Telefone = "11912345678",
+                Email = "sergio.teste@example.com",
+                DataNascimento = DateTime.UtcNow.Date.AddYears(-30),
+                Cpf = "12345678909"
+            };
+
+            // Gera a senha temporária de acesso do paciente — mesmo padrão de PacientesController.Criar
+            var senhaTemporaria = AutenticacaoService.GerarSenhaTemporaria();
+            paciente.Senha = AutenticacaoService.HashSenhaPaciente(paciente, senhaTemporaria);
+
+            _context.Pacientes.Add(paciente);
+            _vinculoService.CriarVinculo(paciente.Id, profissional.Id);
+            await _context.SaveChangesAsync();
+        }
+        else if (!await _vinculoService.PacientePertenceAoProfissionalAsync(paciente.Id, profissional.Id))
+        {
+            _vinculoService.CriarVinculo(paciente.Id, profissional.Id);
+            await _context.SaveChangesAsync();
+        }
+
+        await AutenticacaoService.AutenticarPacienteAsync(HttpContext, paciente);
+
+        return RedirectToAction("Index", "PainelPaciente");
     }
 
     [Authorize]

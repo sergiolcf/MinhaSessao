@@ -14,8 +14,6 @@ public class Sessao
 
     public StatusSessao Status { get; set; } = StatusSessao.Agendada;
 
-    public string? AnotacoesClinicas { get; set; }
-
     // Código de identificação único da sessão, gerado e gravado na criação (formato MS_{numero}_{iniciais},
     // numero sequencial por Profissional) — nunca recalculado, pra ficar estável mesmo se o profissional
     // mudar de nome ou outras sessões dele forem excluídas

@@ -52,6 +52,11 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" id="anotacoes-clinicas-tab" data-bs-toggle="tab" data-bs-target="#anotacoes-clinicas" type="button" role="tab" aria-controls="anotacoes-clinicas" aria-selected="false">
+            <i class="bi bi-journal-text me-1"></i> Anotações Clínicas
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" id="sessoes-tab" data-bs-toggle="tab" data-bs-target="#sessoes" type="button" role="tab" aria-controls="sessoes" aria-selected="false">
             <i class="bi bi-clock-history me-1"></i> Histórico de Sessões
         </button>
@@ -76,11 +81,13 @@
         </div>
 
         <div id="objetivosContainer" data-paciente-id="@Model.Id">
-            <div class="ms-objetivos-grid" id="listaObjetivos">
-                <div class="ms-dash-empty-state" id="objetivosEmptyState">
-                    <i class="bi bi-bullseye"></i>
-                    <h5>Nenhum objetivo definido</h5>
-                    <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico de @Model.NomeCompleto.</p>
+            <div class="ms-objetivos-grid-scroll">
+                <div class="ms-objetivos-grid" id="listaObjetivos">
+                    <div class="ms-dash-empty-state" id="objetivosEmptyState">
+                        <i class="bi bi-bullseye"></i>
+                        <h5>Nenhum objetivo definido</h5>
+                        <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico de @Model.NomeCompleto.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -111,40 +118,51 @@
              data-paciente-id="@Model.Id"
              data-pagina-atual="@Model.PaginaAtualAnotacoes"
              data-total-paginas="@Model.TotalPaginasAnotacoes">
-            <div class="ms-timeline-scroll">
-                <div class="ms-timeline" id="listaAnotacoes">
-                    @if (Model.Anotacoes.Count == 0)
-                    {
-                        <div class="ms-dash-empty-state" id="anotacoesEmptyState">
-                            <i class="bi bi-journal-lock"></i>
-                            <h5>Nenhuma anotação registrada</h5>
-                            <p>Clique em "Nova Anotação" para registrar a primeira anotação confidencial sobre @Model.NomeCompleto.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        foreach (var anotacao in Model.Anotacoes)
-                        {
-                            <div class="ms-timeline-item" data-anotacao-id="@anotacao.Id">
-                                <span class="ms-timeline-marker"></span>
-                                <div class="ms-timeline-content">
-                                    <div class="ms-timeline-header">
-                                        <strong class="ms-timeline-title">@(string.IsNullOrWhiteSpace(anotacao.Titulo) ? "Anotação" : anotacao.Titulo)</strong>
-                                        <div class="ms-timeline-actions">
-                                            <span class="ms-timeline-date">@anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")</span>
-                                            <button type="button" class="ms-timeline-edit" data-anotacao-id="@anotacao.Id" data-titulo="@anotacao.Titulo" data-conteudo="@anotacao.Conteudo" title="Editar anotação">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button type="button" class="ms-timeline-delete" data-anotacao-id="@anotacao.Id" title="Excluir anotação">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive ms-dash-table-scroll">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Data</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAnotacoes">
+                            @if (Model.Anotacoes.Count == 0)
+                            {
+                                <tr id="anotacoesEmptyRow">
+                                    <td colspan="3">
+                                        <div class="ms-dash-empty-state">
+                                            <i class="bi bi-journal-lock"></i>
+                                            <h5>Nenhuma anotação registrada</h5>
+                                            <p>Clique em "Nova Anotação" para registrar a primeira anotação confidencial sobre @Model.NomeCompleto.</p>
                                         </div>
-                                    </div>
-                                    <p class="ms-timeline-body">@anotacao.Conteudo</p>
-                                </div>
-                            </div>
-                        }
-                    }
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var anotacao in Model.Anotacoes)
+                                {
+                                    <tr data-anotacao-id="@anotacao.Id" data-titulo="@anotacao.Titulo" data-conteudo="@anotacao.Conteudo">
+                                        <td>@(string.IsNullOrWhiteSpace(anotacao.Titulo) ? "Anotação" : anotacao.Titulo)</td>
+                                        <td>@anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-end">
+                                            <div class="d-inline-flex gap-1">
+                                                <button type="button" class="ms-timeline-edit" data-anotacao-id="@anotacao.Id" data-titulo="@anotacao.Titulo" data-conteudo="@anotacao.Conteudo" title="Editar anotação">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button type="button" class="ms-timeline-delete" data-anotacao-id="@anotacao.Id" title="Excluir anotação">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -155,6 +173,109 @@
                         for (var pagina = 1; pagina <= Model.TotalPaginasAnotacoes; pagina++)
                         {
                             <li class="page-item@(pagina == Model.PaginaAtualAnotacoes ? " active" : "")">
+                                <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="anotacoes-clinicas" role="tabpanel" aria-labelledby="anotacoes-clinicas-tab">
+        <div class="ms-dash-page-header ms-anotacao-tab-header">
+            <div>
+                <h5 class="mb-1">Anotações Clínicas</h5>
+                <p class="ms-dash-table-subtext mb-0">Todas as anotações clínicas registradas nas sessões de @Model.NomeCompleto, das mais recentes às mais antigas.</p>
+            </div>
+            <div class="ms-anotacao-toolbar">
+                <div class="ms-anotacao-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="buscaAnotacaoClinicaTitulo" class="form-control form-control-sm" placeholder="Buscar por título..." autocomplete="off">
+                </div>
+                <div class="ms-anotacao-periodo">
+                    <input type="date" id="filtroAnotacaoClinicaDataInicio" class="form-control form-control-sm" title="Data início">
+                    <span class="ms-anotacao-periodo-separador">até</span>
+                    <input type="date" id="filtroAnotacaoClinicaDataFim" class="form-control form-control-sm" title="Data fim">
+                    <button type="button" class="ms-anotacao-periodo-limpar d-none" id="btnLimparPeriodoAnotacaoClinica" title="Limpar período">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="anotacoesClinicasContainer"
+             data-paciente-id="@Model.Id"
+             data-pagina-atual="@Model.PaginaAtualAnotacoesClinicas"
+             data-total-paginas="@Model.TotalPaginasAnotacoesClinicas">
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive ms-dash-table-scroll-anotacoes-clinicas">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Código da Sessão</th>
+                                <th>Data</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAnotacoesClinicas">
+                            @if (Model.AnotacoesClinicas.Count == 0)
+                            {
+                                <tr id="anotacoesClinicasEmptyRow">
+                                    <td colspan="4">
+                                        <div class="ms-dash-empty-state">
+                                            <i class="bi bi-journal-text"></i>
+                                            <h5>Nenhuma anotação clínica registrada</h5>
+                                            <p>As anotações clínicas registradas em "Minhas Sessões" para @Model.NomeCompleto aparecerão aqui.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var anotacao in Model.AnotacoesClinicas)
+                                {
+                                    @* anotacaoId na query string permite que a tela da Sessão já abra com esta anotação
+                                       específica selecionada/destacada na lista "Anotações desta sessão" *@
+                                    <tr data-sessao-id="@anotacao.SessaoId" data-sessao-url="@Url.Action("Sessao", "Sessoes", new { id = anotacao.SessaoId, anotacaoId = anotacao.Id })">
+                                        <td>
+                                            @anotacao.Titulo
+                                            @if (anotacao.Objetivos.Count > 0)
+                                            {
+                                                <div class="ms-objetivo-chips-wrapper mt-1">
+                                                    @foreach (var objetivo in anotacao.Objetivos)
+                                                    {
+                                                        <span class="ms-objetivo-chip">@objetivo</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="ms-badge-codigo">@anotacao.SessaoCodigo</span>
+                                            <div class="ms-dash-table-subtext">@anotacao.SessaoDataHora.ToString("dd/MM/yyyy")</div>
+                                        </td>
+                                        <td>@anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-end">
+                                            <a asp-controller="Sessoes" asp-action="Sessao" asp-route-id="@anotacao.SessaoId" asp-route-anotacaoId="@anotacao.Id"
+                                               class="ms-dash-row-link" title="Abrir sessão">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <nav aria-label="Paginação de anotações clínicas" class="mt-3">
+                <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoAnotacoesClinicas">
+                    @if (Model.TotalPaginasAnotacoesClinicas > 1)
+                    {
+                        for (var pagina = 1; pagina <= Model.TotalPaginasAnotacoesClinicas; pagina++)
+                        {
+                            <li class="page-item@(pagina == Model.PaginaAtualAnotacoesClinicas ? " active" : "")">
                                 <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
                             </li>
                         }
@@ -194,7 +315,7 @@
                                     "Realizada" => "ms-badge-realizada",
                                     _ => "ms-badge-cancelada"
                                 };
-                                var temEvolucao = !string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas);
+                                var temEvolucao = sessao.Anotacoes.Any();
                                 var temObjetivosTrabalhados = sessao.ObjetivosTrabalhados.Any();
                                 var temDetalhe = temEvolucao || temObjetivosTrabalhados;
                                 var idEvolucao = $"evolucaoSessao_{sessao.Id}";
@@ -213,7 +334,7 @@
                                                     <i class="bi bi-journal-text"></i>
                                                 </button>
                                             }
-                                            <a asp-controller="Sessoes" asp-action="Index" asp-route-abrirSessaoId="@sessao.Id"
+                                            <a asp-controller="Sessoes" asp-action="Sessao" asp-route-id="@sessao.Id"
                                                class="ms-dash-row-link" title="Abrir sessão">
                                                 <i class="bi bi-box-arrow-up-right"></i>
                                             </a>
@@ -244,9 +365,20 @@
                                                             </div>
                                                         </div>
                                                     }
-                                                    @if (!string.IsNullOrWhiteSpace(sessao.AnotacoesClinicas))
+                                                    @if (sessao.Anotacoes.Any())
                                                     {
-                                                        <p class="mb-0"><strong>Anotações Clínicas:</strong> @sessao.AnotacoesClinicas</p>
+                                                        <div>
+                                                            <strong>Anotações Clínicas:</strong>
+                                                            <div class="mt-1 d-flex flex-column gap-2">
+                                                                @foreach (var anotacao in sessao.Anotacoes)
+                                                                {
+                                                                    <div>
+                                                                        <div class="fw-semibold">@anotacao.Titulo</div>
+                                                                        <p class="mb-0">@anotacao.Conteudo</p>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
                                                     }
                                                 </div>
                                             </div>
@@ -451,7 +583,7 @@
                 </div>
                 <div>
                     <span class="ms-dash-info-label d-block mb-1">Anotações Clínicas</span>
-                    <p class="mb-0" id="modalVisualizarSessaoAnotacoes"></p>
+                    <div id="modalVisualizarSessaoAnotacoes" class="d-flex flex-column gap-2"></div>
                 </div>
             </div>
             <div class="modal-footer justify-content-end">
@@ -464,5 +596,6 @@
 @section Scripts {
     <script src="~/js/plano-tratamento.js" asp-append-version="true"></script>
     <script src="~/js/anotacoes.js" asp-append-version="true"></script>
+    <script src="~/js/anotacoes-clinicas.js" asp-append-version="true"></script>
     <script src="~/js/pacientes-detalhes.js" asp-append-version="true"></script>
 }

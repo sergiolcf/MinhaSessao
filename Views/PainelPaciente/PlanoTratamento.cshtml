@@ -1,0 +1,86 @@
+@model List<MinhaSessao.Models.ViewModels.ObjetivoTerapeuticoLeituraViewModel>
+@{
+    ViewData["Title"] = "Meus Planos de Tratamento";
+    Layout = "_LayoutDashboardPaciente";
+}
+
+@* Tela inteiramente SOMENTE LEITURA: sem botão de novo objetivo, sem editar/excluir, sem marcar
+   combinado como concluído — quem registra e mantém o Plano de Tratamento é sempre o profissional,
+   em Views/Pacientes/Detalhes.cshtml. Aqui o paciente só acompanha o que já foi definido. *@
+<div class="ms-dash-page-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Meus Planos de Tratamento</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Objetivos terapêuticos e combinados definidos com você pelos seus profissionais.</p>
+    </div>
+</div>
+
+<div class="ms-objetivos-grid-scroll">
+    <div class="ms-objetivos-grid">
+        @if (Model.Count == 0)
+        {
+            <div class="ms-dash-empty-state" id="objetivosEmptyState">
+                <i class="bi bi-bullseye"></i>
+                <h5>Nenhum objetivo registrado ainda</h5>
+                <p>Quando um profissional definir um objetivo terapêutico com você, ele aparecerá aqui.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var objetivo in Model)
+            {
+                var classeBadge = objetivo.Status switch
+                {
+                    "EmAndamento" => "bg-info",
+                    "Atingido" => "bg-success",
+                    "Pausado" => "bg-warning text-dark",
+                    "Cancelado" => "bg-secondary",
+                    _ => "bg-secondary"
+                };
+                var rotuloStatus = objetivo.Status switch
+                {
+                    "EmAndamento" => "Em Andamento",
+                    "Atingido" => "Atingido",
+                    "Pausado" => "Pausado",
+                    "Cancelado" => "Cancelado",
+                    _ => objetivo.Status
+                };
+                <div class="ms-dash-card ms-objetivo-card">
+                    <div class="ms-objetivo-card-header">
+                        <h6 class="ms-objetivo-titulo">@objetivo.Titulo</h6>
+                        <span class="badge @classeBadge">@rotuloStatus</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(objetivo.Descricao))
+                    {
+                        <p class="ms-objetivo-descricao">@objetivo.Descricao</p>
+                    }
+                    <div class="ms-objetivo-progresso">
+                        <div class="d-flex justify-content-between ms-objetivo-progresso-label">
+                            <span>Progresso</span>
+                            <span>@objetivo.CombinadosConcluidos de @objetivo.TotalCombinados combinados</span>
+                        </div>
+                        <div class="progress" role="progressbar" aria-valuenow="@objetivo.PercentualConcluido" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: @(objetivo.PercentualConcluido)%"></div>
+                        </div>
+                    </div>
+                    <ul class="ms-combinado-lista">
+                        @foreach (var combinado in objetivo.Combinados)
+                        {
+                            <li class="ms-combinado-item d-flex align-items-center gap-2">
+                                @if (combinado.Concluido)
+                                {
+                                    <i class="bi bi-check-circle-fill text-success" title="Concluído"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-circle text-secondary" title="Ainda não concluído"></i>
+                                }
+                                <span class="@(combinado.Concluido ? "ms-combinado-concluido" : "")">@combinado.Descricao</span>
+                            </li>
+                        }
+                    </ul>
+                    <p class="ms-dash-table-subtext mb-0">Criado em @objetivo.DataCriacao.ToString("dd/MM/yyyy")</p>
+                </div>
+            }
+        }
+    </div>
+</div>

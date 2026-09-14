@@ -184,18 +184,18 @@ public class PacientesController : Controller
                 DataHora = s.DataHora,
                 PacienteNome = paciente.NomeCompleto,
                 DuracaoMinutos = s.DuracaoMinutos,
-                Status = s.Status.ToString(),
-                AnotacoesClinicas = s.AnotacoesClinicas
+                Status = s.Status.ToString()
             })
             .ToListAsync();
 
         // Busca os Objetivos Terapêuticos trabalhados em todas as sessões do paciente numa única
-        // consulta (evita N+1 de uma query por sessão) e depois agrupa em memória por SessaoId
+        // consulta (evita N+1 de uma query por sessão) e depois agrupa em memória por SessaoId —
+        // cada objetivo pertence a uma Anotação específica, então passa por AnotacaoSessao.SessaoId
         var objetivosTrabalhados = await _context.SessoesObjetivos
-            .Where(so => so.Sessao!.PacienteId == paciente.Id && so.Sessao.ProfissionalId == profissionalId)
+            .Where(so => so.AnotacaoSessao!.Sessao!.PacienteId == paciente.Id && so.AnotacaoSessao.Sessao.ProfissionalId == profissionalId)
             .Select(so => new
             {
-                so.SessaoId,
+                SessaoId = so.AnotacaoSessao!.SessaoId,
                 Titulo = so.ObjetivoTerapeutico!.Titulo,
                 so.Observacao
             })
@@ -207,13 +207,35 @@ public class PacientesController : Controller
                 g => g.Key,
                 g => g.Select(o => new ObjetivoTrabalhadoViewModel { Titulo = o.Titulo, Observacao = o.Observacao }).ToList());
 
+        // Mesma lógica de evitar N+1: busca as Anotações Clínicas de todas as sessões do paciente
+        // numa única consulta e depois agrupa em memória por SessaoId
+        var anotacoesDasSessoes = await _context.AnotacoesSessao
+            .Where(a => a.Sessao!.PacienteId == paciente.Id && a.Sessao.ProfissionalId == profissionalId)
+            .OrderByDescending(a => a.DataRegistro)
+            .Select(a => new { a.SessaoId, a.Id, a.Titulo, a.Conteudo, a.DataRegistro })
+            .ToListAsync();
+
+        var anotacoesPorSessaoId = anotacoesDasSessoes
+            .GroupBy(a => a.SessaoId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(a => new AnotacaoSessaoItemViewModel { Id = a.Id, Titulo = a.Titulo, Conteudo = a.Conteudo, DataRegistro = a.DataRegistro }).ToList());
+
         foreach (var sessao in sessoes)
         {
             if (objetivosPorSessaoId.TryGetValue(sessao.Id, out var objetivosDaSessao))
             {
                 sessao.ObjetivosTrabalhados = objetivosDaSessao;
             }
+
+            if (anotacoesPorSessaoId.TryGetValue(sessao.Id, out var anotacoesDaSessao))
+            {
+                sessao.Anotacoes = anotacoesDaSessao;
+            }
         }
+
+        var (anotacoesClinicas, totalPaginasAnotacoesClinicas) = await ObterPaginaAnotacoesClinicasAsync(
+            paciente.Id, profissionalId, 1, null, null, null);
 
         var model = new PacienteDetalhesViewModel
         {
@@ -231,10 +253,96 @@ public class PacientesController : Controller
             Anotacoes = anotacoes,
             PaginaAtualAnotacoes = 1,
             TotalPaginasAnotacoes = totalPaginasAnotacoes,
-            Sessoes = sessoes
+            Sessoes = sessoes,
+            AnotacoesClinicas = anotacoesClinicas,
+            PaginaAtualAnotacoesClinicas = 1,
+            TotalPaginasAnotacoesClinicas = totalPaginasAnotacoesClinicas
         };
 
         return View(model);
+    }
+
+    // Pagina (10 por vez) as Anotações Clínicas (AnotacaoSessao) de TODAS as sessões do paciente,
+    // reunindo num só lugar o que hoje só dá pra ver entrando sessão por sessão — reaproveitado pelo
+    // carregamento inicial da Ficha do Paciente (Detalhes) e pelo endpoint AJAX (BuscarAnotacoesClinicas).
+    // Sempre filtra por Sessao.ProfissionalId == profissionalId, nunca só por PacienteId.
+    private async Task<(List<AnotacaoClinicaListItemViewModel> Anotacoes, int TotalPaginas)> ObterPaginaAnotacoesClinicasAsync(
+        Guid pacienteId, Guid profissionalId, int pagina, string? busca, DateTime? dataInicio, DateTime? dataFim)
+    {
+        var consulta = _context.AnotacoesSessao
+            .Where(a => a.Sessao!.PacienteId == pacienteId && a.Sessao.ProfissionalId == profissionalId);
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termoBusca = busca.Trim().ToLower();
+            consulta = consulta.Where(a => a.Titulo.ToLower().Contains(termoBusca));
+        }
+
+        if (dataInicio.HasValue)
+        {
+            consulta = consulta.Where(a => a.DataRegistro.Date >= dataInicio.Value.Date);
+        }
+
+        if (dataFim.HasValue)
+        {
+            consulta = consulta.Where(a => a.DataRegistro.Date <= dataFim.Value.Date);
+        }
+
+        var total = await consulta.CountAsync();
+        var totalPaginas = total == 0 ? 1 : (int)Math.Ceiling(total / (double)AnotacoesPorPagina);
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+
+        var anotacoes = await consulta
+            .OrderByDescending(a => a.DataRegistro)
+            .Skip((pagina - 1) * AnotacoesPorPagina)
+            .Take(AnotacoesPorPagina)
+            .Select(a => new AnotacaoClinicaListItemViewModel
+            {
+                Id = a.Id,
+                Titulo = a.Titulo,
+                Conteudo = a.Conteudo,
+                DataRegistro = a.DataRegistro,
+                SessaoId = a.SessaoId,
+                SessaoCodigo = a.Sessao!.Codigo,
+                SessaoDataHora = a.Sessao.DataHora,
+                Objetivos = a.SessaoObjetivos.Select(so => so.ObjetivoTerapeutico!.Titulo).ToList()
+            })
+            .ToListAsync();
+
+        return (anotacoes, totalPaginas);
+    }
+
+    // Endpoint AJAX: paginação, busca por título e filtro por período da aba "Anotações Clínicas"
+    [HttpGet]
+    public async Task<IActionResult> BuscarAnotacoesClinicas(Guid pacienteId, int pagina = 1, string? busca = null, DateTime? dataInicio = null, DateTime? dataFim = null)
+    {
+        var profissionalId = User.ObterProfissionalId();
+
+        var pacienteValido = await _vinculoService.PacientePertenceAoProfissionalAsync(pacienteId, profissionalId);
+
+        if (!pacienteValido)
+        {
+            return Json(new { success = false, message = "Paciente não encontrado." });
+        }
+
+        var (anotacoes, totalPaginas) = await ObterPaginaAnotacoesClinicasAsync(pacienteId, profissionalId, pagina, busca, dataInicio, dataFim);
+
+        var itens = anotacoes.Select(a => new
+        {
+            id = a.Id,
+            titulo = a.Titulo,
+            conteudo = a.Conteudo,
+            dataRegistro = a.DataRegistro.ToString("dd/MM/yyyy HH:mm"),
+            objetivos = a.Objetivos,
+            sessaoId = a.SessaoId,
+            sessaoCodigo = a.SessaoCodigo,
+            sessaoDataHora = a.SessaoDataHora.ToString("dd/MM/yyyy"),
+            // anotacaoId na query string permite que a tela da Sessão já abra com esta anotação
+            // específica selecionada/destacada na lista "Anotações desta sessão"
+            sessaoUrl = Url.Action("Sessao", "Sessoes", new { id = a.SessaoId, anotacaoId = a.Id })
+        });
+
+        return Json(new { success = true, anotacoes = itens, paginaAtual = Math.Clamp(pagina, 1, totalPaginas), totalPaginas });
     }
 
     [HttpGet]
@@ -651,9 +759,12 @@ public class PacientesController : Controller
 
         if (pagina < 1) pagina = 1;
 
+        // Cada linha aqui é uma anotação que marcou este objetivo (não mais 1 linha por sessão) —
+        // agora que Objetivos Trabalhados é por Anotação, a mesma sessão pode aparecer mais de uma
+        // vez se objetivo foi marcado em mais de uma anotação dela
         var query = _context.SessoesObjetivos
             .Where(so => so.ObjetivoTerapeuticoId == objetivoId)
-            .OrderByDescending(so => so.Sessao!.DataHora);
+            .OrderByDescending(so => so.AnotacaoSessao!.Sessao!.DataHora);
 
         var totalSessoes = await query.CountAsync();
         var totalPaginas = totalSessoes == 0 ? 1 : (int)Math.Ceiling(totalSessoes / (double)tamanhoPagina);
@@ -663,9 +774,9 @@ public class PacientesController : Controller
             .Take(tamanhoPagina)
             .Select(so => new
             {
-                sessaoId = so.SessaoId,
-                codigo = so.Sessao!.Codigo,
-                dataHora = so.Sessao.DataHora.ToString("dd/MM/yyyy"),
+                sessaoId = so.AnotacaoSessao!.SessaoId,
+                codigo = so.AnotacaoSessao.Sessao!.Codigo,
+                dataHora = so.AnotacaoSessao.Sessao.DataHora.ToString("dd/MM/yyyy"),
                 observacao = so.Observacao
             })
             .ToListAsync();

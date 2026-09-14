@@ -26,6 +26,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<SessaoObjetivo> SessoesObjetivos => Set<SessaoObjetivo>();
 
+    public DbSet<AnotacaoSessao> AnotacoesSessao => Set<AnotacaoSessao>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -54,13 +56,14 @@ public class ApplicationDbContext : DbContext
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Vínculo N:N entre Sessão e Objetivo Terapêutico: ao apagar a sessão, apaga os vínculos junto;
-        // ao apagar o objetivo, o vínculo é restrito (evita múltiplos caminhos de cascade do EF Core) —
-        // exclusão de objetivo com sessões vinculadas precisa ser tratada explicitamente no controller
+        // Vínculo N:N entre Anotação da Sessão e Objetivo Terapêutico: ao apagar a anotação, apaga os
+        // vínculos junto; ao apagar o objetivo, o vínculo é restrito (evita múltiplos caminhos de
+        // cascade do EF Core) — exclusão de objetivo com anotações vinculadas precisa ser tratada
+        // explicitamente no controller
         modelBuilder.Entity<SessaoObjetivo>()
-            .HasOne(so => so.Sessao)
-            .WithMany()
-            .HasForeignKey(so => so.SessaoId)
+            .HasOne(so => so.AnotacaoSessao)
+            .WithMany(a => a.SessaoObjetivos)
+            .HasForeignKey(so => so.AnotacaoSessaoId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
@@ -76,6 +79,15 @@ public class ApplicationDbContext : DbContext
             .Property(s => s.Codigo)
             .HasMaxLength(30)
             .IsRequired();
+
+        // Anotação Clínica pertence a uma Sessão; ao apagar a sessão, apaga as anotações junto
+        // (mesmo comportamento de SessaoObjetivo acima)
+        modelBuilder.Entity<AnotacaoSessao>()
+            .HasOne(a => a.Sessao)
+            .WithMany()
+            .HasForeignKey(a => a.SessaoId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
 
         // O Postgres mapeia DateTime como "timestamp with time zone", que só aceita Kind=Utc.
         // Valores vindos de formulário (ex.: DataNascimento, DataHora da Sessão) chegam com Kind=Unspecified

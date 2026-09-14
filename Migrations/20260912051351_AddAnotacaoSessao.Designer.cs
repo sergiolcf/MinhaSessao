@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MinhaSessao.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MinhaSessao.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260912051351_AddAnotacaoSessao")]
+    partial class AddAnotacaoSessao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,9 +283,6 @@ namespace MinhaSessao.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AnotacaoSessaoId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("DataRegistro")
                         .HasColumnType("timestamp with time zone");
 
@@ -292,11 +292,14 @@ namespace MinhaSessao.Migrations
                     b.Property<string>("Observacao")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("SessaoId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AnotacaoSessaoId");
-
                     b.HasIndex("ObjetivoTerapeuticoId");
+
+                    b.HasIndex("SessaoId");
 
                     b.ToTable("SessoesObjetivos");
                 });
@@ -412,21 +415,21 @@ namespace MinhaSessao.Migrations
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.SessaoObjetivo", b =>
                 {
-                    b.HasOne("MinhaSessao.Models.Entities.AnotacaoSessao", "AnotacaoSessao")
-                        .WithMany("SessaoObjetivos")
-                        .HasForeignKey("AnotacaoSessaoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("MinhaSessao.Models.Entities.ObjetivoTerapeutico", "ObjetivoTerapeutico")
                         .WithMany("SessoesObjetivo")
                         .HasForeignKey("ObjetivoTerapeuticoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AnotacaoSessao");
+                    b.HasOne("MinhaSessao.Models.Entities.Sessao", "Sessao")
+                        .WithMany()
+                        .HasForeignKey("SessaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ObjetivoTerapeutico");
+
+                    b.Navigation("Sessao");
                 });
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.VinculoPacienteProfissional", b =>
@@ -446,11 +449,6 @@ namespace MinhaSessao.Migrations
                     b.Navigation("Paciente");
 
                     b.Navigation("Profissional");
-                });
-
-            modelBuilder.Entity("MinhaSessao.Models.Entities.AnotacaoSessao", b =>
-                {
-                    b.Navigation("SessaoObjetivos");
                 });
 
             modelBuilder.Entity("MinhaSessao.Models.Entities.ObjetivoTerapeutico", b =>

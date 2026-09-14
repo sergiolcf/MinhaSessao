@@ -52,6 +52,8 @@
                 && string.Equals(acaoAtual, "Configuracoes", StringComparison.OrdinalIgnoreCase);
             var isSessoesAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(acaoAtual, "Sessoes", StringComparison.OrdinalIgnoreCase);
+            var isPlanoTratamentoAtivo = string.Equals(controladorAtual, "PainelPaciente", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(acaoAtual, "PlanoTratamento", StringComparison.OrdinalIgnoreCase);
         }
         <aside class="ms-dash-sidebar" id="dashSidebar">
             <ul class="ms-dash-menu">
@@ -67,6 +69,13 @@
                        class="ms-dash-menu-link@(isSessoesAtivo ? " active" : "")">
                         <i class="bi bi-journal-medical"></i>
                         <span class="menu-text">Minhas Sessões</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="PainelPaciente" asp-action="PlanoTratamento"
+                       class="ms-dash-menu-link@(isPlanoTratamentoAtivo ? " active" : "")">
+                        <i class="bi bi-bullseye"></i>
+                        <span class="menu-text">Meus Objetivos</span>
                     </a>
                 </li>
                 <li>

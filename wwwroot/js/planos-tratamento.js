@@ -1,11 +1,19 @@
+// Tela "Planos de Tratamento": mesma lógica de CRUD de wwwroot/js/plano-tratamento.js (aba "Plano de
+// Tratamento" da Ficha do Paciente), adaptada pra uma lista cross-paciente com filtros de
+// Paciente/Período/Status em vez de um pacienteId fixo vindo da URL.
 (function () {
     let ms_combinadosNovoObjetivo = [];
+    let ms_filtroPacienteId = "";
+    let ms_filtroDataInicio = "";
+    let ms_filtroDataFim = "";
+    let ms_filtroStatus = "todos";
 
     document.addEventListener("DOMContentLoaded", function () {
         const objetivosContainer = document.getElementById("objetivosContainer");
         const listaObjetivos = document.getElementById("listaObjetivos");
         const form = document.getElementById("formNovoObjetivo");
         const modalEl = document.getElementById("modalNovoObjetivo");
+        const objetivoPacienteSelect = document.getElementById("objetivoPacienteId");
         const objetivoTituloInput = document.getElementById("objetivoTitulo");
         const objetivoDescricaoInput = document.getElementById("objetivoDescricao");
         const novoCombinadoInput = document.getElementById("novoCombinadoInput");
@@ -16,6 +24,13 @@
         const btnSalvar = document.getElementById("btnSalvarObjetivo");
         const btnSalvarSpinner = document.getElementById("btnSalvarObjetivoSpinner");
         const btnSalvarTexto = document.getElementById("btnSalvarObjetivoTexto");
+
+        // Toolbar de filtros
+        const filtroPacienteSelect = document.getElementById("filtroObjetivoPaciente");
+        const filtroDataInicioInput = document.getElementById("filtroObjetivoDataInicio");
+        const filtroDataFimInput = document.getElementById("filtroObjetivoDataFim");
+        const btnLimparPeriodo = document.getElementById("btnLimparPeriodoObjetivo");
+        const filtroStatusSelect = document.getElementById("filtroObjetivoStatus");
 
         // Modal "Visualizar Sessão" (somente leitura), aberto ao clicar na data de um item do Histórico de Sessões
         const modalVisualizarSessaoEl = document.getElementById("modalVisualizarSessao");
@@ -28,8 +43,6 @@
         const modalVisualizarSessaoAnotacoesEl = document.getElementById("modalVisualizarSessaoAnotacoes");
 
         if (!objetivosContainer || !listaObjetivos || !form) return;
-
-        const pacienteId = objetivosContainer.dataset.pacienteId;
 
         const rotulosStatus = {
             EmAndamento: "Em Andamento",
@@ -190,7 +203,12 @@
 
             card.innerHTML = `
                 <div class="ms-objetivo-card-header">
-                    <h6 class="ms-objetivo-titulo">${escaparHtml(objetivo.titulo)}</h6>
+                    <div>
+                        <a href="${objetivo.pacienteUrl}" class="ms-objetivo-card-paciente">
+                            <i class="bi bi-person"></i> ${escaparHtml(objetivo.pacienteNome)}
+                        </a>
+                        <h6 class="ms-objetivo-titulo">${escaparHtml(objetivo.titulo)}</h6>
+                    </div>
                     <span class="badge ${badgeClasse}">${rotuloStatus}</span>
                 </div>
                 ${objetivo.descricao ? `<p class="ms-objetivo-descricao">${escaparHtml(objetivo.descricao)}</p>` : ""}
@@ -226,11 +244,15 @@
             listaObjetivos.innerHTML = "";
 
             if (!objetivos || objetivos.length === 0) {
+                const filtroAtivo = ms_filtroPacienteId || ms_filtroDataInicio || ms_filtroDataFim || ms_filtroStatus !== "todos";
+                const mensagem = filtroAtivo
+                    ? `<h5>Nenhum objetivo encontrado</h5><p>Não há objetivos terapêuticos com os filtros selecionados.</p>`
+                    : `<h5>Nenhum objetivo encontrado</h5><p>Ajuste os filtros acima ou clique em "Novo Objetivo" para registrar o primeiro.</p>`;
+
                 listaObjetivos.innerHTML = `
                     <div class="ms-dash-empty-state" id="objetivosEmptyState">
                         <i class="bi bi-bullseye"></i>
-                        <h5>Nenhum objetivo definido</h5>
-                        <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico.</p>
+                        ${mensagem}
                     </div>
                 `;
                 return;
@@ -243,8 +265,12 @@
 
         async function carregarObjetivos() {
             try {
-                const parametros = new URLSearchParams({ pacienteId });
-                const resposta = await fetch(`/Pacientes/ListarObjetivos?${parametros.toString()}`);
+                const parametros = new URLSearchParams({ status: ms_filtroStatus });
+                if (ms_filtroPacienteId) parametros.set("pacienteId", ms_filtroPacienteId);
+                if (ms_filtroDataInicio) parametros.set("dataInicio", ms_filtroDataInicio);
+                if (ms_filtroDataFim) parametros.set("dataFim", ms_filtroDataFim);
+
+                const resposta = await fetch(`/PlanosTratamento/Buscar?${parametros.toString()}`);
                 const resultado = await resposta.json();
 
                 if (!resposta.ok || !resultado.success) return;
@@ -255,6 +281,52 @@
             }
         }
 
+        function atualizarBotaoLimparPeriodo() {
+            if (!btnLimparPeriodo) return;
+            btnLimparPeriodo.classList.toggle("d-none", !(ms_filtroDataInicio || ms_filtroDataFim));
+        }
+
+        if (filtroPacienteSelect) {
+            filtroPacienteSelect.addEventListener("change", function () {
+                ms_filtroPacienteId = filtroPacienteSelect.value;
+                carregarObjetivos();
+            });
+        }
+
+        if (filtroDataInicioInput) {
+            filtroDataInicioInput.addEventListener("change", function () {
+                ms_filtroDataInicio = filtroDataInicioInput.value;
+                atualizarBotaoLimparPeriodo();
+                carregarObjetivos();
+            });
+        }
+
+        if (filtroDataFimInput) {
+            filtroDataFimInput.addEventListener("change", function () {
+                ms_filtroDataFim = filtroDataFimInput.value;
+                atualizarBotaoLimparPeriodo();
+                carregarObjetivos();
+            });
+        }
+
+        if (btnLimparPeriodo) {
+            btnLimparPeriodo.addEventListener("click", function () {
+                ms_filtroDataInicio = "";
+                ms_filtroDataFim = "";
+                if (filtroDataInicioInput) filtroDataInicioInput.value = "";
+                if (filtroDataFimInput) filtroDataFimInput.value = "";
+                atualizarBotaoLimparPeriodo();
+                carregarObjetivos();
+            });
+        }
+
+        if (filtroStatusSelect) {
+            filtroStatusSelect.addEventListener("change", function () {
+                ms_filtroStatus = filtroStatusSelect.value;
+                carregarObjetivos();
+            });
+        }
+
         async function salvarObjetivo() {
             ocultarErro();
             definirCarregando(true);
@@ -263,7 +335,7 @@
                 // Envia via FormData (mesmo padrão de model binding + antiforgery do resto do projeto);
                 // campos repetidos "Combinados" fazem o binder do MVC montar a List<string> do ViewModel
                 const formData = new FormData();
-                formData.append("PacienteId", pacienteId);
+                formData.append("PacienteId", objetivoPacienteSelect.value);
                 formData.append("Titulo", objetivoTituloInput.value.trim());
                 formData.append("Descricao", objetivoDescricaoInput.value.trim());
                 ms_combinadosNovoObjetivo.forEach(function (descricao) {
@@ -490,6 +562,11 @@
 
         form.addEventListener("submit", function (e) {
             e.preventDefault();
+
+            if (!objetivoPacienteSelect.value) {
+                exibirErro("Selecione o paciente.");
+                return;
+            }
             if (!objetivoTituloInput.value.trim()) {
                 exibirErro("Informe o título do objetivo.");
                 return;

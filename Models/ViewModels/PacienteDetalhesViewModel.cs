@@ -32,6 +32,12 @@ public class PacienteDetalhesViewModel
 
     public int TotalPaginasAnotacoes { get; set; } = 1;
 
+    public List<AnotacaoClinicaListItemViewModel> AnotacoesClinicas { get; set; } = new();
+
+    public int PaginaAtualAnotacoesClinicas { get; set; } = 1;
+
+    public int TotalPaginasAnotacoesClinicas { get; set; } = 1;
+
     public string Iniciais => PacienteIniciais.Calcular(NomeCompleto);
 
     public int Idade

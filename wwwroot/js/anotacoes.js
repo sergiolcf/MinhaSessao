@@ -87,33 +87,30 @@ document.addEventListener("DOMContentLoaded", function () {
             .replace(/'/g, "&#39;");
     }
 
-    function criarCardAnotacao(anotacao) {
-        const item = document.createElement("div");
-        item.className = "ms-timeline-item";
-        item.dataset.anotacaoId = anotacao.id;
+    function criarLinhaAnotacao(anotacao) {
+        const linha = document.createElement("tr");
+        linha.dataset.anotacaoId = anotacao.id;
+        linha.dataset.titulo = anotacao.titulo || "";
+        linha.dataset.conteudo = anotacao.conteudo;
 
         const titulo = anotacao.titulo && anotacao.titulo.trim() !== "" ? anotacao.titulo : "Anotação";
 
-        item.innerHTML = `
-            <span class="ms-timeline-marker"></span>
-            <div class="ms-timeline-content">
-                <div class="ms-timeline-header">
-                    <strong class="ms-timeline-title">${escaparHtml(titulo)}</strong>
-                    <div class="ms-timeline-actions">
-                        <span class="ms-timeline-date">${escaparHtml(anotacao.dataRegistro)}</span>
-                        <button type="button" class="ms-timeline-edit" data-anotacao-id="${anotacao.id}" data-titulo="${escaparHtml(anotacao.titulo || "")}" data-conteudo="${escaparHtml(anotacao.conteudo)}" title="Editar anotação">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button type="button" class="ms-timeline-delete" data-anotacao-id="${anotacao.id}" title="Excluir anotação">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
+        linha.innerHTML = `
+            <td>${escaparHtml(titulo)}</td>
+            <td>${escaparHtml(anotacao.dataRegistro)}</td>
+            <td class="text-end">
+                <div class="d-inline-flex gap-1">
+                    <button type="button" class="ms-timeline-edit" data-anotacao-id="${anotacao.id}" data-titulo="${escaparHtml(anotacao.titulo || "")}" data-conteudo="${escaparHtml(anotacao.conteudo)}" title="Editar anotação">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="ms-timeline-delete" data-anotacao-id="${anotacao.id}" title="Excluir anotação">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
-                <p class="ms-timeline-body">${escaparHtml(anotacao.conteudo)}</p>
-            </div>
+            </td>
         `;
 
-        return item;
+        return linha;
     }
 
     function renderizarAnotacoes(anotacoes) {
@@ -125,16 +122,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 : `<h5>Nenhuma anotação registrada</h5><p>Clique em "Nova Anotação" para registrar a primeira anotação confidencial.</p>`;
 
             listaAnotacoes.innerHTML = `
-                <div class="ms-dash-empty-state" id="anotacoesEmptyState">
-                    <i class="bi bi-journal-lock"></i>
-                    ${mensagem}
-                </div>
+                <tr id="anotacoesEmptyRow">
+                    <td colspan="3">
+                        <div class="ms-dash-empty-state">
+                            <i class="bi bi-journal-lock"></i>
+                            ${mensagem}
+                        </div>
+                    </td>
+                </tr>
             `;
             return;
         }
 
         anotacoes.forEach(function (anotacao) {
-            listaAnotacoes.appendChild(criarCardAnotacao(anotacao));
+            listaAnotacoes.appendChild(criarLinhaAnotacao(anotacao));
         });
     }
 
@@ -266,10 +267,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 resetarModalParaCriacao();
 
                 if (modoEdicao) {
-                    // Atualiza o card em tela sem precisar refazer a busca (a ordenação não muda)
+                    // Atualiza a linha em tela sem precisar refazer a busca (a ordenação não muda)
                     const item = listaAnotacoes.querySelector(`[data-anotacao-id="${resultado.anotacao.id}"]`);
                     if (item) {
-                        item.replaceWith(criarCardAnotacao(resultado.anotacao));
+                        item.replaceWith(criarLinhaAnotacao(resultado.anotacao));
                     } else {
                         await carregarPagina(ms_paginaAtualAnotacoes);
                     }
@@ -318,7 +319,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const paginaAlvo = ms_paginaAtualAnotacoes;
                     await carregarPagina(paginaAlvo);
 
-                    if (!listaAnotacoes.querySelector(".ms-timeline-item") && paginaAlvo > 1) {
+                    if (!listaAnotacoes.querySelector("tr[data-anotacao-id]") && paginaAlvo > 1) {
                         await carregarPagina(paginaAlvo - 1);
                     }
                 } else {
@@ -327,7 +328,18 @@ document.addEventListener("DOMContentLoaded", function () {
             } catch (erro) {
                 window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
             }
+
+            return;
         }
+
+        // Clique em qualquer outro ponto da linha abre a edição (mesmo padrão de "Meus Pacientes":
+        // delegação de evento na linha inteira, ignorando cliques em botões/links dentro dela)
+        if (e.target.closest("a") || e.target.closest("button")) return;
+
+        const linha = e.target.closest("tr[data-anotacao-id]");
+        if (!linha) return;
+
+        window.abrirModalEdicao(linha.dataset.anotacaoId, linha.dataset.titulo, linha.dataset.conteudo);
     });
 
     if (paginacaoEl) {
