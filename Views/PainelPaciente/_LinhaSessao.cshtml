@@ -1,15 +1,22 @@
 @model MinhaSessao.Models.ViewModels.SessaoListItemViewModel
 @{
+    // Trata os 4 status conhecidos explicitamente — "_" fica só como fallback de segurança, nunca
+    // como destino esperado de um status válido (era assim que "EmAndamento" acabava caindo em
+    // "Cancelada" por engano, já que só Agendada/Realizada tinham caso próprio)
     var classeBadge = Model.Status switch
     {
         "Agendada" => "ms-badge-agendada",
+        "EmAndamento" => "ms-badge-em-andamento",
         "Realizada" => "ms-badge-realizada",
+        "Cancelada" => "ms-badge-cancelada",
         _ => "ms-badge-cancelada"
     };
     var rotuloStatus = Model.Status switch
     {
         "Agendada" => "Agendada",
+        "EmAndamento" => "Em Andamento",
         "Realizada" => "Realizada",
+        "Cancelada" => "Cancelada",
         _ => "Cancelada"
     };
 }
@@ -19,8 +26,8 @@
     <td>@Model.ProfissionalNome</td>
     <td><span class="badge @classeBadge">@rotuloStatus</span></td>
     <td class="text-end">
-        <button type="button" class="btn btn-sm ms-dash-btn-ficha btn-ver-detalhes-sessao" data-sessao-id="@Model.Id">
-            <i class="bi bi-eye"></i> Ver Detalhes
+        <button type="button" class="ms-dash-row-link btn-ver-detalhes-sessao" data-sessao-id="@Model.Id" title="Ver detalhes">
+            <i class="bi bi-eye"></i>
         </button>
     </td>
 </tr>

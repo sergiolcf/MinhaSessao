@@ -13,6 +13,7 @@ namespace MinhaSessao.Controllers;
 public class PainelPacienteController : Controller
 {
     private const int ProfissionaisPorPagina = 10;
+    private const int AnotacoesPorPagina = 10;
 
     private readonly ApplicationDbContext _context;
 
@@ -165,22 +166,108 @@ public class PainelPacienteController : Controller
             })
             .ToListAsync();
 
+        var (anotacoesClinicas, totalPaginasAnotacoesClinicas) = await ObterPaginaAnotacoesClinicasAsync(pacienteId, 1, null, null, null);
+
         var model = new PainelSessoesViewModel
         {
             ProximaSessao = sessoes
                 .Where(s => s.Status == StatusSessao.Agendada.ToString() && s.DataHora >= agora)
                 .FirstOrDefault(),
-            TotalSessoesRealizadas = sessoes.Count(s => s.Status == StatusSessao.Realizada.ToString()),
+            // Contagens dos 4 cards do topo — calculadas em memória a partir da lista "sessoes" já
+            // carregada, sem precisar de uma nova consulta ao banco
+            TotalAgendadas = sessoes.Count(s => s.Status == StatusSessao.Agendada.ToString()),
+            TotalCanceladas = sessoes.Count(s => s.Status == StatusSessao.Cancelada.ToString()),
+            TotalRealizadas = sessoes.Count(s => s.Status == StatusSessao.Realizada.ToString()),
             Agendadas = sessoes
                 .Where(s => s.Status == StatusSessao.Agendada.ToString())
                 .ToList(),
             Historico = sessoes
                 .Where(s => s.Status != StatusSessao.Agendada.ToString())
                 .OrderByDescending(s => s.DataHora)
-                .ToList()
+                .ToList(),
+            AnotacoesClinicas = anotacoesClinicas,
+            PaginaAtualAnotacoesClinicas = 1,
+            TotalPaginasAnotacoesClinicas = totalPaginasAnotacoesClinicas
         };
 
         return View(model);
+    }
+
+    // Pagina (10 por vez) as Anotações Clínicas (AnotacaoSessao) de TODAS as sessões do paciente
+    // logado, reunindo num só lugar o que hoje só dá pra ver entrando sessão por sessão — reaproveitado
+    // pelo carregamento inicial de Sessoes() e pelo endpoint AJAX (BuscarAnotacoesClinicas). Filtra só
+    // por Sessao.PacienteId (NUNCA por ProfissionalId): o paciente pode ter tido mais de um profissional
+    // ao longo do tempo e deve ver as anotações de todos eles — diferente da versão do profissional
+    // (PacientesController.ObterPaginaAnotacoesClinicasAsync), que restringe ao profissional logado.
+    private async Task<(List<AnotacaoClinicaListItemViewModel> Anotacoes, int TotalPaginas)> ObterPaginaAnotacoesClinicasAsync(
+        Guid pacienteId, int pagina, string? busca, DateTime? dataInicio, DateTime? dataFim)
+    {
+        var consulta = _context.AnotacoesSessao.Where(a => a.Sessao!.PacienteId == pacienteId);
+
+        if (!string.IsNullOrWhiteSpace(busca))
+        {
+            var termoBusca = busca.Trim().ToLower();
+            consulta = consulta.Where(a => a.Titulo.ToLower().Contains(termoBusca));
+        }
+
+        if (dataInicio.HasValue)
+        {
+            consulta = consulta.Where(a => a.DataRegistro.Date >= dataInicio.Value.Date);
+        }
+
+        if (dataFim.HasValue)
+        {
+            consulta = consulta.Where(a => a.DataRegistro.Date <= dataFim.Value.Date);
+        }
+
+        var total = await consulta.CountAsync();
+        var totalPaginas = total == 0 ? 1 : (int)Math.Ceiling(total / (double)AnotacoesPorPagina);
+        pagina = Math.Clamp(pagina, 1, totalPaginas);
+
+        var anotacoes = await consulta
+            .OrderByDescending(a => a.DataRegistro)
+            .Skip((pagina - 1) * AnotacoesPorPagina)
+            .Take(AnotacoesPorPagina)
+            .Select(a => new AnotacaoClinicaListItemViewModel
+            {
+                Id = a.Id,
+                Titulo = a.Titulo,
+                Conteudo = a.Conteudo,
+                DataRegistro = a.DataRegistro,
+                SessaoId = a.SessaoId,
+                SessaoCodigo = a.Sessao!.Codigo,
+                SessaoDataHora = a.Sessao.DataHora,
+                Objetivos = a.SessaoObjetivos.Select(so => so.ObjetivoTerapeutico!.Titulo).ToList()
+            })
+            .ToListAsync();
+
+        return (anotacoes, totalPaginas);
+    }
+
+    // Endpoint AJAX: paginação, busca por título e filtro por período da aba "Anotações Clínicas" —
+    // mesmo padrão de PacientesController.BuscarAnotacoesClinicas (lado do profissional), mas sem
+    // parâmetro pacienteId na rota (usa sempre o paciente logado, via User.ObterPacienteId()) e sem
+    // "sessaoUrl": o paciente não acessa Views/Sessoes/Sessao.cshtml (tela exclusiva do profissional),
+    // então cada item só é aberto em modo leitura dentro do próprio Painel do Paciente.
+    [HttpGet]
+    public async Task<IActionResult> BuscarAnotacoesClinicas(int pagina = 1, string? busca = null, DateTime? dataInicio = null, DateTime? dataFim = null)
+    {
+        var pacienteId = User.ObterPacienteId();
+
+        var (anotacoes, totalPaginas) = await ObterPaginaAnotacoesClinicasAsync(pacienteId, pagina, busca, dataInicio, dataFim);
+
+        var itens = anotacoes.Select(a => new
+        {
+            id = a.Id,
+            titulo = a.Titulo,
+            conteudo = a.Conteudo,
+            dataRegistro = a.DataRegistro.ToString("dd/MM/yyyy HH:mm"),
+            objetivos = a.Objetivos,
+            sessaoCodigo = a.SessaoCodigo,
+            sessaoDataHora = a.SessaoDataHora.ToString("dd/MM/yyyy")
+        });
+
+        return Json(new { success = true, anotacoes = itens, paginaAtual = Math.Clamp(pagina, 1, totalPaginas), totalPaginas });
     }
 
     [HttpGet]
@@ -203,13 +290,17 @@ public class PainelPacienteController : Controller
             return Json(new { success = false, message = "Sessão não encontrada." });
         }
 
+        // Enum.ToString() não tem espaço ("EmAndamento") — só esse valor precisa de um texto de
+        // exibição próprio, mesmo ajuste já feito em Views/PainelPaciente/_LinhaSessao.cshtml
+        var statusExibicao = sessao.Status == "EmAndamento" ? "Em Andamento" : sessao.Status;
+
         return Json(new
         {
             success = true,
             data = sessao.DataHora.ToString("dd/MM/yyyy"),
             hora = sessao.DataHora.ToString("HH:mm"),
             profissionalNome = sessao.ProfissionalNome,
-            status = sessao.Status
+            status = statusExibicao
         });
     }
 
