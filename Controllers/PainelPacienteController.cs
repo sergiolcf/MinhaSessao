@@ -270,6 +270,49 @@ public class PainelPacienteController : Controller
         return Json(new { success = true, anotacoes = itens, paginaAtual = Math.Clamp(pagina, 1, totalPaginas), totalPaginas });
     }
 
+    // Tela "Meus Planos de Tratamento" — SOMENTE LEITURA: mostra os Objetivos Terapêuticos e
+    // Combinados do próprio paciente, mesmo conteúdo da aba "Plano de Tratamento" da Ficha do
+    // Paciente (lado do profissional, PacientesController.ListarObjetivos), mas filtrando só por
+    // PacienteId (nunca por ProfissionalId) — o paciente pode ter tido mais de um profissional ao
+    // longo do tempo e deve ver os objetivos de todos eles. Sem nenhuma action de escrita: criar,
+    // mudar status, excluir objetivo/combinado ou marcar combinado como concluído continuam
+    // exclusivos do profissional.
+    [HttpGet]
+    public async Task<IActionResult> PlanoTratamento()
+    {
+        var pacienteId = User.ObterPacienteId();
+        var paciente = await _context.Pacientes.FirstOrDefaultAsync(p => p.Id == pacienteId);
+
+        if (paciente is null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        ViewBag.PacienteId = paciente.Id;
+        ViewBag.PacienteNome = paciente.NomeCompleto;
+
+        var objetivos = await _context.ObjetivosTerapeuticos
+            .Where(o => o.PacienteId == pacienteId)
+            .OrderByDescending(o => o.DataCriacao)
+            .Select(o => new ObjetivoTerapeuticoLeituraViewModel
+            {
+                Id = o.Id,
+                Titulo = o.Titulo,
+                Descricao = o.Descricao,
+                Status = o.Status.ToString(),
+                DataCriacao = o.DataCriacao,
+                Combinados = o.Combinados.Select(c => new CombinadoLeituraViewModel
+                {
+                    Id = c.Id,
+                    Descricao = c.Descricao,
+                    Concluido = c.Concluido
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return View(objetivos);
+    }
+
     [HttpGet]
     public async Task<IActionResult> DetalhesSessao(Guid id)
     {
