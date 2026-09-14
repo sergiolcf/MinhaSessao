@@ -4,11 +4,21 @@ public class PainelSessoesViewModel
 {
     public SessaoListItemViewModel? ProximaSessao { get; set; }
 
-    public int TotalSessoesRealizadas { get; set; }
+    public int TotalAgendadas { get; set; }
+
+    public int TotalCanceladas { get; set; }
+
+    public int TotalRealizadas { get; set; }
 
     public List<SessaoListItemViewModel> Agendadas { get; set; } = new();
 
     public List<SessaoListItemViewModel> Historico { get; set; } = new();
+
+    public List<AnotacaoClinicaListItemViewModel> AnotacoesClinicas { get; set; } = new();
+
+    public int PaginaAtualAnotacoesClinicas { get; set; } = 1;
+
+    public int TotalPaginasAnotacoesClinicas { get; set; } = 1;
 }
 
 public class SessaoListItemViewModel

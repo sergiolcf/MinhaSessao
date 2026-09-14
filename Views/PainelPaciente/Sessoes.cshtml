@@ -11,7 +11,15 @@
     </div>
 </div>
 
+<!-- 4 cards cobrindo os status de sessão existentes (Agendada/Realizada/Cancelada) + a Próxima Sessão
+     em destaque no meio — .ms-dash-cards já acomoda os 4 automaticamente (grid-template-columns:
+     repeat(auto-fit, minmax(220px, 1fr))), sem precisar de CSS novo -->
 <div class="ms-dash-cards mb-4">
+    <div class="ms-dash-card">
+        <i class="bi bi-calendar-check"></i>
+        <h5>Agendadas</h5>
+        <p class="ms-stat-numero mb-0">@Model.TotalAgendadas</p>
+    </div>
     <div class="ms-dash-card">
         <i class="bi bi-calendar-event"></i>
         <h5>Próxima Sessão</h5>
@@ -26,9 +34,14 @@
         }
     </div>
     <div class="ms-dash-card">
+        <i class="bi bi-x-circle"></i>
+        <h5>Canceladas</h5>
+        <p class="ms-stat-numero mb-0">@Model.TotalCanceladas</p>
+    </div>
+    <div class="ms-dash-card">
         <i class="bi bi-check2-circle"></i>
-        <h5>Total de Sessões Realizadas</h5>
-        <p class="ms-stat-numero mb-0">@Model.TotalSessoesRealizadas</p>
+        <h5>Realizadas</h5>
+        <p class="ms-stat-numero mb-0">@Model.TotalRealizadas</p>
     </div>
 </div>
 
@@ -41,6 +54,11 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historicoSessoes" type="button" role="tab" aria-controls="historicoSessoes" aria-selected="false">
             <i class="bi bi-clock-history"></i> Histórico
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="anotacoes-clinicas-tab" data-bs-toggle="tab" data-bs-target="#anotacoesClinicasSessoes" type="button" role="tab" aria-controls="anotacoesClinicasSessoes" aria-selected="false">
+            <i class="bi bi-journal-text"></i> Anotações Clínicas
         </button>
     </li>
 </ul>
@@ -115,9 +133,114 @@
             </div>
         }
     </div>
+
+    <div class="tab-pane fade" id="anotacoesClinicasSessoes" role="tabpanel" aria-labelledby="anotacoes-clinicas-tab">
+        <div class="ms-dash-page-header ms-anotacao-tab-header">
+            <div>
+                <h5 class="mb-1">Anotações Clínicas</h5>
+                <p class="ms-dash-table-subtext mb-0">Todas as anotações clínicas registradas nas suas sessões, das mais recentes às mais antigas — somente leitura.</p>
+            </div>
+            <div class="ms-anotacao-toolbar">
+                <div class="ms-anotacao-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="buscaAnotacaoClinicaTituloPaciente" class="form-control form-control-sm" placeholder="Buscar por título..." autocomplete="off">
+                </div>
+                <div class="ms-anotacao-periodo">
+                    <input type="date" id="filtroAnotacaoClinicaDataInicio" class="form-control form-control-sm" title="Data início">
+                    <span class="ms-anotacao-periodo-separador">até</span>
+                    <input type="date" id="filtroAnotacaoClinicaDataFim" class="form-control form-control-sm" title="Data fim">
+                    <button type="button" class="ms-anotacao-periodo-limpar d-none" id="btnLimparPeriodoAnotacaoClinica" title="Limpar período">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="anotacoesClinicasContainer"
+             data-pagina-atual="@Model.PaginaAtualAnotacoesClinicas"
+             data-total-paginas="@Model.TotalPaginasAnotacoesClinicas">
+            <div class="ms-dash-card ms-dash-table-card">
+                <div class="table-responsive ms-dash-table-scroll-anotacoes-clinicas">
+                    <table class="table table-hover ms-dash-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Código da Sessão</th>
+                                <th>Data</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAnotacoesClinicas">
+                            @if (Model.AnotacoesClinicas.Count == 0)
+                            {
+                                <tr id="anotacoesClinicasEmptyRow">
+                                    <td colspan="4">
+                                        <div class="ms-dash-empty-state">
+                                            <i class="bi bi-journal-text"></i>
+                                            <h5>Nenhuma anotação clínica registrada</h5>
+                                            <p>As anotações clínicas registradas pelos seus profissionais em "Minhas Sessões" aparecerão aqui.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var anotacao in Model.AnotacoesClinicas)
+                                {
+                                    <tr data-anotacao-id="@anotacao.Id"
+                                        data-titulo="@anotacao.Titulo"
+                                        data-conteudo="@anotacao.Conteudo"
+                                        data-data-registro="@anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")">
+                                        <td>
+                                            @anotacao.Titulo
+                                            @if (anotacao.Objetivos.Count > 0)
+                                            {
+                                                <div class="ms-objetivo-chips-wrapper mt-1">
+                                                    @foreach (var objetivo in anotacao.Objetivos)
+                                                    {
+                                                        <span class="ms-objetivo-chip">@objetivo</span>
+                                                    }
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="ms-badge-codigo">@anotacao.SessaoCodigo</span>
+                                            <div class="ms-dash-table-subtext">@anotacao.SessaoDataHora.ToString("dd/MM/yyyy")</div>
+                                        </td>
+                                        <td>@anotacao.DataRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-end">
+                                            <button type="button" class="ms-dash-row-link" title="Visualizar">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <nav aria-label="Paginação de anotações clínicas" class="mt-3">
+                <ul class="pagination pagination-sm justify-content-center ms-pagination" id="paginacaoAnotacoesClinicas">
+                    @if (Model.TotalPaginasAnotacoesClinicas > 1)
+                    {
+                        for (var pagina = 1; pagina <= Model.TotalPaginasAnotacoesClinicas; pagina++)
+                        {
+                            <li class="page-item@(pagina == Model.PaginaAtualAnotacoesClinicas ? " active" : "")">
+                                <button type="button" class="page-link" data-pagina="@pagina">@pagina</button>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div>
 
-<!-- Modal: Detalhes da Sessão (somente dados administrativos, sem prontuário/anotações) -->
+<!-- Modal: Detalhes da Sessão (somente dados administrativos, sem prontuário/anotações — Anotações
+     Clínicas viraram a aba dedicada "Anotações Clínicas" acima, no mesmo padrão da Ficha do
+     Paciente do profissional; Anotações Confidenciais continuam exclusivas do profissional) -->
 <div class="modal fade" id="modalDetalhesSessao" tabindex="-1" aria-labelledby="modalDetalhesSessaoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -150,6 +273,33 @@
     </div>
 </div>
 
+<!-- Modal: Visualizar Anotação Clínica (somente leitura — sem nenhuma ação de editar/excluir, já
+     que quem registra a evolução clínica é sempre o profissional, em Sessoes/Sessao) -->
+<div class="modal fade" id="modalVisualizarAnotacaoClinica" tabindex="-1" aria-labelledby="modalVisualizarAnotacaoClinicaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVisualizarAnotacaoClinicaLabel">
+                    <span id="modalVisualizarAnotacaoClinicaTitulo"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalVisualizarAnotacaoClinicaObjetivosWrapper" class="mb-3">
+                    <span class="ms-dash-info-label d-block mb-1">Objetivos Trabalhados</span>
+                    <div class="ms-objetivo-chips-wrapper" id="modalVisualizarAnotacaoClinicaObjetivos"></div>
+                </div>
+                <div class="mb-2 ms-anotacao-sessao-item-data" id="modalVisualizarAnotacaoClinicaData"></div>
+                <div id="modalVisualizarAnotacaoClinicaConteudo" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/painel-sessoes.js" asp-append-version="true"></script>
+    <script src="~/js/painel-anotacoes-clinicas.js" asp-append-version="true"></script>
 }
