@@ -465,6 +465,13 @@ body.ms-dashboard-body {
   cursor: pointer;
 }
 
+/* Linha inteira clicável das tabelas de Anotações Confidenciais (abre edição) e Anotações Clínicas
+   (abre a sessão), na Ficha do Paciente */
+.ms-dash-table tbody tr[data-anotacao-id],
+.ms-dash-table tbody tr[data-sessao-id] {
+  cursor: pointer;
+}
+
 /* Tabela de pacientes */
 .ms-dash-table-card {
   padding: 0;
@@ -934,6 +941,32 @@ body.ms-dashboard-body {
   width: auto;
 }
 
+/* Filtro de período (aba "Anotações Clínicas") — dois inputs type="date" lado a lado */
+.ms-anotacao-periodo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ms-anotacao-periodo-separador {
+  color: #868E96;
+  font-size: 0.8rem;
+}
+
+.ms-anotacao-periodo-limpar {
+  background: transparent;
+  border: none;
+  color: #ADB5BD;
+  font-size: 0.9rem;
+  padding: 0 0.15rem;
+  line-height: 1;
+}
+
+.ms-anotacao-periodo-limpar:hover {
+  color: #DC3545;
+}
+
 /* Filtro de paciente por busca (Minhas Sessões do Profissional): campo aberto com autocomplete de até 3 sugestões */
 .ms-filtro-paciente-wrapper {
   width: 280px;
@@ -1396,82 +1429,9 @@ body.ms-dashboard-body {
   resize: vertical;
 }
 
-/* Timeline de anotações confidenciais */
-/* Área com scroll interno da timeline: mantém ~4 anotações visíveis por vez,
-   sem precisar rolar a página inteira. A paginação (10 por página) continua igual. */
-.ms-timeline-scroll {
-  max-height: min(500px, 60vh);
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
-.ms-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  position: relative;
-  padding-left: 1.5rem;
-}
-
-.ms-timeline::before {
-  content: "";
-  position: absolute;
-  left: 0.3rem;
-  top: 0.4rem;
-  bottom: 0.4rem;
-  width: 2px;
-  background-color: rgba(43, 45, 66, 0.1);
-}
-
-.ms-timeline-item {
-  position: relative;
-}
-
-.ms-timeline-marker {
-  position: absolute;
-  left: -1.5rem;
-  top: 0.35rem;
-  width: 0.65rem;
-  height: 0.65rem;
-  border-radius: 50%;
-  background-color: var(--ms-orange);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.25);
-}
-
-.ms-timeline-content {
-  background-color: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 0.25rem 0.75rem rgba(43, 45, 66, 0.08);
-  padding: 1.25rem 1.5rem;
-}
-
-.ms-timeline-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.ms-timeline-title {
-  color: var(--ms-text);
-  font-size: 1rem;
-}
-
-.ms-timeline-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
-
-.ms-timeline-date {
-  color: #6C757D;
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
+/* Botões de ação (editar/excluir) da coluna "Ações" da tabela de Anotações Confidenciais —
+   nomes de classe mantidos de quando a listagem era uma timeline (ver histórico do CARD-31),
+   mas o estilo em si (ícone discreto + hover de cor) independe do container ser div ou <td> */
 .ms-timeline-edit,
 .ms-timeline-delete {
   background: transparent;
@@ -1490,13 +1450,6 @@ body.ms-dashboard-body {
 .ms-timeline-delete:hover {
   color: #DC3545;
   background-color: rgba(220, 53, 69, 0.08);
-}
-
-.ms-timeline-body {
-  color: var(--ms-text);
-  font-size: 0.9rem;
-  white-space: pre-wrap;
-  margin: 0;
 }
 
 /* Paginação (anotações confidenciais, sessões, etc.), seguindo a paleta do sistema */
@@ -1534,9 +1487,18 @@ body.ms-dashboard-body {
   overflow-y: auto;
 }
 
+/* Variante de "Anotações Clínicas" (Ficha do Paciente): a coluna Título pode ganhar uma segunda
+   linha de chips de Objetivos Trabalhados, então a altura da linha também varia com o conteúdo —
+   mesmo raciocínio de .ms-dash-table-scroll-pacientes, com o max-height calculado em JS
+   (ajustarAlturaTabelaAnotacoesClinicas, em wwwroot/js/anotacoes-clinicas.js) */
+.ms-dash-table-scroll-anotacoes-clinicas {
+  overflow-y: auto;
+}
+
 .ms-dash-table-scroll thead th,
 .ms-dash-table-scroll-5 thead th,
-.ms-dash-table-scroll-pacientes thead th {
+.ms-dash-table-scroll-pacientes thead th,
+.ms-dash-table-scroll-anotacoes-clinicas thead th {
   position: sticky;
   top: 0;
   background-color: #fff;
@@ -1584,6 +1546,15 @@ body.ms-dashboard-body {
   .ms-anotacao-search input,
   .ms-anotacao-search select {
     width: 100%;
+  }
+
+  .ms-anotacao-periodo {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .ms-anotacao-periodo input {
+    flex: 1 1 auto;
   }
 
   .ms-filtro-paciente-wrapper {
@@ -1838,9 +1809,14 @@ body.ms-dashboard-body {
   font-size: 1.6rem;
 }
 
+/* Hierarquia visual do card "Anotações Clínicas / Evolução": o título da anotação aberta no painel
+   principal (compose-titulo) é o texto de maior destaque da tela, por ser o conteúdo em foco; o
+   cabeçalho "Anotações desta sessão" (lista-titulo) vem em segundo, com peso forte compensando o
+   tamanho menor da coluna; o título de cada item da lista (item-titulo, mais abaixo) fica visivelmente
+   menor que os dois — painel principal > cabeçalho da lista > itens da lista */
 .ms-anotacao-sessao-compose-titulo {
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--ms-text);
   margin-bottom: 0.5rem;
 }
@@ -1857,9 +1833,10 @@ body.ms-dashboard-body {
   flex-direction: column;
 }
 
+/* Segundo na hierarquia (ver comentário em .ms-anotacao-sessao-compose-titulo acima) */
 .ms-anotacao-sessao-lista-titulo {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--ms-text);
   margin-bottom: 0.6rem;
 }
@@ -1884,11 +1861,22 @@ body.ms-dashboard-body {
   border-bottom: none;
 }
 
+/* Destaque temporário da anotação selecionada ao chegar na tela via "Anotações Clínicas" da Ficha
+   do Paciente (ver sessao-detalhe.js, destacarAnotacaoDaUrl) — some sozinho depois de alguns
+   segundos, por isso a transição suave em vez de uma cor fixa permanente */
+.ms-anotacao-destacada {
+  background-color: rgba(255, 107, 53, 0.12);
+  border-radius: 0.5rem;
+  transition: background-color 0.6s ease-in-out;
+}
+
 .ms-anotacao-sessao-item-info {
   min-width: 0;
 }
 
+/* Terceiro (menor destaque) na hierarquia (ver comentário em .ms-anotacao-sessao-compose-titulo acima) */
 .ms-anotacao-sessao-item-titulo {
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--ms-text);
   white-space: nowrap;
