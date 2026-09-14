@@ -81,11 +81,13 @@
         </div>
 
         <div id="objetivosContainer" data-paciente-id="@Model.Id">
-            <div class="ms-objetivos-grid" id="listaObjetivos">
-                <div class="ms-dash-empty-state" id="objetivosEmptyState">
-                    <i class="bi bi-bullseye"></i>
-                    <h5>Nenhum objetivo definido</h5>
-                    <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico de @Model.NomeCompleto.</p>
+            <div class="ms-objetivos-grid-scroll">
+                <div class="ms-objetivos-grid" id="listaObjetivos">
+                    <div class="ms-dash-empty-state" id="objetivosEmptyState">
+                        <i class="bi bi-bullseye"></i>
+                        <h5>Nenhum objetivo definido</h5>
+                        <p>Clique em "Novo Objetivo" para registrar o primeiro objetivo terapêutico de @Model.NomeCompleto.</p>
+                    </div>
                 </div>
             </div>
         </div>

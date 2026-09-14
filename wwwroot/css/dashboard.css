@@ -941,6 +941,13 @@ body.ms-dashboard-body {
   width: auto;
 }
 
+/* Selects avulsos soltos direto na toolbar (fora de .ms-anotacao-search), ex.: filtros de
+   Paciente/Status em Planos de Tratamento — largura pelo conteúdo, não a 100% do container */
+.ms-anotacao-toolbar > select.form-select-sm {
+  width: auto;
+  min-width: 170px;
+}
+
 /* Filtro de período (aba "Anotações Clínicas") — dois inputs type="date" lado a lado */
 .ms-anotacao-periodo {
   position: relative;
@@ -1560,6 +1567,10 @@ body.ms-dashboard-body {
   .ms-filtro-paciente-wrapper {
     width: 100%;
   }
+
+  .ms-anotacao-toolbar > select.form-select-sm {
+    width: 100%;
+  }
 }
 
 /* Evolução da Sessão (aba "Histórico de Sessões" da Ficha do Paciente) */
@@ -1601,6 +1612,20 @@ body.ms-dashboard-body {
   grid-column: 1 / -1;
 }
 
+/* Wrapper com scroll interno pra lista de objetivos não esticar a página inteira quando há muitos
+   cards — max-height fixo (não calculado via JS) de propósito: diferente de uma tabela, onde cada
+   linha tem altura única e dá pra medir "cabeçalho + N linhas", aqui os cards de um grid que quebra
+   em colunas têm altura variável (depende da quantidade de combinados de cada objetivo), então não
+   existe uma "altura de linha" única pra multiplicar — um valor fixo, generoso o bastante pra caber
+   confortavelmente ~2 linhas de cards em resoluções comuns de desktop, resolve com muito menos
+   complexidade. Usado em Views/Pacientes/Detalhes.cshtml, Views/PlanosTratamento/Index.cshtml e
+   Views/PainelPaciente/PlanoTratamento.cshtml. */
+.ms-objetivos-grid-scroll {
+  max-height: 700px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
 .ms-objetivo-card-header {
   display: flex;
   align-items: flex-start;
@@ -1613,6 +1638,22 @@ body.ms-dashboard-body {
   color: var(--ms-text);
   font-weight: 700;
   margin: 0;
+}
+
+/* Nome do paciente em cada card (tela "Planos de Tratamento" — lista cross-paciente, diferente da
+   aba "Plano de Tratamento" da Ficha do Paciente, onde o paciente já é fixo e não precisa aparecer) */
+.ms-objetivo-card-paciente {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #6C757D;
+  font-size: 0.8rem;
+  text-decoration: none;
+  margin-bottom: 0.15rem;
+}
+
+.ms-objetivo-card-paciente:hover {
+  color: var(--ms-orange-dark);
 }
 
 .ms-objetivo-descricao {

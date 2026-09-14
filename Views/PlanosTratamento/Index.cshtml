@@ -1,0 +1,163 @@
+@model MinhaSessao.Models.ViewModels.PlanosTratamentoViewModel
+@{
+    ViewData["Title"] = "Planos de Tratamento";
+    Layout = "_LayoutDashboard";
+}
+
+<div class="ms-dash-page-header ms-anotacao-tab-header">
+    <div>
+        <h1 class="ms-dash-welcome-title">Planos de Tratamento</h1>
+        <p class="ms-dash-welcome-subtitle mb-0">Objetivos terapêuticos de todos os seus pacientes, num só lugar.</p>
+    </div>
+    <button type="button" class="btn btn-ms-orange" data-bs-toggle="modal" data-bs-target="#modalNovoObjetivo">
+        <i class="bi bi-plus-lg"></i> Novo Objetivo
+    </button>
+</div>
+
+<div class="ms-anotacao-toolbar mb-4">
+    <select id="filtroObjetivoPaciente" class="form-select form-select-sm" title="Filtrar por paciente">
+        <option value="">Todos os Pacientes</option>
+        @foreach (var paciente in Model.Pacientes)
+        {
+            <option value="@paciente.Id">@paciente.NomeCompleto</option>
+        }
+    </select>
+    <div class="ms-anotacao-periodo">
+        <input type="date" id="filtroObjetivoDataInicio" class="form-control form-control-sm" title="Data de criação (início)">
+        <span class="ms-anotacao-periodo-separador">até</span>
+        <input type="date" id="filtroObjetivoDataFim" class="form-control form-control-sm" title="Data de criação (fim)">
+        <button type="button" class="ms-anotacao-periodo-limpar d-none" id="btnLimparPeriodoObjetivo" title="Limpar período">
+            <i class="bi bi-x-circle-fill"></i>
+        </button>
+    </div>
+    <select id="filtroObjetivoStatus" class="form-select form-select-sm" title="Filtrar por status">
+        <option value="todos" selected>Todos os Status</option>
+        <option value="EmAndamento">Em Andamento</option>
+        <option value="Atingido">Atingido</option>
+        <option value="Pausado">Pausado</option>
+        <option value="Cancelado">Cancelado</option>
+    </select>
+</div>
+
+<div id="objetivosContainer">
+    <div class="ms-objetivos-grid-scroll">
+        <div class="ms-objetivos-grid" id="listaObjetivos">
+            <div class="ms-dash-empty-state" id="objetivosEmptyState">
+                <i class="bi bi-bullseye"></i>
+                <h5>Nenhum objetivo encontrado</h5>
+                <p>Ajuste os filtros acima ou clique em "Novo Objetivo" para registrar o primeiro.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Novo Objetivo Terapêutico (Proposta A: objetivo e combinados na mesma tela) — aqui, sem
+     um pacienteId fixo vindo da URL (a lista é cross-paciente), o próprio modal pede o Paciente -->
+<div class="modal fade" id="modalNovoObjetivo" tabindex="-1" aria-labelledby="modalNovoObjetivoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNovoObjetivoLabel">
+                    <i class="bi bi-bullseye me-2"></i>Novo Objetivo Terapêutico
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="objetivoFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <div>
+                        <strong>Erro ao Salvar</strong>
+                        <p class="mb-0" id="objetivoFeedbackErroMensagem"></p>
+                    </div>
+                </div>
+
+                <form id="formNovoObjetivo">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="objetivoPacienteId" class="form-label">Paciente<span class="ms-required">*</span></label>
+                        <select id="objetivoPacienteId" name="PacienteId" class="form-select">
+                            <option value="" selected disabled>Selecione o paciente...</option>
+                            @foreach (var paciente in Model.Pacientes)
+                            {
+                                <option value="@paciente.Id">@paciente.NomeCompleto</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="objetivoTitulo" class="form-label">Título<span class="ms-required">*</span></label>
+                        <input type="text" id="objetivoTitulo" name="Titulo" class="form-control" placeholder="Ex.: Reduzir crises de ansiedade">
+                    </div>
+                    <div class="mb-3">
+                        <label for="objetivoDescricao" class="form-label">Descrição</label>
+                        <textarea id="objetivoDescricao" name="Descricao" class="form-control" rows="3" placeholder="Detalhe o objetivo, se necessário..."></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Combinados</label>
+                        <div class="ms-combinado-input-group">
+                            <input type="text" id="novoCombinadoInput" class="form-control" placeholder="Ex.: Praticar técnica de respiração 2x ao dia" autocomplete="off">
+                            <button type="button" class="btn btn-outline-secondary text-nowrap" id="btnAdicionarCombinado">
+                                <i class="bi bi-plus-lg"></i> Adicionar
+                            </button>
+                        </div>
+                        <ul class="ms-combinado-lista-form" id="listaCombinadosForm"></ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNovoObjetivo" class="btn btn-ms-orange" id="btnSalvarObjetivo">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="btnSalvarObjetivoSpinner"></span>
+                    <span id="btnSalvarObjetivoTexto">Salvar Objetivo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Visualizar Sessão (somente leitura, aberto ao clicar na data de um item do Histórico de
+     Sessões de um objetivo) — mesmo modal/lógica reaproveitados de Views/Pacientes/Detalhes.cshtml -->
+<div class="modal fade" id="modalVisualizarSessao" tabindex="-1" aria-labelledby="modalVisualizarSessaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVisualizarSessaoLabel">Detalhes da Sessão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Código</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoCodigo"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Data e Hora</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoData"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Duração</span>
+                        <span class="ms-dash-info-value" id="modalVisualizarSessaoDuracao"></span>
+                    </div>
+                    <div class="col-3 ms-dash-info-item">
+                        <span class="ms-dash-info-label">Status</span>
+                        <span class="ms-dash-info-value"><span class="badge" id="modalVisualizarSessaoStatus"></span></span>
+                    </div>
+                </div>
+                <div class="mb-3" id="modalVisualizarSessaoObjetivosWrapper">
+                    <span class="ms-dash-info-label d-block mb-1">Objetivos Trabalhados</span>
+                    <div class="ms-objetivo-chips-wrapper" id="modalVisualizarSessaoObjetivos"></div>
+                </div>
+                <div>
+                    <span class="ms-dash-info-label d-block mb-1">Anotações Clínicas</span>
+                    <div id="modalVisualizarSessaoAnotacoes" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/planos-tratamento.js" asp-append-version="true"></script>
+}
