@@ -186,14 +186,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const tokenInput = modalCadastroEl.querySelector('input[name="__RequestVerificationToken"]');
 
+    // Etapa 0: Este paciente precisa de um responsável? (menor de idade, CARD-35)
+    const etapaNecessitaResponsavelEl = document.getElementById("etapaNecessitaResponsavel");
+    const btnResponsavelNao = document.getElementById("btnResponsavelNao");
+    const btnResponsavelSim = document.getElementById("btnResponsavelSim");
+    let necessitaResponsavel = false;
+
     // Etapa 1: Verificar CPF
     const etapaVerificarCpfEl = document.getElementById("etapaVerificarCpf");
     const verificarCpfInput = document.getElementById("verificarCpfInput");
+    const verificarCpfPacienteOpcionalEl = document.getElementById("verificarCpfPacienteOpcional");
+    const verificarCpfPacienteRequeridoEl = document.getElementById("verificarCpfPacienteRequerido");
+    const verificarCpfResponsavelWrapperEl = document.getElementById("verificarCpfResponsavelWrapper");
+    const verificarCpfResponsavelInput = document.getElementById("verificarCpfResponsavelInput");
     const verificarCpfFeedbackErroEl = document.getElementById("verificarCpfFeedbackErro");
     const verificarCpfFeedbackErroMensagemEl = document.getElementById("verificarCpfFeedbackErroMensagem");
     const btnVerificarCpf = document.getElementById("btnVerificarCpf");
     const btnVerificarCpfSpinner = document.getElementById("btnVerificarCpfSpinner");
     const btnVerificarCpfTexto = document.getElementById("btnVerificarCpfTexto");
+
+    // Etapa 1b: Mais de um paciente encontrado com o mesmo Responsável
+    const etapaEscolherPacienteEl = document.getElementById("etapaEscolherPaciente");
+    const listaPacientesEncontradosEl = document.getElementById("listaPacientesEncontradosResponsavel");
+    const btnNenhumDessesPacientes = document.getElementById("btnNenhumDessesPacientes");
 
     // Etapa 2: Paciente encontrado
     const etapaPacienteEncontradoEl = document.getElementById("etapaPacienteEncontrado");
@@ -210,10 +225,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const feedbackErroEl = document.getElementById("cadastroPacienteFeedbackErro");
     const feedbackErroMensagemEl = document.getElementById("cadastroPacienteFeedbackErroMensagem");
     const pacienteCpfInput = document.getElementById("PacienteCpf");
+    const pacienteCpfOpcionalEl = document.getElementById("pacienteCpfOpcional");
+    const pacienteCpfRequeridoEl = document.getElementById("pacienteCpfRequerido");
     const btnTrocarCpf = document.getElementById("btnTrocarCpf");
     const btnSalvar = document.getElementById("btnSalvarPaciente");
     const btnSalvarSpinner = document.getElementById("btnSalvarPacienteSpinner");
     const btnSalvarTexto = document.getElementById("btnSalvarPacienteTexto");
+    const cadastroResponsavelFieldsEl = document.getElementById("cadastroResponsavelFields");
+    const pacienteNecessitaResponsavelInput = document.getElementById("PacienteNecessitaResponsavel");
+    const pacienteCpfResponsavelInput = document.getElementById("PacienteCpfResponsavel");
 
     // Aplica a máscara 000.000.000-00 a partir de um valor com ou sem pontuação
     function aplicarMascaraCpf(valor) {
@@ -231,8 +251,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    if (verificarCpfResponsavelInput) {
+        verificarCpfResponsavelInput.addEventListener("input", function () {
+            verificarCpfResponsavelInput.value = aplicarMascaraCpf(verificarCpfResponsavelInput.value);
+        });
+    }
+
     function irParaEtapa(etapa) {
+        etapaNecessitaResponsavelEl.classList.toggle("d-none", etapa !== "responsavel");
         etapaVerificarCpfEl.classList.toggle("d-none", etapa !== "verificar");
+        etapaEscolherPacienteEl.classList.toggle("d-none", etapa !== "escolha");
         etapaPacienteEncontradoEl.classList.toggle("d-none", etapa !== "encontrado");
         formCadastroPaciente.classList.toggle("d-none", etapa !== "cadastro");
 
@@ -241,13 +269,103 @@ document.addEventListener("DOMContentLoaded", function () {
         btnSalvar.classList.toggle("d-none", etapa !== "cadastro");
     }
 
+    // Mostra/oculta o campo "CPF do Responsável" e ajusta o rótulo do CPF do Paciente (opcional quando
+    // necessitaResponsavel é true) na Etapa 1 — chamado ao trocar de resposta na Etapa 0 e ao reabrir a modal
+    function atualizarCamposEtapaVerificar() {
+        if (verificarCpfResponsavelWrapperEl) verificarCpfResponsavelWrapperEl.classList.toggle("d-none", !necessitaResponsavel);
+        if (verificarCpfPacienteOpcionalEl) verificarCpfPacienteOpcionalEl.classList.toggle("d-none", !necessitaResponsavel);
+        if (verificarCpfPacienteRequeridoEl) verificarCpfPacienteRequeridoEl.classList.toggle("d-none", necessitaResponsavel);
+    }
+
     function resetarModalParaEtapaInicial() {
-        irParaEtapa("verificar");
+        necessitaResponsavel = false;
+        // Toda reabertura volta pro estado neutro: nenhum dos dois botões começa destacado
+        if (btnResponsavelNao) btnResponsavelNao.classList.remove("active");
+        if (btnResponsavelSim) btnResponsavelSim.classList.remove("active");
+        atualizarCamposEtapaVerificar();
+        irParaEtapa("responsavel");
         verificarCpfInput.value = "";
+        if (verificarCpfResponsavelInput) verificarCpfResponsavelInput.value = "";
         pacienteEncontradoId = null;
         ocultarErroVerificar();
         ocultarErroCadastro();
         formCadastroPaciente.reset();
+    }
+
+    // Os dois botões (Não/Sim) começam com o mesmo peso visual — nenhuma resposta é "a esperada" — e o
+    // clicado passa a ficar destacado em laranja (.active), voltando o outro pro estado neutro
+    function marcarBotaoResponsavelSelecionado(botaoSelecionado) {
+        if (btnResponsavelNao) btnResponsavelNao.classList.toggle("active", botaoSelecionado === btnResponsavelNao);
+        if (btnResponsavelSim) btnResponsavelSim.classList.toggle("active", botaoSelecionado === btnResponsavelSim);
+    }
+
+    if (btnResponsavelNao) {
+        btnResponsavelNao.addEventListener("click", function () {
+            necessitaResponsavel = false;
+            marcarBotaoResponsavelSelecionado(btnResponsavelNao);
+            atualizarCamposEtapaVerificar();
+            irParaEtapa("verificar");
+        });
+    }
+
+    if (btnResponsavelSim) {
+        btnResponsavelSim.addEventListener("click", function () {
+            necessitaResponsavel = true;
+            marcarBotaoResponsavelSelecionado(btnResponsavelSim);
+            atualizarCamposEtapaVerificar();
+            irParaEtapa("verificar");
+        });
+    }
+
+    // Leva a modal pra Etapa 3 (cadastro completo), já preenchendo/ocultando os campos de acordo com o
+    // que foi apurado na Etapa 1 — reaproveitado tanto por "CPF não encontrado" quanto por
+    // "Nenhum desses, cadastrar novo paciente" (Etapa 1b)
+    function irParaCadastroCompleto(cpfPacienteValor, cpfResponsavelValor) {
+        if (pacienteCpfInput) {
+            pacienteCpfInput.value = cpfPacienteValor || "";
+            // Só fica readonly quando o CPF do paciente já veio preenchido da etapa de verificação —
+            // se ficou em branco (paciente menor sem CPF próprio), o profissional pode digitar aqui
+            pacienteCpfInput.readOnly = !!cpfPacienteValor;
+        }
+        if (pacienteCpfOpcionalEl) pacienteCpfOpcionalEl.classList.toggle("d-none", !necessitaResponsavel);
+        if (pacienteCpfRequeridoEl) pacienteCpfRequeridoEl.classList.toggle("d-none", necessitaResponsavel);
+        if (btnTrocarCpf) btnTrocarCpf.classList.toggle("d-none", !cpfPacienteValor);
+
+        if (cadastroResponsavelFieldsEl) cadastroResponsavelFieldsEl.classList.toggle("d-none", !necessitaResponsavel);
+        if (pacienteNecessitaResponsavelInput) pacienteNecessitaResponsavelInput.value = necessitaResponsavel ? "true" : "false";
+
+        if (necessitaResponsavel && pacienteCpfResponsavelInput) {
+            pacienteCpfResponsavelInput.value = cpfResponsavelValor || "";
+        }
+
+        irParaEtapa("cadastro");
+    }
+
+    // Renderiza a lista de pacientes encontrados pelo CPF do Responsável (Etapa 1b) — clicar num deles
+    // leva pra Etapa 2 (encontrado), reaproveitando o mesmo fluxo de vincular paciente já existente
+    function renderizarListaPacientesEncontrados(pacientes) {
+        if (!listaPacientesEncontradosEl) return;
+        listaPacientesEncontradosEl.innerHTML = "";
+
+        (pacientes || []).forEach(function (paciente) {
+            const botao = document.createElement("button");
+            botao.type = "button";
+            botao.className = "btn btn-outline-secondary text-start d-flex align-items-center gap-2";
+            botao.innerHTML = `<span class="ms-avatar-iniciais">${escaparHtml(paciente.iniciais)}</span> ${escaparHtml(paciente.nomeCompleto)}`;
+            botao.addEventListener("click", function () {
+                pacienteEncontradoId = paciente.id;
+                if (pacienteEncontradoIniciaisEl) pacienteEncontradoIniciaisEl.textContent = paciente.iniciais;
+                if (pacienteEncontradoNomeEl) pacienteEncontradoNomeEl.textContent = paciente.nomeCompleto;
+                irParaEtapa("encontrado");
+            });
+            listaPacientesEncontradosEl.appendChild(botao);
+        });
+    }
+
+    if (btnNenhumDessesPacientes) {
+        btnNenhumDessesPacientes.addEventListener("click", function () {
+            irParaCadastroCompleto("", verificarCpfResponsavelInput ? verificarCpfResponsavelInput.value.trim() : "");
+        });
     }
 
     function definirCarregandoVerificar(carregando) {
@@ -292,25 +410,39 @@ document.addEventListener("DOMContentLoaded", function () {
     // Toda vez que o modal abre, volta pro estado inicial (etapa "Verificar CPF")
     modalCadastroEl.addEventListener("show.bs.modal", resetarModalParaEtapaInicial);
 
-    // Etapa 1 -> verifica se já existe um paciente com esse CPF
+    // Etapa 1 -> verifica se já existe um paciente com esse CPF (ou, quando necessitaResponsavel e o
+    // CPF do paciente ficou em branco, com o CPF do Responsável — CARD-35)
     async function verificarCpf() {
-        const cpf = verificarCpfInput.value.trim();
         ocultarErroVerificar();
 
-        if (!cpf) {
-            exibirErroVerificar("Informe o CPF do paciente.");
+        const cpfPaciente = verificarCpfInput.value.trim();
+        const cpfResponsavel = necessitaResponsavel && verificarCpfResponsavelInput ? verificarCpfResponsavelInput.value.trim() : "";
+
+        // O CPF do paciente tem prioridade se preenchido; senão, busca pelo do responsável
+        const usarResponsavel = necessitaResponsavel && !cpfPaciente;
+        const cpfParaBuscar = usarResponsavel ? cpfResponsavel : cpfPaciente;
+
+        if (!cpfParaBuscar) {
+            exibirErroVerificar(necessitaResponsavel ? "Informe o CPF do paciente ou do responsável." : "Informe o CPF do paciente.");
             return;
         }
 
-        if (cpf.replace(/\D/g, "").length !== 11) {
-            exibirErroVerificar("Informe um CPF válido (11 dígitos).");
+        if (cpfParaBuscar.replace(/\D/g, "").length !== 11) {
+            exibirErroVerificar(usarResponsavel ? "Informe um CPF do responsável válido (11 dígitos)." : "Informe um CPF válido (11 dígitos).");
             return;
         }
 
         definirCarregandoVerificar(true);
 
         try {
-            const resposta = await fetch("/Pacientes/VerificarPacienteExistente?cpf=" + encodeURIComponent(cpf));
+            const parametros = new URLSearchParams();
+            if (usarResponsavel) {
+                parametros.set("cpfResponsavel", cpfResponsavel);
+            } else {
+                parametros.set("cpf", cpfPaciente);
+            }
+
+            const resposta = await fetch("/Pacientes/VerificarPacienteExistente?" + parametros.toString());
 
             if (!resposta.ok) {
                 exibirErroVerificar("Ocorreu um erro inesperado no servidor. Tente novamente.");
@@ -320,18 +452,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const resultado = await resposta.json();
 
             if (!resultado.cpfValido) {
-                exibirErroVerificar("CPF inválido. Verifique os números digitados.");
+                exibirErroVerificar(usarResponsavel ? "CPF do responsável inválido. Verifique os números digitados." : "CPF inválido. Verifique os números digitados.");
                 return;
             }
 
-            if (resultado.existe) {
+            if (resultado.multiplos) {
+                renderizarListaPacientesEncontrados(resultado.pacientes);
+                irParaEtapa("escolha");
+            } else if (resultado.existe) {
                 pacienteEncontradoId = resultado.pacienteId;
                 if (pacienteEncontradoIniciaisEl) pacienteEncontradoIniciaisEl.textContent = resultado.iniciais;
                 if (pacienteEncontradoNomeEl) pacienteEncontradoNomeEl.textContent = resultado.nomeCompleto;
                 irParaEtapa("encontrado");
             } else {
-                if (pacienteCpfInput) pacienteCpfInput.value = cpf;
-                irParaEtapa("cadastro");
+                irParaCadastroCompleto(cpfPaciente, cpfResponsavel);
             }
         } catch (erro) {
             exibirErroVerificar("Erro de conexão. Verifique sua internet e tente novamente.");
@@ -357,6 +491,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (btnVerificarOutroCpf) {
         btnVerificarOutroCpf.addEventListener("click", function () {
             verificarCpfInput.value = "";
+            if (verificarCpfResponsavelInput) verificarCpfResponsavelInput.value = "";
             pacienteEncontradoId = null;
             irParaEtapa("verificar");
         });

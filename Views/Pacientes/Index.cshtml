@@ -83,8 +83,17 @@ else
                 @* Token único, reaproveitado pelos POSTs de Vincular e Criar *@
                 @Html.AntiForgeryToken()
 
+                <!-- Etapa 0: Este paciente precisa de um responsável? (menor de idade, CARD-35) -->
+                <div id="etapaNecessitaResponsavel" class="text-center py-4">
+                    <p class="mb-3">Este paciente precisa de um responsável (é menor de idade)?</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn ms-toggle-btn d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 7rem;" id="btnResponsavelNao"><i class="bi bi-x-lg"></i> Não</button>
+                        <button type="button" class="btn ms-toggle-btn d-inline-flex align-items-center justify-content-center gap-2" style="min-width: 7rem;" id="btnResponsavelSim"><i class="bi bi-check-lg"></i> Sim</button>
+                    </div>
+                </div>
+
                 <!-- Etapa 1: Verificar CPF -->
-                <div id="etapaVerificarCpf">
+                <div id="etapaVerificarCpf" class="d-none">
                     <div id="verificarCpfFeedbackErro" class="ms-alert ms-alert-erro d-none" role="alert">
                         <i class="bi bi-x-circle-fill"></i>
                         <div>
@@ -93,9 +102,22 @@ else
                         </div>
                     </div>
                     <div class="mb-2">
-                        <label for="verificarCpfInput" class="form-label">CPF do Paciente<span class="ms-required">*</span></label>
+                        <label for="verificarCpfInput" class="form-label">
+                            CPF do Paciente<span class="ms-dash-table-subtext d-none" id="verificarCpfPacienteOpcional"> (opcional)</span><span class="ms-required" id="verificarCpfPacienteRequerido">*</span>
+                        </label>
                         <input type="text" id="verificarCpfInput" class="form-control" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
                     </div>
+                    <div class="mb-2 d-none" id="verificarCpfResponsavelWrapper">
+                        <label for="verificarCpfResponsavelInput" class="form-label">CPF do Responsável<span class="ms-required">*</span></label>
+                        <input type="text" id="verificarCpfResponsavelInput" class="form-control" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+                    </div>
+                </div>
+
+                <!-- Etapa 1b: Mais de um paciente encontrado com o mesmo Responsável -->
+                <div id="etapaEscolherPaciente" class="d-none">
+                    <p class="ms-dash-table-subtext mb-3">Encontramos mais de um paciente com esse responsável. É um desses?</p>
+                    <div id="listaPacientesEncontradosResponsavel" class="d-flex flex-column gap-2 mb-3"></div>
+                    <button type="button" class="btn btn-link btn-sm p-0" id="btnNenhumDessesPacientes">Nenhum desses, cadastrar novo paciente</button>
                 </div>
 
                 <!-- Etapa 2: Paciente já cadastrado, só falta vincular -->
@@ -135,9 +157,9 @@ else
                             <input type="date" id="PacienteDataNascimento" name="DataNascimento" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="PacienteCpf" class="form-label">CPF<span class="ms-required">*</span></label>
+                            <label for="PacienteCpf" class="form-label">CPF<span class="ms-dash-table-subtext d-none" id="pacienteCpfOpcional"> (opcional)</span><span class="ms-required" id="pacienteCpfRequerido">*</span></label>
                             <input type="text" id="PacienteCpf" name="Cpf" class="form-control" readonly>
-                            <button type="button" class="btn btn-link btn-sm p-0 mt-1" id="btnTrocarCpf">trocar CPF</button>
+                            <button type="button" class="btn btn-link btn-sm p-0 mt-1 d-none" id="btnTrocarCpf">trocar CPF</button>
                         </div>
                     </div>
                     <div class="row">
@@ -160,6 +182,34 @@ else
                         <label for="PacienteProfissao" class="form-label">Profissão</label>
                         <input type="text" id="PacienteProfissao" name="Profissao" class="form-control" placeholder="Profissão do paciente">
                     </div>
+
+                    <!-- Dados do Responsável (só exibidos quando o paciente precisa de um responsável, CARD-35) -->
+                    <div id="cadastroResponsavelFields" class="d-none">
+                        <h6 class="mb-3">Dados do Responsável</h6>
+                        <div class="ms-secao-responsavel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="PacienteNomeResponsavel" class="form-label">Nome do Responsável<span class="ms-required">*</span></label>
+                                    <input type="text" id="PacienteNomeResponsavel" name="NomeResponsavel" class="form-control" placeholder="Nome completo do responsável">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="PacienteTelefoneResponsavel" class="form-label">Telefone do Responsável<span class="ms-required">*</span></label>
+                                    <input type="tel" id="PacienteTelefoneResponsavel" name="TelefoneResponsavel" class="form-control" placeholder="(00) 00000-0000">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="PacienteCpfResponsavel" class="form-label">CPF do Responsável<span class="ms-required">*</span></label>
+                                    <input type="text" id="PacienteCpfResponsavel" name="CpfResponsavel" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="PacienteProfissaoResponsavel" class="form-label">Profissão do Responsável</label>
+                                    <input type="text" id="PacienteProfissaoResponsavel" name="ProfissaoResponsavel" class="form-control" placeholder="Profissão do responsável">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="PacienteNecessitaResponsavel" name="NecessitaResponsavel" value="false">
                 </form>
             </div>
             <div class="modal-footer justify-content-end">

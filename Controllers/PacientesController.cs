@@ -561,14 +561,22 @@ public class PacientesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> VerificarPacienteExistente(string cpf)
+    public async Task<IActionResult> VerificarPacienteExistente(string? cpf, string? cpfResponsavel)
     {
+        // Paciente com Responsável (CARD-35): quando o CPF do paciente não foi informado (menor sem CPF
+        // próprio), a busca é feita pelo CPF do Responsável — um mesmo responsável pode ter mais de um
+        // filho cadastrado, então aqui pode haver mais de um resultado (ver bloco abaixo)
+        if (string.IsNullOrWhiteSpace(cpf) && !string.IsNullOrWhiteSpace(cpfResponsavel))
+        {
+            return await VerificarPorCpfResponsavelAsync(cpfResponsavel);
+        }
+
         if (!CpfUtil.EhValido(cpf))
         {
             return Json(new { existe = false, cpfValido = false });
         }
 
-        var paciente = await BuscarPacientePorCpfAsync(cpf);
+        var paciente = await BuscarPacientePorCpfAsync(cpf!);
 
         if (paciente is null)
         {
@@ -582,6 +590,55 @@ public class PacientesController : Controller
             pacienteId = paciente.Id,
             nomeCompleto = paciente.NomeCompleto,
             iniciais = PacienteIniciais.Calcular(paciente.NomeCompleto)
+        });
+    }
+
+    // Busca pacientes pelo CPF do Responsável normalizado — usado só quando o paciente (menor) não tem
+    // CPF próprio informado na etapa de verificação. Se encontrar mais de um paciente com o mesmo
+    // Responsável, não escolhe automaticamente: devolve a lista pro frontend perguntar "é um desses?"
+    private async Task<IActionResult> VerificarPorCpfResponsavelAsync(string cpfResponsavel)
+    {
+        if (!CpfUtil.EhValido(cpfResponsavel))
+        {
+            return Json(new { existe = false, cpfValido = false });
+        }
+
+        var cpfResponsavelNormalizado = CpfUtil.Normalizar(cpfResponsavel);
+
+        var pacientesDoResponsavel = await _context.Pacientes
+            .Where(p => p.CpfResponsavel == cpfResponsavelNormalizado)
+            .ToListAsync();
+
+        if (pacientesDoResponsavel.Count == 0)
+        {
+            return Json(new { existe = false, cpfValido = true });
+        }
+
+        if (pacientesDoResponsavel.Count > 1)
+        {
+            return Json(new
+            {
+                existe = true,
+                cpfValido = true,
+                multiplos = true,
+                pacientes = pacientesDoResponsavel.Select(p => new
+                {
+                    id = p.Id,
+                    nomeCompleto = p.NomeCompleto,
+                    iniciais = PacienteIniciais.Calcular(p.NomeCompleto)
+                })
+            });
+        }
+
+        var unicoPaciente = pacientesDoResponsavel[0];
+
+        return Json(new
+        {
+            existe = true,
+            cpfValido = true,
+            pacienteId = unicoPaciente.Id,
+            nomeCompleto = unicoPaciente.NomeCompleto,
+            iniciais = PacienteIniciais.Calcular(unicoPaciente.NomeCompleto)
         });
     }
 
@@ -643,11 +700,17 @@ public class PacientesController : Controller
             // A tela já verificou o CPF antes de chegar aqui (VerificarPacienteExistente); esta é só uma
             // rede de segurança contra condição de corrida. Não deveria ocorrer no fluxo normal — se ocorrer,
             // não cadastra e pede pra verificar de novo (o profissional deve reabrir o modal e checar o CPF).
-            var pacienteExistente = await BuscarPacientePorCpfAsync(model.Cpf);
-
-            if (pacienteExistente is not null)
+            // Paciente com Responsável (CARD-35): o CPF do paciente é opcional, então essa checagem só
+            // faz sentido quando ele foi de fato informado — a etapa de verificação pelo CPF do Responsável
+            // já cobre a duplicidade nesse outro caso.
+            if (!string.IsNullOrWhiteSpace(model.Cpf))
             {
-                return Json(new { success = false, message = "Já existe um paciente cadastrado com esse CPF. Feche e reabra o cadastro para verificar novamente." });
+                var pacienteExistente = await BuscarPacientePorCpfAsync(model.Cpf);
+
+                if (pacienteExistente is not null)
+                {
+                    return Json(new { success = false, message = "Já existe um paciente cadastrado com esse CPF. Feche e reabra o cadastro para verificar novamente." });
+                }
             }
 
             var paciente = new Paciente
@@ -660,7 +723,12 @@ public class PacientesController : Controller
                 Cpf = CpfUtil.Normalizar(model.Cpf),
                 Sexo = model.Sexo,
                 ContatoEmergencia = model.ContatoEmergencia,
-                Profissao = model.Profissao
+                Profissao = model.Profissao,
+                NecessitaResponsavel = model.NecessitaResponsavel,
+                NomeResponsavel = model.NomeResponsavel,
+                TelefoneResponsavel = model.TelefoneResponsavel,
+                CpfResponsavel = CpfUtil.Normalizar(model.CpfResponsavel),
+                ProfissaoResponsavel = model.ProfissaoResponsavel
             };
 
             // Gera a senha temporária de acesso do paciente; só existe em texto puro nesta resposta

@@ -26,4 +26,16 @@ public class Paciente
     public bool Ativo { get; set; } = true;
 
     public DateTime DataCadastro { get; set; } = DateTime.UtcNow;
+
+    // Suporte a "Paciente com Responsável" (CARD-35), pra atender menores de idade: quando true, o CPF
+    // do paciente vira opcional e os dados abaixo do responsável passam a ser exigidos no cadastro
+    public bool NecessitaResponsavel { get; set; }
+
+    public string? NomeResponsavel { get; set; }
+
+    public string? TelefoneResponsavel { get; set; }
+
+    public string? CpfResponsavel { get; set; }
+
+    public string? ProfissaoResponsavel { get; set; }
 }
