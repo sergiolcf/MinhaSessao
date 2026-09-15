@@ -149,6 +149,35 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação genérico (substitui window.confirm nas telas do Dashboard, ex.: excluir objetivo) -->
+    <div class="modal fade" id="modalConfirmarAcao" tabindex="-1" aria-labelledby="modalConfirmarAcaoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalConfirmarAcaoLabel">Confirmar ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="modalConfirmarAcaoMensagem"></p>
+                </div>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary" id="modalConfirmarAcaoBtnCancelar" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarAcaoConfirmar">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast genérico do Dashboard (substitui window.alert nas telas do Dashboard, ex.: Planos de Tratamento) -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="toastGlobal" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastGlobalMensagem"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/dashboard.js" asp-append-version="true"></script>

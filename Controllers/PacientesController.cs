@@ -987,6 +987,18 @@ public class PacientesController : Controller
             return Json(new { success = false, message = "Objetivo não encontrado." });
         }
 
+        // A relação SessaoObjetivo -> ObjetivoTerapeutico usa DeleteBehavior.Restrict (ver
+        // ApplicationDbContext.OnModelCreating) justamente pra não apagar objetivo já trabalhado em
+        // sessões registradas — precisa ser checado aqui antes do Remove, senão o banco recusa a
+        // exclusão e o profissional só via uma mensagem genérica de erro
+        var possuiSessaoVinculada = await _context.SessoesObjetivos
+            .AnyAsync(so => so.ObjetivoTerapeuticoId == id);
+
+        if (possuiSessaoVinculada)
+        {
+            return Json(new { success = false, message = "Não é possível excluir: este objetivo já foi trabalhado em sessões registradas. Altere o status para \"Cancelado\" em vez de excluir, para preservar o histórico clínico." });
+        }
+
         try
         {
             // O delete em cascata configurado no ApplicationDbContext remove os Combinados junto

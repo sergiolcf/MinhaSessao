@@ -152,10 +152,19 @@
                 ? Math.round((objetivo.combinadosConcluidos / objetivo.totalCombinados) * 100)
                 : 0;
 
-            const opcoesStatus = Object.keys(rotulosStatus)
+            // Itens do dropdown de status (badge clicável no cabeçalho do card) — o item que
+            // corresponde ao status atual ganha um ícone de check, já que não há mais um <select>
+            // separado mostrando esse valor (evita duplicidade de exibição do mesmo status)
+            const opcoesStatusDropdown = Object.keys(rotulosStatus)
                 .map(function (valor) {
-                    const selecionado = valor === objetivo.status ? " selected" : "";
-                    return `<option value="${valor}"${selecionado}>${rotulosStatus[valor]}</option>`;
+                    const ehStatusAtual = valor === objetivo.status;
+                    return `
+                        <li>
+                            <button class="dropdown-item" type="button" data-objetivo-id="${objetivo.id}" data-status="${valor}">
+                                ${ehStatusAtual ? '<i class="bi bi-check-lg"></i> ' : ""}${rotulosStatus[valor]}
+                            </button>
+                        </li>
+                    `;
                 })
                 .join("");
 
@@ -188,21 +197,36 @@
                     </div>
                 `;
 
+            // Sem nenhum combinado ainda, a barra de progresso não tem o que mostrar — omitida pra
+            // não sobrar um bloco vazio/redundante no card
+            const progressoHtml = objetivo.totalCombinados > 0
+                ? `
+                    <div class="ms-objetivo-progresso">
+                        <div class="d-flex justify-content-between ms-objetivo-progresso-label">
+                            <span>Progresso</span>
+                            <span>${objetivo.combinadosConcluidos} de ${objetivo.totalCombinados} combinados</span>
+                        </div>
+                        <div class="progress" role="progressbar" aria-valuenow="${percentual}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: ${percentual}%"></div>
+                        </div>
+                    </div>
+                `
+                : "";
+
             card.innerHTML = `
                 <div class="ms-objetivo-card-header">
                     <h6 class="ms-objetivo-titulo">${escaparHtml(objetivo.titulo)}</h6>
-                    <span class="badge ${badgeClasse}">${rotuloStatus}</span>
+                    <div class="dropdown ms-objetivo-status-dropdown">
+                        <button type="button" class="badge ${badgeClasse} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-objetivo-id="${objetivo.id}" title="Alterar status">
+                            ${rotuloStatus}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            ${opcoesStatusDropdown}
+                        </ul>
+                    </div>
                 </div>
                 ${objetivo.descricao ? `<p class="ms-objetivo-descricao">${escaparHtml(objetivo.descricao)}</p>` : ""}
-                <div class="ms-objetivo-progresso">
-                    <div class="d-flex justify-content-between ms-objetivo-progresso-label">
-                        <span>Progresso</span>
-                        <span>${objetivo.combinadosConcluidos} de ${objetivo.totalCombinados} combinados</span>
-                    </div>
-                    <div class="progress" role="progressbar" aria-valuenow="${percentual}" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" style="width: ${percentual}%"></div>
-                    </div>
-                </div>
+                ${progressoHtml}
                 <ul class="ms-combinado-lista">
                     ${itensCombinados}
                 </ul>
@@ -210,10 +234,7 @@
                     ${historicoHtml}
                 </div>
                 <div class="ms-objetivo-card-footer">
-                    <select class="form-select form-select-sm ms-objetivo-status-select" data-objetivo-id="${objetivo.id}" title="Alterar status">
-                        ${opcoesStatus}
-                    </select>
-                    <button type="button" class="btn btn-sm btn-outline-danger ms-objetivo-excluir" data-objetivo-id="${objetivo.id}" title="Excluir objetivo">
+                    <button type="button" class="ms-objetivo-excluir" data-objetivo-id="${objetivo.id}" title="Excluir objetivo">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -320,15 +341,18 @@
                     await carregarObjetivos();
                 } else {
                     checkboxEl.checked = !checkboxEl.checked;
-                    window.alert(resultado.message || "Não foi possível atualizar o combinado.");
+                    await avisarUsuario(resultado.message || "Não foi possível atualizar o combinado.");
                 }
             } catch (erro) {
                 checkboxEl.checked = !checkboxEl.checked;
-                window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
+                await avisarUsuario("Erro de conexão. Verifique sua internet e tente novamente.");
             }
         }
 
-        async function atualizarStatusObjetivo(id, status, selectEl) {
+        // O status agora é alterado pelo dropdown do próprio badge no cabeçalho do card, não mais
+        // por um <select> à parte — por isso não recebe mais um elemento de referência: qualquer
+        // atualização (sucesso ou erro) já recarrega o card inteiro via carregarObjetivos()
+        async function atualizarStatusObjetivo(id, status) {
             const formData = new FormData();
             formData.append("id", id);
             formData.append("status", status);
@@ -346,11 +370,11 @@
                 if (resposta.ok && resultado.success) {
                     await carregarObjetivos();
                 } else {
-                    window.alert(resultado.message || "Não foi possível atualizar o status.");
+                    await avisarUsuario(resultado.message || "Não foi possível atualizar o status.");
                     await carregarObjetivos();
                 }
             } catch (erro) {
-                window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
+                await avisarUsuario("Erro de conexão. Verifique sua internet e tente novamente.");
             }
         }
 
@@ -411,7 +435,7 @@
                 const dados = await resposta.json();
 
                 if (!resposta.ok || !dados.success) {
-                    window.alert(dados.message || "Não foi possível carregar os detalhes da sessão.");
+                    await avisarUsuario(dados.message || "Não foi possível carregar os detalhes da sessão.");
                     return;
                 }
 
@@ -458,12 +482,12 @@
 
                 bootstrap.Modal.getOrCreateInstance(modalVisualizarSessaoEl).show();
             } catch (erro) {
-                window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
+                await avisarUsuario("Erro de conexão. Verifique sua internet e tente novamente.");
             }
         }
 
         async function excluirObjetivo(id) {
-            if (!window.confirm("Tem certeza que deseja excluir este objetivo? Os combinados dele também serão removidos.")) return;
+            if (!(await confirmarAcao("Tem certeza que deseja excluir este objetivo? Os combinados dele também serão removidos."))) return;
 
             const formData = new FormData();
             formData.append("id", id);
@@ -481,10 +505,10 @@
                 if (resposta.ok && resultado.success) {
                     await carregarObjetivos();
                 } else {
-                    window.alert(resultado.message || "Não foi possível excluir o objetivo.");
+                    await avisarUsuario(resultado.message || "Não foi possível excluir o objetivo.");
                 }
             } catch (erro) {
-                window.alert("Erro de conexão. Verifique sua internet e tente novamente.");
+                await avisarUsuario("Erro de conexão. Verifique sua internet e tente novamente.");
             }
         }
 
@@ -501,12 +525,6 @@
             const checkbox = e.target.closest('input[type="checkbox"][data-combinado-id]');
             if (checkbox) {
                 alternarCombinado(checkbox.dataset.combinadoId, checkbox);
-                return;
-            }
-
-            const select = e.target.closest(".ms-objetivo-status-select");
-            if (select) {
-                atualizarStatusObjetivo(select.dataset.objetivoId, select.value, select);
             }
         });
 
@@ -514,6 +532,13 @@
             const botaoExcluir = e.target.closest(".ms-objetivo-excluir");
             if (botaoExcluir) {
                 excluirObjetivo(botaoExcluir.dataset.objetivoId);
+                return;
+            }
+
+            // Item do dropdown de status (badge clicável no cabeçalho do card)
+            const botaoStatus = e.target.closest(".ms-objetivo-status-dropdown .dropdown-item[data-objetivo-id]");
+            if (botaoStatus) {
+                atualizarStatusObjetivo(botaoStatus.dataset.objetivoId, botaoStatus.dataset.status);
                 return;
             }
 
