@@ -53,15 +53,20 @@
                     {
                         <p class="ms-objetivo-descricao">@objetivo.Descricao</p>
                     }
-                    <div class="ms-objetivo-progresso">
-                        <div class="d-flex justify-content-between ms-objetivo-progresso-label">
-                            <span>Progresso</span>
-                            <span>@objetivo.CombinadosConcluidos de @objetivo.TotalCombinados combinados</span>
+                    @* Sem nenhum combinado ainda, a barra de progresso não tem o que mostrar — omitida
+                       pra não sobrar um bloco vazio/redundante no card *@
+                    @if (objetivo.TotalCombinados > 0)
+                    {
+                        <div class="ms-objetivo-progresso">
+                            <div class="d-flex justify-content-between ms-objetivo-progresso-label">
+                                <span>Progresso</span>
+                                <span>@objetivo.CombinadosConcluidos de @objetivo.TotalCombinados combinados</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-valuenow="@objetivo.PercentualConcluido" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" style="width: @(objetivo.PercentualConcluido)%"></div>
+                            </div>
                         </div>
-                        <div class="progress" role="progressbar" aria-valuenow="@objetivo.PercentualConcluido" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar" style="width: @(objetivo.PercentualConcluido)%"></div>
-                        </div>
-                    </div>
+                    }
                     <ul class="ms-combinado-lista">
                         @foreach (var combinado in objetivo.Combinados)
                         {

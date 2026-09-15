@@ -1711,7 +1711,7 @@ body.ms-dashboard-body {
 }
 
 .ms-objetivo-progresso {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .ms-objetivo-progresso-label {
@@ -1731,7 +1731,7 @@ body.ms-dashboard-body {
 .ms-combinado-lista {
   list-style: none;
   padding: 0;
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.85rem;
 }
 
 .ms-combinado-item {
@@ -1749,7 +1749,10 @@ body.ms-dashboard-body {
 }
 
 .ms-objetivo-historico {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  /* Separa visualmente do conteúdo do objetivo (título/descrição/progresso/combinados) acima */
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(43, 45, 66, 0.08);
 }
 
 .ms-objetivo-historico-vazio {
@@ -1819,13 +1822,53 @@ body.ms-dashboard-body {
 .ms-objetivo-card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* O status saiu daqui pro dropdown do badge no cabeçalho (evita duplicidade de exibição do
+     mesmo status em dois lugares do card) — o rodapé agora só tem o botão de excluir, então o
+     alinhamento vira "fim" em vez de "espaço entre" (que só fazia sentido com 2 elementos) */
+  justify-content: flex-end;
   gap: 0.75rem;
+  /* Separa o rodapé de ações do restante do card, como uma "faixa de ações" distinta em vez de
+     um bloco solto colado no conteúdo */
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(43, 45, 66, 0.08);
 }
 
-.ms-objetivo-status-select {
-  width: auto;
-  flex: 1 1 auto;
+/* Badge de status virou um dropdown clicável (substitui o <select> que ficava no rodapé) — dá
+   mais destaque ao controle e evita mostrar o mesmo status em dois lugares do card. Mantém o
+   formato de badge (pill colorido); só reforça que é interativo além da setinha que o Bootstrap
+   já adiciona via ::after do .dropdown-toggle */
+.ms-objetivo-status-dropdown .dropdown-toggle {
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.ms-objetivo-status-dropdown .dropdown-toggle:hover,
+.ms-objetivo-status-dropdown .dropdown-toggle:focus {
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(43, 45, 66, 0.18);
+}
+
+/* Botão de excluir objetivo — mesmo espírito circular/compacto de .ms-dash-row-link, mas em
+   variante de perigo: vermelho suave por padrão, preenchendo com vermelho sólido no hover/focus */
+.ms-objetivo-excluir {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: #DC3545;
+  background-color: transparent;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.ms-objetivo-excluir:hover,
+.ms-objetivo-excluir:focus {
+  background-color: #DC3545;
+  color: #fff;
 }
 
 /* Combinados dentro do modal "Novo Objetivo" */
