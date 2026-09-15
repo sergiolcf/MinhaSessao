@@ -319,6 +319,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const resultado = await resposta.json();
 
+            if (!resultado.cpfValido) {
+                exibirErroVerificar("CPF inválido. Verifique os números digitados.");
+                return;
+            }
+
             if (resultado.existe) {
                 pacienteEncontradoId = resultado.pacienteId;
                 if (pacienteEncontradoIniciaisEl) pacienteEncontradoIniciaisEl.textContent = resultado.iniciais;
