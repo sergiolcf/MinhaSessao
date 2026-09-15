@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MinhaSessao.Helpers;
 
 namespace MinhaSessao.Models.ViewModels;
 
@@ -21,6 +22,7 @@ public class PacienteViewModel
     public DateTime DataNascimento { get; set; }
 
     [Required(ErrorMessage = "Informe o CPF do paciente.")]
+    [CpfValido(ErrorMessage = "Informe um CPF válido.")]
     public string Cpf { get; set; } = string.Empty;
 
     public string? Sexo { get; set; }

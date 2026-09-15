@@ -563,16 +563,22 @@ public class PacientesController : Controller
     [HttpGet]
     public async Task<IActionResult> VerificarPacienteExistente(string cpf)
     {
+        if (!CpfUtil.EhValido(cpf))
+        {
+            return Json(new { existe = false, cpfValido = false });
+        }
+
         var paciente = await BuscarPacientePorCpfAsync(cpf);
 
         if (paciente is null)
         {
-            return Json(new { existe = false });
+            return Json(new { existe = false, cpfValido = true });
         }
 
         return Json(new
         {
             existe = true,
+            cpfValido = true,
             pacienteId = paciente.Id,
             nomeCompleto = paciente.NomeCompleto,
             iniciais = PacienteIniciais.Calcular(paciente.NomeCompleto)
