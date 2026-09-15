@@ -381,6 +381,44 @@ body.ms-dashboard-body {
   margin-left: 0.15rem;
 }
 
+/* Botão de alternância (toggle) pra opções igualmente válidas, sem "ação primária/secundária" fixa —
+   ex.: "Este paciente precisa de um responsável?" (Sim/Não). Os dois começam com o mesmo peso visual
+   (estado neutro) e só o que foi clicado (.active) ganha o destaque laranja da marca. Formato de pílula
+   (border-radius bem arredondado) e padding generoso, consistente com .btn-ms-orange. */
+.ms-toggle-btn {
+  border: 1px solid #DEE2E6;
+  background-color: var(--ms-bg);
+  color: var(--ms-text);
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border-radius: 2rem;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out, transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.ms-toggle-btn:hover {
+  border-color: var(--ms-orange);
+  color: var(--ms-orange-dark);
+  /* Leve elevação no hover, pra reforçar a sensação de "clicável" mesmo no estado neutro */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(43, 45, 66, 0.1);
+}
+
+.ms-toggle-btn.active {
+  background-color: var(--ms-orange);
+  border-color: var(--ms-orange);
+  color: #fff;
+  /* Sombra suave pra dar profundidade ao preenchimento laranja, sem ficar um bloco de cor chapado */
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.35);
+}
+
+.ms-toggle-btn.active:hover {
+  background-color: var(--ms-orange-dark);
+  border-color: var(--ms-orange-dark);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(255, 107, 53, 0.4);
+}
+
 /* Bloco de campos secundários dentro de um formulário (ex.: Duração/Status da modal Nova Sessão) —
    mesmo destaque de fundo dos cards (var(--ms-bg)), mas com labels menores/apagados para reduzir
    o peso visual em relação aos campos principais do formulário. */
@@ -654,6 +692,16 @@ body.ms-dashboard-body {
   color: #198754;
   font-size: 0.85rem;
   margin: 0.6rem 0 0;
+}
+
+/* Seção "Dados do Responsável" no cadastro de Paciente (CARD-35) — fundo destacado (mesmo cinza claro
+   var(--ms-bg) usado em outras seções, ex.: hover da Agenda) pra separar visualmente dos dados do paciente */
+.ms-secao-responsavel {
+  background-color: var(--ms-bg);
+  border: 1px solid #E9ECEF;
+  border-radius: 0.6rem;
+  padding: 1rem 1rem 0.25rem;
+  margin-top: 0.5rem;
 }
 
 /* Avatar circular com iniciais (tabela e ficha do paciente) */
